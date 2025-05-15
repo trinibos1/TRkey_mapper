@@ -1,61 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Micropad VIA-style Mapper</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Micropad Key Mapper</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Micropad VIA Mapper</h1>
-    <button id="connect-btn">Connect to Micropad</button>
-    <div id="device-info">Not connected</div>
-  </header>
-
-  <main>
-    <section id="profiles">
-      <label for="profile-select">Profile:</label>
-      <select id="profile-select">
+  <div id="app">
+    <header>
+      <h1>Micropad Key Mapper</h1>
+      <button id="connectBtn">Connect to Micropad</button>
+      <select id="profileSelect">
         <option value="0">Profile 1</option>
         <option value="1">Profile 2</option>
         <option value="2">Profile 3</option>
         <option value="3">Profile 4</option>
       </select>
-      <button id="save-profile-btn">Save Profile</button>
-      <button id="load-profile-btn">Load Profile</button>
+      <button id="saveProfileBtn">Save Profile</button>
+    </header>
+
+    <section id="keyboard">
+      <!-- 3x3 keys container -->
+      <div class="key-row">
+        <div class="key" data-row="0" data-col="0" tabindex="0"></div>
+        <div class="key" data-row="0" data-col="1" tabindex="0"></div>
+        <div class="key" data-row="0" data-col="2" tabindex="0"></div>
+      </div>
+      <div class="key-row">
+        <div class="key" data-row="1" data-col="0" tabindex="0"></div>
+        <div class="key" data-row="1" data-col="1" tabindex="0"></div>
+        <div class="key" data-row="1" data-col="2" tabindex="0"></div>
+      </div>
+      <div class="key-row">
+        <div class="key" data-row="2" data-col="0" tabindex="0"></div>
+        <div class="key" data-row="2" data-col="1" tabindex="0"></div>
+        <div class="key" data-row="2" data-col="2" tabindex="0"></div>
+      </div>
     </section>
 
-    <section id="key-grid">
-      <!-- 3x3 keys -->
-      <div class="key" data-key="0">0</div>
-      <div class="key" data-key="1">1</div>
-      <div class="key" data-key="2">2</div>
-      <div class="key" data-key="3">3</div>
-      <div class="key" data-key="4">4</div>
-      <div class="key" data-key="5">5</div>
-      <div class="key" data-key="6">6</div>
-      <div class="key" data-key="7">7</div>
-      <div class="key" data-key="8">8</div>
+    <section id="assignShortcut">
+      <h2>Assign Shortcut</h2>
+      <p>Selected Key: <span id="selectedKeyLabel">None</span></p>
+      <input type="text" id="shortcutInput" placeholder="Press keys here" readonly />
+      <button id="assignBtn" disabled>Assign</button>
     </section>
 
-    <section id="shortcut-assign">
-      <label for="shortcut-input">Assign Shortcut</label>
-      <input
-        type="text"
-        id="shortcut-input"
-        placeholder="e.g. Ctrl + Alt + M"
-        disabled
-      />
-      <button id="assign-btn" disabled>Assign</button>
+    <section id="keyTestSection">
+      <h2>Key Tester</h2>
+      <p>Press a key on the Micropad or keyboard to see it highlighted here.</p>
+      <div id="keyTestArea">
+        <!-- Dynamically highlight keys pressed -->
+      </div>
     </section>
 
-    <section id="status-section">
-      <div id="connection-status">Disconnected</div>
-      <div id="os-info"></div>
-    </section>
-  </main>
+    <footer>
+      <p id="status">Status: Disconnected</p>
+      <p id="deviceInfo"></p>
+    </footer>
+  </div>
 
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
