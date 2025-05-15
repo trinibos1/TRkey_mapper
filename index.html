@@ -9,6 +9,16 @@
 <body>
   <h1>3x3 Micropad Remapper</h1>
 
+  <button id="themeToggle">Switch to Dark Theme</button>
+
+  <div id="profileControls">
+    <input type="text" id="profileName" placeholder="Profile Name" />
+    <button id="saveProfileBtn">Save Profile</button>
+    <select id="profileList"></select>
+    <button id="loadProfileBtn">Load Profile</button>
+    <button id="deleteProfileBtn">Delete Profile</button>
+  </div>
+
   <select id="presetApp">
     <option value="">-- Load App Shortcuts --</option>
     <option value="fusion360">Fusion 360</option>
@@ -39,6 +49,16 @@
   <div id="testOutput">Key Output: <span id="lastKey">None</span></div>
   <div id="connectionStatus">Device not connected</div>
   <pre id="output"></pre>
+
+  <!-- Shortcut Suggestion Modal -->
+  <div id="shortcutModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Shortcut Suggestions</h3>
+      <input type="text" id="shortcutSearch" placeholder="Search shortcuts..." />
+      <ul id="shortcutList"></ul>
+      <button id="closeModal">Close</button>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="app.js"></script>
