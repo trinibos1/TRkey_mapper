@@ -1,204 +1,128 @@
 :root {
-  --bg-light: #f0f0f0;
-  --bg-dark: #222;
-  --text-light: #222;
-  --text-dark: #0f0;
-  --key-bg: white;
+  --bg-color: #f0f0f0;
+  --text-color: #222;
+  --key-bg: #fff;
   --key-border: #333;
-  --key-hover-bg: #ddd;
+  --hover-bg: #ddd;
+  --modifier-active: #6c63ff;
+  --status-color: green;
 }
 
 body {
-  font-family: sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   text-align: center;
   padding: 20px;
-  background: var(--bg-light);
-  color: var(--text-light);
+  background: var(--bg-color);
+  color: var(--text-color);
   transition: background 0.3s, color 0.3s;
 }
 
-body.dark {
-  background: var(--bg-dark);
-  color: var(--text-dark);
+.dark-theme {
+  --bg-color: #222;
+  --text-color: #eee;
+  --key-bg: #333;
+  --key-border: #888;
+  --hover-bg: #444;
+  --modifier-active: #9a8cff;
+  --status-color: #6df06d;
 }
 
-#matrix {
+h1 {
+  margin-bottom: 10px;
+}
+
+.controls {
+  margin: 10px 0;
+}
+
+.matrix {
   display: grid;
-  grid-template-columns: repeat(3, 80px);
-  gap: 10px;
+  grid-template-columns: repeat(3, 90px);
+  gap: 12px;
   justify-content: center;
-  margin: 20px 0;
+  margin: 20px auto;
 }
 
 .key {
   background: var(--key-bg);
   border: 2px solid var(--key-border);
   border-radius: 8px;
-  height: 80px;
+  height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 22px;
   padding: 5px;
-  text-align: center;
-  transition: background 0.2s;
   user-select: none;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .key:hover {
-  background: var(--key-hover-bg);
+  background: var(--hover-bg);
+  border-color: var(--modifier-active);
 }
 
-body.dark .key {
-  background: #444;
-  border-color: #0f0;
-  color: var(--text-dark);
+.modifiers {
+  margin: 10px 0;
 }
 
-body.dark .key:hover {
-  background: #555;
-}
-
-#modifiers label {
-  margin: 0 10px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#buttons button,
-#profileControls button,
-#loadPreset,
-#themeToggle {
-  margin: 5px;
-  padding: 8px 12px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 5px;
-  border: 1px solid #333;
-  background: white;
-  transition: background 0.3s;
-}
-
-body.dark #buttons button,
-body.dark #profileControls button,
-body.dark #loadPreset,
-body.dark #themeToggle {
-  background: #333;
-  color: var(--text-dark);
-  border-color: var(--text-dark);
-}
-
-#buttons button:hover,
-#profileControls button:hover,
-#loadPreset:hover,
-#themeToggle:hover {
-  background: #ddd;
-}
-
-body.dark #buttons button:hover,
-body.dark #profileControls button:hover,
-body.dark #loadPreset:hover,
-body.dark #themeToggle:hover {
-  background: #555;
-}
-
-#qrCanvas {
-  margin-top: 10px;
-}
-
-#testOutput {
-  margin-top: 10px;
+.modifiers label {
+  margin: 0 15px;
   font-weight: bold;
 }
 
-#connectionStatus {
-  margin-top: 10px;
-  font-weight: bold;
-  color: green;
+.modifiers input[type="checkbox"]:checked + label {
+  color: var(--modifier-active);
 }
 
-pre#output {
-  text-align: left;
+.testOutput {
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.status {
+  margin-top: 15px;
+  font-weight: bold;
+  color: var(--status-color);
+}
+
+.output {
   background: #111;
   color: #0f0;
-  padding: 10px;
+  padding: 12px;
+  margin-top: 20px;
   max-height: 150px;
   overflow-y: auto;
-  margin-top: 10px;
-  border-radius: 6px;
-  font-family: monospace;
-}
-
-/* Modal styles */
-.modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  z-index: 1000;
-}
-
-.modal.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.modal-content {
-  background: white;
-  color: black;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-body.dark .modal-content {
-  background: #333;
-  color: var(--text-dark);
-}
-
-#shortcutList {
-  list-style: none;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
   text-align: left;
+  font-family: monospace;
+  border-radius: 6px;
+  user-select: text;
 }
 
-#shortcutList li {
-  padding: 6px 10px;
+canvas#qrCanvas {
+  margin-top: 10px;
+  border: 1px solid var(--key-border);
+  border-radius: 6px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button {
+  padding: 8px 15px;
+  margin: 0 5px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1.5px solid var(--key-border);
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  background: var(--key-bg);
+  color: var(--text-color);
+  transition: background 0.2s, color 0.2s;
 }
 
-#shortcutList li:hover {
-  background: #ddd;
-}
-
-body.dark #shortcutList li:hover {
-  background: #555;
-}
-
-#shortcutSearch {
-  width: 100%;
-  padding: 6px 8px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-  border: 1px solid #aaa;
-  font-size: 16px;
-}
-
-body.dark #shortcutSearch {
-  background: #222;
-  color: var(--text-dark);
-  border-color: var(--text-dark);
+button:hover {
+  background: var(--modifier-active);
+  color: #fff;
 }
