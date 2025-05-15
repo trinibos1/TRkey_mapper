@@ -1,39 +1,28 @@
 :root {
-  --bg-color: #f0f0f0;
-  --text-color: #222;
-  --key-bg: #fff;
+  --bg-light: #f0f0f0;
+  --bg-dark: #222;
+  --text-light: #222;
+  --text-dark: #0f0;
+  --key-bg: white;
   --key-border: #333;
-  --modal-bg: #fff;
-  --modal-border: #333;
-  --highlight: #4caf50;
-}
-
-[data-theme="dark"] {
-  --bg-color: #121212;
-  --text-color: #eee;
-  --key-bg: #222;
-  --key-border: #555;
-  --modal-bg: #333;
-  --modal-border: #bbb;
-  --highlight: #81c784;
+  --key-hover-bg: #ddd;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: sans-serif;
   text-align: center;
   padding: 20px;
-  background: var(--bg-color);
-  color: var(--text-color);
+  background: var(--bg-light);
+  color: var(--text-light);
   transition: background 0.3s, color 0.3s;
 }
 
 #matrix {
   display: grid;
-  grid-template-columns: repeat(3, minmax(70px, 1fr));
+  grid-template-columns: repeat(3, 80px);
   gap: 10px;
   justify-content: center;
-  margin: 20px auto;
-  max-width: 300px;
+  margin: 20px 0;
 }
 
 .key {
@@ -45,143 +34,64 @@ body {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   padding: 5px;
+  text-align: center;
   user-select: none;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s;
 }
 
 .key:hover {
-  background: var(--highlight);
-  border-color: var(--highlight);
-  color: #fff;
-}
-
-#modifiers {
-  margin: 15px 0;
+  background: var(--key-hover-bg);
 }
 
 #modifiers label {
-  margin: 0 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-#modifiers label input {
-  margin-right: 5px;
-}
-
-#activeModifiers {
-  margin-top: 10px;
-  font-weight: 700;
-  color: var(--highlight);
-  min-height: 22px;
-}
-
-#keyAssignModal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--modal-bg);
-  border: 2px solid var(--modal-border);
-  padding: 20px;
-  z-index: 1000;
-  box-shadow: 0 0 12px rgba(0,0,0,0.5);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  width: 320px;
-  max-width: 90vw;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-#keyAssignModal.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#keyAssignModal h3 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-#keyAssignModal input[type="text"] {
-  width: 100%;
-  padding: 6px 8px;
-  font-size: 1rem;
-  border: 1px solid var(--key-border);
-  border-radius: 5px;
-  box-sizing: border-box;
-}
-
-#keyAssignModal label {
-  font-weight: 600;
+  margin: 0 10px;
   user-select: none;
 }
 
-#keyAssignModal button {
-  padding: 8px 14px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 6px;
+#buttons {
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+button {
+  margin: 5px;
+  padding: 8px 15px;
+  font-size: 14px;
   cursor: pointer;
-  background: var(--highlight);
-  color: white;
-  font-weight: 700;
-  transition: background 0.3s;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: white;
+  transition: background 0.2s;
 }
 
-#keyAssignModal button:hover {
-  background: #2e7d32;
+button:hover {
+  background: #eee;
 }
 
-#modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.45);
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
+#output {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+  padding: 10px;
+  margin-top: 20px;
+  text-align: left;
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: monospace;
 }
 
-#modalOverlay.show {
-  opacity: 1;
-  pointer-events: auto;
+#qrCanvas {
+  margin-top: 10px;
 }
 
 #testOutput {
-  margin-top: 12px;
-  font-weight: 700;
-  font-size: 1.1rem;
+  margin-top: 10px;
+  font-weight: bold;
 }
 
 #connectionStatus {
   margin-top: 10px;
-  font-weight: 700;
-  color: var(--highlight);
-}
-
-#themeToggle {
-  margin-top: 20px;
-  padding: 8px 18px;
-  font-weight: 700;
-  border-radius: 8px;
-  border: 2px solid var(--key-border);
-  background: var(--key-bg);
-  color: var(--text-color);
-  cursor: pointer;
-  transition: background 0.3s, color 0.3s;
-}
-
-#themeToggle:hover {
-  background: var(--highlight);
-  color: white;
+  font-weight: bold;
+  color: green;
 }
