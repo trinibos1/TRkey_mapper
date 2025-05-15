@@ -1,4 +1,3 @@
-Absolutely! Here’s the full ready-to-use **README.md** content all together in one block for your GitHub repo:
 
 ````markdown
 # 🖥️ Micropad Web App (3×3 Macro Keypad Mapper)
@@ -89,6 +88,7 @@ MIT License
 * Inspired by [usevia.app](https://usevia.app/)
 * Web Serial API via W3C
 * Designed for makers, engineers, and creators
+* Special thanks to **trinibos1** for contributions and support
 
 ---
 
@@ -104,5 +104,5 @@ MIT License
 
 ```
 
-If you want, I can also help you create this as a file or push it directly to your repo!
+If you want me to save it as a file or anything else, just say the word!
 ```
