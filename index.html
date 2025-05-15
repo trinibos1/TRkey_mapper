@@ -9,56 +9,45 @@
 <body>
   <h1>3x3 Micropad Remapper</h1>
 
-  <button id="themeToggle">Switch to Dark Theme</button>
-
-  <div id="profileControls">
-    <input type="text" id="profileName" placeholder="Profile Name" />
-    <button id="saveProfileBtn">Save Profile</button>
-    <select id="profileList"></select>
-    <button id="loadProfileBtn">Load Profile</button>
-    <button id="deleteProfileBtn">Delete Profile</button>
+  <div class="controls">
+    <select id="presetApp">
+      <option value="">-- Load App Shortcuts --</option>
+      <option value="fusion360">Fusion 360</option>
+      <option value="canva">Canva</option>
+      <option value="kicad">KiCad</option>
+      <option value="vscode">VS Code</option>
+      <option value="warthunder">War Thunder</option>
+    </select>
+    <button id="loadPreset">Apply Preset</button>
   </div>
 
-  <select id="presetApp">
-    <option value="">-- Load App Shortcuts --</option>
-    <option value="fusion360">Fusion 360</option>
-    <option value="canva">Canva</option>
-    <option value="kicad">KiCad</option>
-    <option value="vscode">VS Code</option>
-    <option value="warthunder">War Thunder</option>
-  </select>
-  <button id="loadPreset">Apply Preset</button>
+  <div id="matrix" class="matrix"></div>
 
-  <div id="matrix"></div>
-
-  <div id="modifiers">
+  <div id="modifiers" class="modifiers">
     <label><input type="checkbox" id="ctrlMod" /> Ctrl</label>
     <label><input type="checkbox" id="altMod" /> Alt</label>
     <label><input type="checkbox" id="shiftMod" /> Shift</label>
   </div>
 
-  <div id="buttons">
+  <div class="controls">
     <button id="connectBtn">Connect Device</button>
-    <button id="exportBtn">Export Mapping</button>
-    <button id="sendBtn">Send to Device (Serial/WebUSB)</button>
+    <button id="sendBtn">Send to Device</button>
     <button id="saveEEPROM">Save to EEPROM</button>
+    <button id="disconnectBtn">Disconnect Device</button>
+    <button id="exportBtn">Export Mapping</button>
     <button id="genQR">Generate QR</button>
+    <button id="themeToggle">Dark Theme</button>
   </div>
 
   <canvas id="qrCanvas"></canvas>
-  <div id="testOutput">Key Output: <span id="lastKey">None</span></div>
-  <div id="connectionStatus">Device not connected</div>
-  <pre id="output"></pre>
 
-  <!-- Shortcut Suggestion Modal -->
-  <div id="shortcutModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Shortcut Suggestions</h3>
-      <input type="text" id="shortcutSearch" placeholder="Search shortcuts..." />
-      <ul id="shortcutList"></ul>
-      <button id="closeModal">Close</button>
-    </div>
+  <div id="testOutput" class="testOutput">
+    Key Output: <span id="lastKey">None</span>
   </div>
+
+  <div id="connectionStatus" class="status">Device not connected</div>
+
+  <pre id="output" class="output"></pre>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="app.js"></script>
