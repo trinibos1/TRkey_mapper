@@ -1,122 +1,128 @@
+# 3x3 Micropad Remapper
 
-
----
-
-```markdown
-# 🎹 Micropad Key Mapper
-
-**Unlock the power of your 3x3 Micropad** — customize every key with your favorite shortcuts, switch between profiles, and connect effortlessly via USB serial. A sleek, modern web app designed for makers, coders, and creatives who want full control of their micro keyboard.
+A powerful web-based configuration tool for your 3x3 ESP32-powered micropad keyboard.
 
 ---
 
-## 🚀 Features
+## Features
 
-- **Seamless Serial Connection:** Connect to your Micropad device via USB using the Web Serial API.
-- **Intuitive 3x3 Key Layout:** Visualize and map all 9 keys with a clean, interactive interface.
-- **4 Configurable Profiles:** Save and switch between multiple profiles to fit your workflow.
-- **OS-Aware Shortcuts:** Auto-detect Windows, macOS, or Linux and adapt shortcut labels accordingly.
-- **Custom Shortcut Mapping:** Assign complex key combos (e.g., Ctrl + Alt + M) to each pad button.
-- **Real-Time Communication:** Changes instantly sent to your Micropad for immediate effect.
-- **Persistent Storage:** Profiles saved locally in your browser for easy recall.
-
----
-
-## 🔧 Getting Started
-
-### Prerequisites
-
-- Micropad hardware connected via USB serial port (115200 baud).
-- A Chromium-based browser (Chrome, Edge, Opera) with Web Serial API support.
-- Optional: Serve files over a local web server for best compatibility (e.g., `live-server`, Python's `http.server`).
-
-### Installation
-
-1. Clone or download this repo.
-2. Serve the files or open `index.html` in a compatible browser.
-3. Click **Connect to Micropad** and select your device.
-4. Map your shortcuts and save profiles.
-
----
-
-## 🎯 How to Use
-
-1. **Connect:** Click the connect button and authorize your Micropad device.
-2. **Select a Key:** Click any of the 9 keys in the 3x3 grid.
-3. **Assign Shortcut:** Enter your desired key combo in the input box, then click **Assign**.
-4. **Save Profile:** Store your mappings by clicking **Save Profile**.
-5. **Switch Profiles:** Toggle between 4 profiles anytime — perfect for different apps or workflows.
-6. **Disconnect:** When done, safely disconnect your Micropad.
+- **Full key remapping:** Click keys to assign shortcuts or single keys, with modifier toggles (Ctrl, Alt, Shift).
+- **Drag-and-drop layout editing:** Rearrange keys intuitively by dragging them.
+- **Preset profiles:** Quickly load predefined shortcuts for popular apps including:
+  - Fusion 360
+  - Canva
+  - KiCad
+  - VS Code
+  - War Thunder
+- **Serial communication:** Connect your micropad device via Web Serial API:
+  - Auto-detect and auto-connect if previously paired
+  - Send JSON-based mappings
+  - Save mappings to device EEPROM persistently
+  - Disconnect safely
+- **Live key output preview:** See what key or shortcut is currently assigned/edited.
+- **QR code generation:** Export your key mapping config as a scannable QR code for easy sharing or backup.
+- **Responsive and interactive UI:**
+  - Smooth fade-in modals and overlays
+  - Hover states and active modifier indicators
+  - Theme toggle between light and dark modes using CSS variables
+- **Profiles support:** Save/load user profiles with custom mappings.
+- **Shortcut suggestion UI:** Shows shortcut suggestions for keys and apps.
+- **Gamepad/WebHID support:** (planned for extension)
+- **Custom icons and themes:** Display shortcut icons like ⏯, 💾, 🔇 on keys.
+- **Physical device echo:** Feedback loop showing assigned key updates in real-time.
+- **Persistent profile saving:** Store profiles in local storage for quick reloading.
 
 ---
 
-## 🔌 Serial Communication Protocol
+## How to Use
 
-Commands sent to the device follow this format:
-
-```
-
-SETUP:<keyIndex>:<shortcut>\n
-
-```
-
-- `<keyIndex>`: Number between 0-8, representing the key on the 3x3 grid.
-- `<shortcut>`: Shortcut string, e.g. `Ctrl+Alt+M`.
-
-Example command:
-
-```
-
-SETUP:3\:Shift+F5
-
-```
-
-Ensure your Micropad firmware listens and parses these commands to update key mappings on the device.
-
----
-
-## 💾 Profiles
-
-- 4 user profiles available, labeled **1** to **4**.
-- Each profile stores mappings for all keys.
-- Profiles saved in browser's local storage under `micropadProfiles`.
-- Persistent between sessions unless cleared.
-- Switch profiles on the fly for different usage contexts.
+1. **Open `index.html`** in a modern Chromium browser (Chrome, Edge) with Web Serial API enabled.
+2. **Assign keys:**
+   - Click any key to open the assignment modal.
+   - Enter the key or shortcut (e.g. `A`, `Ctrl+S`, `MediaPlayPause`).
+   - Use modifier toggles (Ctrl, Alt, Shift) to combine modifiers.
+   - Click Save.
+3. **Drag & drop keys** within the 3x3 grid to rearrange layouts.
+4. **Load presets:**
+   - Select your app from the dropdown.
+   - Click *Apply Preset* to load predefined shortcuts.
+5. **Manage profiles:**
+   - Save your current layout as a profile.
+   - Load saved profiles from local storage.
+6. **Connect your device:**
+   - Click *Connect Device*.
+   - Grant serial permission.
+   - Auto-connect attempts on page load if previously connected.
+7. **Send your layout:**
+   - Click *Send to Device* to transmit JSON configuration.
+   - Click *Save to EEPROM* to persist the config on hardware.
+8. **Export/Share:**
+   - Export the mapping JSON to a file or clipboard.
+   - Generate a QR code for easy transfer.
+9. **Switch themes:**
+   - Click *Dark Theme* toggle to switch UI modes instantly.
+10. **Disconnect:** Click *Disconnect Device* to close serial connection safely.
 
 ---
 
-## 🌐 Supported Browsers
+## File Structure
 
-| Browser           | Web Serial API Support |
-|-------------------|-----------------------|
-| Google Chrome     | ✅                    |
-| Microsoft Edge    | ✅                    |
-| Opera             | ✅                    |
-| Firefox           | ❌                    |
-| Safari            | ❌                    |
+- `index.html`: Main app UI, layout, and markup.
+- `styles.css`: Styling for grid, modal, buttons, themes, responsiveness.
+- `app.js`: Logic for UI, serial communication, presets, profiles, QR code, theme toggle.
 
 ---
 
-## 🎉 Credits
+## Requirements
 
-- **Developed by:** [trinibos1]  
-- **Special Thanks:** trinibos1 — for invaluable insights and support.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
+- Chromium-based browser (Chrome, Edge) with Web Serial API support.
+- Micropad device connected via USB serial (baud rate 115200).
+- Micropad firmware that understands JSON `SETUP` and `SAVE` commands over serial.
 
 ---
 
-## 🙌 Contribute
+## Development Notes
 
-Feel free to open issues or pull requests! Help improve the Micropad Key Mapper for everyone.
+- The app uses **Web Serial API** for direct USB serial communication — only supported on desktop Chromium browsers.
+- Profiles are stored in **localStorage** to persist mappings between sessions.
+- The **QR code generator** uses [QRCode.js](https://github.com/davidshimjs/qrcodejs).
+- UI interactions use **CSS transitions** and **flexbox/grid** for responsive design.
+- Drag-and-drop uses native HTML5 Drag and Drop API.
+- Modifier toggles dynamically prepend to keys on assignment.
+- Shortcut suggestions can be extended by editing `presets` and `iconMap` in `app.js`.
 
 ---
 
-Happy mapping! 🎹✨
-```
+## Extending the App
+
+- Add new app presets by editing the `presets` object in `app.js`.
+- Add custom icons by extending the `iconMap`.
+- Integrate WebHID/Gamepad support for advanced device input handling.
+- Improve profiles UI with import/export JSON files.
+- Add cloud sync or backend integration for profile sharing.
 
 ---
+
+## Troubleshooting
+
+- If serial connection fails, check browser permissions and USB device access.
+- Web Serial API only works in secure contexts (https or localhost).
+- Refresh page to reset state if UI misbehaves.
+- Use Chrome/Edge latest stable for best compatibility.
+
+---
+
+## License
+
+MIT License — free to use, modify, and distribute.
+
+---
+
+## Contact
+
+For feature requests or issues, open a GitHub issue or contact the maintainer.
+
+---
+
+*Built for efficient, customizable keypad configuration with modern web tech.*
 
