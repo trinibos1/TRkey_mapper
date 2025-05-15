@@ -2,64 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Micropad Key Mapper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Micropad VIA-style Mapper</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
+  <div class="app">
     <header>
       <h1>Micropad Key Mapper</h1>
-      <button id="connectBtn">Connect to Micropad</button>
-      <select id="profileSelect">
-        <option value="0">Profile 1</option>
-        <option value="1">Profile 2</option>
-        <option value="2">Profile 3</option>
-        <option value="3">Profile 4</option>
-      </select>
-      <button id="saveProfileBtn">Save Profile</button>
     </header>
+    <div class="toolbar">
+      <button id="connect">Connect to Micropad</button>
+      <select id="profile-select">
+        <option value="profile1">Profile 1</option>
+        <option value="profile2">Profile 2</option>
+        <option value="profile3">Profile 3</option>
+        <option value="profile4">Profile 4</option>
+      </select>
+    </div>
 
-    <section id="keyboard">
-      <!-- 3x3 keys container -->
-      <div class="key-row">
-        <div class="key" data-row="0" data-col="0" tabindex="0"></div>
-        <div class="key" data-row="0" data-col="1" tabindex="0"></div>
-        <div class="key" data-row="0" data-col="2" tabindex="0"></div>
+    <div class="keymap">
+      <div class="key-grid">
+        <!-- 3x3 Keys -->
+        <div class="key" data-key="0-0">A</div>
+        <div class="key" data-key="0-1">B</div>
+        <div class="key" data-key="0-2">C</div>
+        <div class="key" data-key="1-0">D</div>
+        <div class="key" data-key="1-1">E</div>
+        <div class="key" data-key="1-2">F</div>
+        <div class="key" data-key="2-0">G</div>
+        <div class="key" data-key="2-1">H</div>
+        <div class="key" data-key="2-2">I</div>
       </div>
-      <div class="key-row">
-        <div class="key" data-row="1" data-col="0" tabindex="0"></div>
-        <div class="key" data-row="1" data-col="1" tabindex="0"></div>
-        <div class="key" data-row="1" data-col="2" tabindex="0"></div>
-      </div>
-      <div class="key-row">
-        <div class="key" data-row="2" data-col="0" tabindex="0"></div>
-        <div class="key" data-row="2" data-col="1" tabindex="0"></div>
-        <div class="key" data-row="2" data-col="2" tabindex="0"></div>
-      </div>
-    </section>
 
-    <section id="assignShortcut">
-      <h2>Assign Shortcut</h2>
-      <p>Selected Key: <span id="selectedKeyLabel">None</span></p>
-      <input type="text" id="shortcutInput" placeholder="Press keys here" readonly />
-      <button id="assignBtn" disabled>Assign</button>
-    </section>
+      <div class="shortcuts-panel">
+        <h2>Assign Shortcut</h2>
+        <input type="text" id="shortcut-input" placeholder="Ctrl + Alt + M" />
+        <button id="assign">Assign</button>
 
-    <section id="keyTestSection">
-      <h2>Key Tester</h2>
-      <p>Press a key on the Micropad or keyboard to see it highlighted here.</p>
-      <div id="keyTestArea">
-        <!-- Dynamically highlight keys pressed -->
+        <h3>App Shortcuts</h3>
+        <select id="shortcut-templates">
+          <option value="">Select App Shortcut</option>
+          <option value="fusion360:Orbit">Fusion 360: Orbit</option>
+          <option value="fusion360:Pan">Fusion 360: Pan</option>
+          <option value="kicad:Route">KiCad: Route</option>
+          <option value="kicad:PlaceVia">KiCad: Place Via</option>
+          <option value="canva:Align">Canva: Align</option>
+          <option value="canva:Duplicate">Canva: Duplicate</option>
+        </select>
+
+        <h3>Media Controls</h3>
+        <button class="media-btn" data-shortcut="Play/Pause">▶️ Play/Pause</button>
+        <button class="media-btn" data-shortcut="Volume Up">🔊 Volume Up</button>
+        <button class="media-btn" data-shortcut="Volume Down">🔉 Volume Down</button>
+        <button class="media-btn" data-shortcut="Mute">🔇 Mute</button>
       </div>
-    </section>
+    </div>
 
     <footer>
-      <p id="status">Status: Disconnected</p>
-      <p id="deviceInfo"></p>
+      <div id="device-info">Detecting device...</div>
+      <div id="os-info">Detecting OS...</div>
     </footer>
-  </div>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
+  </div>
 </body>
 </html>
