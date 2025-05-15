@@ -1,119 +1,187 @@
-/* style.css */
+:root {
+  --bg-color: #f0f0f0;
+  --text-color: #222;
+  --key-bg: #fff;
+  --key-border: #333;
+  --modal-bg: #fff;
+  --modal-border: #333;
+  --highlight: #4caf50;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #eee;
+  --key-bg: #222;
+  --key-border: #555;
+  --modal-bg: #333;
+  --modal-border: #bbb;
+  --highlight: #81c784;
+}
 
 body {
-  margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #1e1e1e;
-  color: #f5f5f5;
-}
-
-header {
-  padding: 1rem;
-  background-color: #2d2d2d;
   text-align: center;
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #00bcd4;
-  border-bottom: 1px solid #444;
+  padding: 20px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: background 0.3s, color 0.3s;
 }
 
-.container {
-  display: flex;
-  height: calc(100vh - 70px);
-}
-
-.sidebar {
-  width: 250px;
-  background-color: #252526;
-  padding: 1rem;
-  border-right: 1px solid #444;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sidebar button,
-.sidebar select {
-  background-color: #333;
-  color: #fff;
-  padding: 0.6rem;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.sidebar button:hover {
-  background-color: #444;
-}
-
-.main {
-  flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  overflow-y: auto;
-}
-
-.keypad {
+#matrix {
   display: grid;
-  grid-template-columns: repeat(3, 80px);
-  grid-gap: 10px;
+  grid-template-columns: repeat(3, minmax(70px, 1fr));
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 2rem;
+  margin: 20px auto;
+  max-width: 300px;
 }
 
 .key {
-  background-color: #3c3c3c;
-  border: 1px solid #555;
+  background: var(--key-bg);
+  border: 2px solid var(--key-border);
   border-radius: 8px;
-  height: 60px;
+  height: 80px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  align-items: center;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 20px;
+  padding: 5px;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .key:hover {
-  background-color: #555;
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: #fff;
 }
 
-.shortcuts {
+#modifiers {
+  margin: 15px 0;
+}
+
+#modifiers label {
+  margin: 0 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#modifiers label input {
+  margin-right: 5px;
+}
+
+#activeModifiers {
+  margin-top: 10px;
+  font-weight: 700;
+  color: var(--highlight);
+  min-height: 22px;
+}
+
+#keyAssignModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--modal-bg);
+  border: 2px solid var(--modal-border);
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 0 12px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  width: 320px;
+  max-width: 90vw;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: 400px;
+  gap: 15px;
 }
 
-.shortcuts input {
-  padding: 0.6rem;
-  border-radius: 5px;
-  border: none;
+#keyAssignModal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#keyAssignModal h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+#keyAssignModal input[type="text"] {
   width: 100%;
+  padding: 6px 8px;
   font-size: 1rem;
-}
-
-.shortcuts button {
-  padding: 0.6rem;
-  background-color: #00bcd4;
-  color: #000;
-  border: none;
+  border: 1px solid var(--key-border);
   border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
+  box-sizing: border-box;
 }
 
-.profile-select {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+#keyAssignModal label {
+  font-weight: 600;
+  user-select: none;
 }
 
-.device-info, .feedback {
-  background-color: #2d2d2d;
-  padding: 1rem;
+#keyAssignModal button {
+  padding: 8px 14px;
+  font-size: 1rem;
+  border: none;
   border-radius: 6px;
-  border: 1px solid #444;
+  cursor: pointer;
+  background: var(--highlight);
+  color: white;
+  font-weight: 700;
+  transition: background 0.3s;
+}
+
+#keyAssignModal button:hover {
+  background: #2e7d32;
+}
+
+#modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#modalOverlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#testOutput {
+  margin-top: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+#connectionStatus {
+  margin-top: 10px;
+  font-weight: 700;
+  color: var(--highlight);
+}
+
+#themeToggle {
+  margin-top: 20px;
+  padding: 8px 18px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 2px solid var(--key-border);
+  background: var(--key-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+#themeToggle:hover {
+  background: var(--highlight);
+  color: white;
 }
