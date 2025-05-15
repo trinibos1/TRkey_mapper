@@ -1,112 +1,85 @@
+// script.js
+
+const keys = [
+  'K1', 'K2', 'K3',
+  'K4', 'K5', 'K6',
+  'K7', 'K8', 'K9'
+];
+
+const osShortcuts = {
+  Windows: {
+    Copy: 'Ctrl + C',
+    Paste: 'Ctrl + V',
+    Undo: 'Ctrl + Z',
+    MediaPlayPause: 'MediaPlayPause'
+  },
+  macOS: {
+    Copy: 'Cmd + C',
+    Paste: 'Cmd + V',
+    Undo: 'Cmd + Z',
+    MediaPlayPause: 'F8'
+  },
+  Linux: {
+    Copy: 'Ctrl + Shift + C',
+    Paste: 'Ctrl + Shift + V',
+    Undo: 'Ctrl + Z',
+    MediaPlayPause: 'MediaPlayPause'
+  }
+};
+
+const appShortcuts = {
+  Fusion360: ['Pan', 'Orbit', 'Zoom', 'Create Sketch'],
+  KiCad: ['Route Track', 'Place Via', 'Add Component'],
+  Canva: ['Group', 'Ungroup', 'Bring to Front']
+};
+
+const keyboardGrid = document.getElementById('keyboardGrid');
+const shortcutPanel = document.getElementById('shortcuts');
 const connectBtn = document.getElementById('connectBtn');
-const grid = document.getElementById('grid');
-const status = document.getElementById('status');
 
-let port;
-let reader;
-let writer;
-let readBuffer = '';
+let selectedOS = detectOS();
 
-let keyMapping = Array(3).fill(null).map(() => Array(3).fill(''));
-
-function logStatus(msg) {
-  status.textContent = msg;
+function detectOS() {
+  const platform = navigator.platform.toLowerCase();
+  if (platform.includes('mac')) return 'macOS';
+  if (platform.includes('win')) return 'Windows';
+  if (platform.includes('linux')) return 'Linux';
+  return 'Windows'; // fallback
 }
 
-async function connect() {
-  try {
-    logStatus('Requesting port...');
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-    logStatus('Connected!');
-
-    writer = port.writable.getWriter();
-    reader = port.readable.getReader();
-
-    connectBtn.disabled = true;
-
-    await sendCommand('GET_MAPPING\n');
-    readLoop();
-
-  } catch (e) {
-    logStatus('Error: ' + e.message);
-  }
-}
-
-async function sendCommand(cmd) {
-  const data = new TextEncoder().encode(cmd);
-  await writer.write(data);
-}
-
-async function readLoop() {
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) {
-        logStatus('Connection closed.');
-        break;
-      }
-      if (value) {
-        const text = new TextDecoder().decode(value);
-        handleIncomingData(text);
-      }
-    }
-  } catch (e) {
-    logStatus('Read error: ' + e.message);
-  }
-}
-
-function handleIncomingData(data) {
-  readBuffer += data;
-  let lines = readBuffer.split('\n');
-  readBuffer = lines.pop();
-
-  lines.forEach(line => {
-    line = line.trim();
-    if (!line) return;
-
-    if (line === 'OK' || line === 'CONFIGURED') {
-      logStatus(line);
-    } else if (line.includes(',')) {
-      parseMapping(line);
-    } else {
-      logStatus('Received: ' + line);
-    }
+function populateKeyboard() {
+  keyboardGrid.innerHTML = '';
+  keys.forEach((key, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.innerText = key;
+    btn.onclick = () => assignShortcut(key);
+    keyboardGrid.appendChild(btn);
   });
 }
 
-function parseMapping(mappingString) {
-  const rows = mappingString.split('|');
-  for (let r = 0; r < 3; r++) {
-    const cols = rows[r].split(',');
-    for (let c = 0; c < 3; c++) {
-      keyMapping[r][c] = cols[c] || '';
-    }
-  }
-  renderGrid();
-  logStatus('Mapping loaded');
-}
-
-function renderGrid() {
-  grid.innerHTML = '';
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      const btn = document.createElement('button');
-      btn.className = 'key-btn';
-      btn.textContent = keyMapping[r][c] || `Key ${r},${c}`;
-      btn.onclick = () => executeKey(r, c);
-      grid.appendChild(btn);
-    }
+function populateShortcuts() {
+  shortcutPanel.innerHTML = '';
+  const shortcuts = osShortcuts[selectedOS];
+  for (const action in shortcuts) {
+    const p = document.createElement('p');
+    p.innerText = `${action}: ${shortcuts[action]}`;
+    shortcutPanel.appendChild(p);
   }
 }
 
-async function executeKey(row, col) {
-  if (!writer) {
-    logStatus('Not connected');
-    return;
-  }
-  logStatus(`Executing key (${row},${col})`);
-  await sendCommand(`EXECUTE,${row},${col}\n`);
+function assignShortcut(key) {
+  const assigned = prompt(`Assign shortcut for ${key}:`, 'Ctrl + Something');
+  if (assigned) alert(`Shortcut for ${key} set to ${assigned}`);
 }
 
-connectBtn.addEventListener('click', connect);
+function connectSerial() {
+  alert('Simulating device connection...');
+  // Implement Web Serial API if needed
+}
+
+connectBtn.onclick = connectSerial;
+
+// Initialize
+populateKeyboard();
+populateShortcuts();
