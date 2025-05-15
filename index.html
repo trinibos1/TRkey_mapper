@@ -2,49 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Micropad Configurator</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Micropad Mapper</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <aside class="sidebar">
-      <h1 class="logo">Micropad</h1>
-      <nav>
-        <button class="tab active" data-tab="keymap">KEYMAP</button>
-        <button class="tab" data-tab="macros">MACROS</button>
-        <button class="tab" data-tab="media">MEDIA</button>
-        <button class="tab" data-tab="os">OS</button>
-        <button class="tab" data-tab="apps">APPS</button>
-        <button class="tab" data-tab="settings">SETTINGS</button>
-      </nav>
-    </aside>
+  <div class="app-container">
+    <header>
+      <h1>Micropad Key Mapper</h1>
+      <button id="connect-btn">Connect to Micropad</button>
+      <select id="mode-select">
+        <option value="default">Default</option>
+        <option value="fusion360">Fusion 360</option>
+        <option value="kicad">KiCad</option>
+        <option value="canva">Canva</option>
+        <option value="media">Media Controls</option>
+      </select>
+    </header>
 
-    <main class="main">
-      <header class="toolbar">
-        <div class="layer-select">
-          <span>LAYER</span>
-          <button data-layer="0" class="layer active">0</button>
-          <button data-layer="1" class="layer">1</button>
-          <button data-layer="2" class="layer">2</button>
-          <button data-layer="3" class="layer">3</button>
-        </div>
-        <button id="connectBtn">Connect</button>
-      </header>
-
-      <section class="keyboard-container">
-        <div id="keyboardGrid" class="grid-3x3">
-          <!-- Keys inserted by JS -->
-        </div>
+    <main>
+      <section class="keyboard-grid" id="keyboard-grid">
+        <!-- JS will populate the 3x3 keys -->
       </section>
 
-      <section class="shortcuts-panel">
-        <h2>Available Shortcuts</h2>
-        <div id="shortcuts">
-          <!-- Shortcuts filled by JS -->
-        </div>
+      <section class="shortcut-options">
+        <h2>Assign Shortcut</h2>
+        <input type="text" id="shortcut-input" placeholder="Ctrl + Alt + M" />
+        <button id="assign-btn">Assign</button>
       </section>
     </main>
+
+    <footer>
+      <p id="os-info">Detecting OS...</p>
+    </footer>
   </div>
 
   <script src="script.js"></script>
