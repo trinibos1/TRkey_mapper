@@ -1,151 +1,201 @@
-/* Reset and basics */
+/* Reset */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  user-select: none;
 }
 
 body {
-  background-color: #121212;
+  background: #1e1e1e;
   color: #e0e0e0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  padding: 1rem;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  padding: 20px;
 }
 
 header {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.connect-area {
-  margin-top: 0.5rem;
-}
-
-.profile-select {
-  margin-top: 1rem;
+  width: 100%;
+  max-width: 600px;
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
   flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 
-.profile-select label {
-  font-weight: 600;
+header h1 {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #f0f0f0;
+  flex: 1 1 auto;
 }
 
-.profile-btn {
-  background-color: #333;
+#connect-btn {
+  background-color: #0078d7;
   border: none;
-  color: #ddd;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 4px;
+  color: white;
   font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-.profile-btn.active,
-.profile-btn:hover {
-  background-color: #0a84ff;
-  color: white;
-}
-
-#save-profile-btn {
-  background-color: #0a84ff;
-  border: none;
-  color: white;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
-#save-profile-btn:hover {
-  background-color: #0066cc;
+#connect-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
 }
 
-.status {
-  margin-top: 0.8rem;
-  font-style: italic;
+#connect-btn:hover:not(:disabled) {
+  background-color: #005a9e;
+}
+
+#device-info {
+  font-size: 0.9rem;
   color: #999;
+  margin-top: 8px;
+  flex-basis: 100%;
+  text-align: left;
 }
 
 main {
   width: 100%;
-  max-width: 420px;
+  max-width: 600px;
+  background: #2d2d2d;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 20px #000a;
 }
 
-.keypad-container {
-  margin-bottom: 1.5rem;
+#profiles {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-.keypad {
+#profile-select {
+  padding: 6px 12px;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: none;
+  background: #444;
+  color: #eee;
+}
+
+#save-profile-btn,
+#load-profile-btn {
+  background-color: #0078d7;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#save-profile-btn:hover,
+#load-profile-btn:hover {
+  background-color: #005a9e;
+}
+
+#key-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
 .key {
-  background-color: #1e1e1e;
-  border-radius: 12px;
-  border: 2px solid #333;
-  padding: 1.6rem 0;
-  text-align: center;
+  background: #444;
+  border-radius: 6px;
+  padding: 20px 0;
   font-weight: 700;
-  font-size: 1.3rem;
-  user-select: none;
+  font-size: 1.2rem;
+  text-align: center;
+  color: #ddd;
   cursor: pointer;
-  transition: border-color 0.25s ease, background-color 0.25s ease;
-  position: relative;
-  color: #e0e0e0;
+  user-select: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: inset 0 0 5px #222;
+}
+
+.key:hover {
+  background-color: #3a78d7;
+  box-shadow: 0 0 15px #3a78d7;
+  color: white;
 }
 
 .key.selected {
-  border-color: #0a84ff;
-  background-color: #273fbb33;
+  background-color: #005a9e;
+  box-shadow: 0 0 20px #0078d7;
+  color: white;
 }
 
-/* Shortcut label inside the key */
-.key .shortcut {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.75rem;
-  color: #a0a0a0;
-  max-width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
+.key.pressed {
+  background-color: #ffa500 !important;
+  box-shadow: 0 0 15px #ffae42 !important;
+  color: #222 !important;
+  transition: background-color 0.2s ease;
 }
 
-.shortcut-assign {
+#shortcut-assign {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-input#shortcut-input {
-  flex-grow: 1;
-  max-width: 280px;
+#shortcut-input {
+  flex: 1;
+  padding: 8px 12px;
   font-size: 1rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background-color: #222;
+  border-radius: 4px;
+  border: none;
+  background-color: #333;
   color: #eee;
-  cursor: text;
 }
 
-h2 {
+#shortcut-input:disabled {
+  background-color: #555;
+}
+
+#assign-btn {
+  background-color: #0078d7;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#assign-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+#assign-btn:hover:not(:disabled) {
+  background-color: #005a9e;
+}
+
+#status-section {
+  color: #999;
+  font-size: 0.9rem;
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin-top: 10px;
+}
+
+#connection-status {
+  margin-bottom: 4px;
+}
+
+#os-info {
+  font-style: italic;
 }
