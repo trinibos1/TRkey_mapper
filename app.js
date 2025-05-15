@@ -1,319 +1,269 @@
-// Elements
+// ==== DOM Elements ====
 const connectBtn = document.getElementById('connect-btn');
-const statusEl = document.getElementById('status');
-const keypadEl = document.getElementById('keypad');
+const deviceInfo = document.getElementById('device-info');
+const connectionStatus = document.getElementById('connection-status') || createStatusElement();
+const osInfo = document.getElementById('os-info');
+const keys = [...document.querySelectorAll('.key')];
 const shortcutInput = document.getElementById('shortcut-input');
 const assignBtn = document.getElementById('assign-btn');
-const profileButtons = document.querySelectorAll('.profile-btn');
+const profileSelect = document.getElementById('profile-select');
 const saveProfileBtn = document.getElementById('save-profile-btn');
+const loadProfileBtn = document.getElementById('load-profile-btn');
 
-let osName = 'unknown';
-let selectedKey = null;
-let currentProfileIndex = 0;
-
-const NUM_KEYS = 9;
-
-// Serial related
 let port = null;
 let writer = null;
 let reader = null;
 let keepReading = false;
+let selectedKeyIndex = null;
 
-// Load profiles from localStorage or init empty
-let profiles = [];
+let profiles = [{}, {}, {}, {}];
+let currentProfileIndex = 0;
+
+const OS = detectOS();
+osInfo.textContent = `Detected OS: ${OS}`;
+
+// Media icons for media keys
+const mediaKeyIcons = {
+  'play': '▶️',
+  'pause': '⏸️',
+  'stop': '⏹️',
+  'next': '⏭️',
+  'prev': '⏮️',
+  'volup': '🔊',
+  'voldown': '🔉',
+  'mute': '🔇',
+  'mediaplaypause': '⏯️'
+};
+
+// --- Initialize ---
+loadProfiles();
+updateKeyLabels();
+assignBtn.disabled = true;
+shortcutInput.disabled = true;
+
+// ==== Functions ====
+
+function createStatusElement() {
+  const el = document.createElement('div');
+  el.id = 'connection-status';
+  document.getElementById('status-section').appendChild(el);
+  return el;
+}
+
+function detectOS() {
+  const platform = navigator.platform.toLowerCase();
+  if (platform.includes('win')) return 'Windows';
+  if (platform.includes('mac')) return 'macOS';
+  if (platform.includes('linux')) return 'Linux';
+  return 'Unknown';
+}
 
 function loadProfiles() {
-  const stored = localStorage.getItem('micropadProfiles');
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
+  try {
+    const saved = localStorage.getItem('micropadProfiles');
+    if (saved) {
+      const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length === 4) {
         profiles = parsed;
-        return;
       }
-    } catch {}
+    }
+  } catch {
+    profiles = [{}, {}, {}, {}];
   }
-  // Init empty profiles (each with 9 empty shortcuts)
-  profiles = Array(4).fill(null).map(() => Array(NUM_KEYS).fill(''));
 }
 
 function saveProfiles() {
   localStorage.setItem('micropadProfiles', JSON.stringify(profiles));
 }
 
-// Utility to detect OS
-function detectOS() {
-  const platform = navigator.platform.toLowerCase();
-  if (platform.indexOf('win') >= 0) return 'windows';
-  if (platform.indexOf('mac') >= 0) return 'macos';
-  if (platform.indexOf('linux') >= 0) return 'linux';
-  return 'unknown';
+// Return label with media icon if applicable
+function getDisplayLabel(shortcut) {
+  if (!shortcut) return '';
+  const keyLower = shortcut.trim().toLowerCase();
+  if (mediaKeyIcons[keyLower]) return mediaKeyIcons[keyLower];
+  return shortcut;
 }
 
-function updateStatus(msg) {
-  statusEl.textContent = msg;
-}
-
-// Render keypad with shortcuts from current profile
-function renderKeypad() {
-  keypadEl.innerHTML = '';
-  const shortcuts = profiles[currentProfileIndex];
-  for (let i = 0; i < NUM_KEYS; i++) {
-    const keyDiv = document.createElement('div');
-    keyDiv.className = 'key';
-    keyDiv.dataset.index = i;
-    keyDiv.tabIndex = 0;
-    keyDiv.setAttribute('role', 'button');
-    keyDiv.setAttribute('aria-pressed', 'false');
-    keyDiv.textContent = `Key ${i + 1}`;
-
-    // Add shortcut label inside key if assigned
-    if (shortcuts[i]) {
-      const shortcutLabel = document.createElement('div');
-      shortcutLabel.className = 'shortcut';
-      shortcutLabel.textContent = shortcuts[i];
-      keyDiv.appendChild(shortcutLabel);
-    }
-
-    // Click to select key
-    keyDiv.addEventListener('click', () => {
-      // Unselect previous
-      if (selectedKey !== null) {
-        const prev = keypadEl.querySelector(`.key[data-index="${selectedKey}"]`);
-        if (prev) {
-          prev.classList.remove('selected');
-          prev.setAttribute('aria-pressed', 'false');
-        }
-      }
-      selectedKey = i;
-      keyDiv.classList.add('selected');
-      keyDiv.setAttribute('aria-pressed', 'true');
-
-      shortcutInput.value = '';
-      assignBtn.disabled = true;
-      pressedKeys.clear();
-      shortcutInput.placeholder = 'Press keys here (e.g. Ctrl + Alt + M)';
-      shortcutInput.focus();
-    });
-
-    keypadEl.appendChild(keyDiv);
-  }
-}
-
-// Shortcut input handlers
-let pressedKeys = new Set();
-
-function normalizeKey(key) {
-  if (key === 'Control') return 'Ctrl';
-  if (key === 'AltGraph') return 'AltGr';
-  if (key === ' ') return 'Space';
-  if (key === 'Meta') return osName === 'macos' ? 'Cmd' : 'Meta';
-  return key.length === 1 ? key.toUpperCase() : key;
-}
-
-function handleKeyDown(event) {
-  if (selectedKey === null) return;
-
-  event.preventDefault();
-
-  pressedKeys.add(event.key);
-
-  // Sort modifiers first for consistency
-  const sortedKeys = Array.from(pressedKeys).sort((a, b) => {
-    const order = ['Control', 'Shift', 'Alt', 'Meta'];
-    const aIdx = order.indexOf(a);
-    const bIdx = order.indexOf(b);
-    if (aIdx === -1) return 1;
-    if (bIdx === -1) return -1;
-    return aIdx - bIdx;
+function updateKeyLabels() {
+  keys.forEach(key => {
+    const idx = key.dataset.key;
+    key.textContent = getDisplayLabel(profiles[currentProfileIndex][idx]);
   });
+}
 
-  const shortcutStr = sortedKeys.map(normalizeKey).join(' + ');
-  shortcutInput.value = shortcutStr;
+function selectKey(index) {
+  selectedKeyIndex = index;
+  keys.forEach(k => k.classList.remove('selected'));
+  keys[index].classList.add('selected');
+
+  shortcutInput.value = profiles[currentProfileIndex][index] || '';
   assignBtn.disabled = false;
+  shortcutInput.disabled = false;
+  shortcutInput.focus();
 }
 
-function handleKeyUp(event) {
-  if (selectedKey === null) return;
-  pressedKeys.delete(event.key);
-}
+function validateShortcut(shortcut) {
+  if (!shortcut) return false;
+  const parts = shortcut.split('+').map(s => s.trim().toLowerCase());
+  const validModifiers = ['ctrl', 'alt', 'shift', 'meta', 'cmd', 'command', 'win'];
+  const validKeys = [
+    'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+    '0','1','2','3','4','5','6','7','8','9',
+    'f1','f2','f3','f4','f5','f6','f7','f8','f9','f10','f11','f12',
+    'enter','space','tab','escape','esc','backspace','delete','insert','home','end','pageup','pagedown',
+    'left','right','up','down',
+    // media keys
+    'play','pause','stop','next','prev','volup','voldown','mute','mediaplaypause'
+  ];
 
-async function assignShortcut() {
-  if (selectedKey === null) return;
-
-  const shortcutText = shortcutInput.value.trim();
-  profiles[currentProfileIndex][selectedKey] = shortcutText;
-  renderKeypad();
-
-  // Send the mapping to micropad device over serial
-  if (writer) {
-    // Compose command string, e.g.:
-    // SETUP:keyIndex:shortcut\n
-    // For your device, you might want a specific protocol, adjust accordingly.
-    // Example: "SETUP:0:Ctrl+Alt+M\n"
-    const command = `SETUP:${selectedKey}:${shortcutText.replace(/ /g, '')}\n`;
-    try {
-      await writer.write(new TextEncoder().encode(command));
-      console.log('Sent to device:', command);
-    } catch (err) {
-      console.error('Error sending command:', err);
-      updateStatus('Error sending data to device.');
+  let hasKey = false;
+  for (const p of parts) {
+    if (validModifiers.includes(p)) continue;
+    if (validKeys.includes(p)) {
+      if (hasKey) return false; // only one main key allowed
+      hasKey = true;
+    } else {
+      return false; // unknown key
     }
   }
-
-  shortcutInput.value = '';
-  assignBtn.disabled = true;
-  selectedKey = null;
-  pressedKeys.clear();
+  return hasKey;
 }
 
-// Profile buttons
-profileButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.classList.contains('active')) return;
-
-    profileButtons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    currentProfileIndex = parseInt(btn.dataset.profile, 10);
-    selectedKey = null;
-    shortcutInput.value = '';
-    assignBtn.disabled = true;
-    pressedKeys.clear();
-
-    renderKeypad();
-  });
-});
-
-// Save profile to localStorage
-saveProfileBtn.addEventListener('click', () => {
-  saveProfiles();
-  updateStatus(`Profile ${currentProfileIndex + 1} saved locally.`);
-});
-
-// Serial connect/disconnect logic
-async function connectSerial() {
-  if (!('serial' in navigator)) {
-    updateStatus('Web Serial API not supported in this browser.');
+// Send command to device
+async function sendCommand(cmd) {
+  if (!writer) {
+    alert('Not connected!');
     return;
   }
+  await writer.write(new TextEncoder().encode(cmd + '\n'));
+}
+
+// Flash key on keypress event
+function flashKeyPress(idx) {
+  if (idx < 0 || idx >= keys.length) return;
+  keys[idx].classList.add('pressed');
+  setTimeout(() => {
+    keys[idx].classList.remove('pressed');
+  }, 300);
+}
+
+// Handle incoming device lines
+function handleLine(line) {
+  if (!line) return;
+  //console.log('Device:', line);
+  if (line.startsWith('KEYPRESS:')) {
+    const idx = parseInt(line.split(':')[1]);
+    if (!isNaN(idx)) flashKeyPress(idx);
+  } else if (line.startsWith('STATUS:')) {
+    connectionStatus.textContent = line.substring(7);
+  }
+}
+
+// Read loop for serial
+async function readLoop() {
+  const decoder = new TextDecoder();
+  let buffer = '';
 
   try {
-    // Request port
+    while (keepReading) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) handleLine(line.trim());
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Connect to serial device
+async function connect() {
+  try {
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
     writer = port.writable.getWriter();
+    reader = port.readable.getReader();
 
     keepReading = true;
     readLoop();
 
-    updateStatus('Connected to Micropad');
-    connectBtn.textContent = 'Disconnect from Micropad';
+    connectionStatus.textContent = 'Connected';
+    connectBtn.disabled = true;
 
-    // Optionally send all current profile mappings to device on connect
-    await sendFullProfile();
+    const info = port.getInfo ? port.getInfo() : {};
+    deviceInfo.textContent = `Device info: USB Vendor ${info.usbVendorId || 'N/A'}, Product ${info.usbProductId || 'N/A'}`;
 
-  } catch (err) {
-    console.error(err);
-    updateStatus('Failed to connect: ' + err.message);
+  } catch (e) {
+    alert('Failed to connect: ' + e.message);
   }
 }
 
-async function disconnectSerial() {
-  keepReading = false;
-
-  if (reader) {
-    try {
-      await reader.cancel();
-      await reader.releaseLock();
-    } catch {}
-    reader = null;
+// Assign shortcut on selected key
+async function assignShortcut() {
+  if (selectedKeyIndex === null) {
+    alert('Select a key first!');
+    return;
+  }
+  const shortcut = shortcutInput.value.trim();
+  if (!shortcut) {
+    alert('Enter a shortcut!');
+    return;
   }
 
-  if (writer) {
-    try {
-      await writer.close();
-      await writer.releaseLock();
-    } catch {}
-    writer = null;
+  if (!validateShortcut(shortcut)) {
+    alert('Invalid shortcut format for ' + OS);
+    return;
   }
 
-  if (port) {
-    try {
-      await port.close();
-    } catch {}
-    port = null;
-  }
+  profiles[currentProfileIndex][selectedKeyIndex] = shortcut;
+  updateKeyLabels();
 
-  updateStatus('Disconnected');
-  connectBtn.textContent = 'Connect to Micropad';
+  await sendCommand(`SETUP:${selectedKeyIndex}:${shortcut}`);
 }
 
-async function readLoop() {
-  try {
-    const decoder = new TextDecoderStream();
-    const inputDone = port.readable.pipeTo(decoder.writable);
-    const inputStream = decoder.readable;
-    reader = inputStream.getReader();
-
-    while (keepReading) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) {
-        console.log('Received from device:', value);
-        // Optionally process device messages here
-      }
-    }
-  } catch (err) {
-    console.error('Read error:', err);
-  } finally {
-    reader = null;
-  }
+// Save/load profiles from localStorage
+function saveProfile() {
+  saveProfiles();
+  alert(`Profile ${currentProfileIndex + 1} saved.`);
 }
 
-// Send all shortcuts of current profile to device
-async function sendFullProfile() {
-  if (!writer) return;
-
-  const shortcuts = profiles[currentProfileIndex];
-  for (let i = 0; i < shortcuts.length; i++) {
-    const sc = shortcuts[i].replace(/ /g, '');
-    const command = `SETUP:${i}:${sc}\n`;
-    try {
-      await writer.write(new TextEncoder().encode(command));
-      await delay(30); // small delay to avoid flooding serial buffer
-    } catch (err) {
-      console.error('Error sending full profile:', err);
-      updateStatus('Error sending full profile to device.');
-      break;
-    }
-  }
+function loadProfile() {
+  loadProfiles();
+  updateKeyLabels();
+  alert(`Profile ${currentProfileIndex + 1} loaded.`);
 }
 
-// Utility delay
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// Profile change
+function changeProfile() {
+  currentProfileIndex = parseInt(profileSelect.value);
+  updateKeyLabels();
+  selectedKeyIndex = null;
+  assignBtn.disabled = true;
+  shortcutInput.value = '';
+  shortcutInput.disabled = true;
 }
 
-// Connect button click handler
-connectBtn.addEventListener('click', async () => {
-  if (port) {
-    await disconnectSerial();
-  } else {
-    await connectSerial();
-  }
+// ==== Event Listeners ====
+connectBtn.addEventListener('click', connect);
+assignBtn.addEventListener('click', assignShortcut);
+saveProfileBtn.addEventListener('click', saveProfile);
+loadProfileBtn.addEventListener('click', loadProfile);
+profileSelect.addEventListener('change', changeProfile);
+
+keys.forEach((key, idx) => {
+  key.addEventListener('click', () => selectKey(idx));
 });
 
-// Shortcut input event listeners
-shortcutInput.addEventListener('keydown', handleKeyDown);
-shortcutInput.addEventListener('keyup', handleKeyUp);
-
-// Assign button click
-assignBtn.addEventListener('click', assignShortcut);
-
-// Init
-osName = detectOS();
-updateStatus(`Detected OS: ${osName}`);
-loadProfiles();
-renderKeypad();
+// Select key function exposed for event
+function selectKey(idx) {
+  selectedKeyIndex = idx;
+  keys.forEach(k => k.classList.remove('selected'));
+  keys[idx].classList.add('selected');
+  shortcutInput.value = profiles[currentProfileIndex][idx] || '';
+  assignBtn.disabled = false;
+  shortcutInput.disabled = false;
+  shortcutInput.focus();
+}
