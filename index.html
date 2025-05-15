@@ -2,69 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Micropad VIA-style Mapper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3x3 Micropad Remapper</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>Micropad Key Mapper</h1>
-    </header>
-    <div class="toolbar">
-      <button id="connect">Connect to Micropad</button>
-      <select id="profile-select">
-        <option value="profile1">Profile 1</option>
-        <option value="profile2">Profile 2</option>
-        <option value="profile3">Profile 3</option>
-        <option value="profile4">Profile 4</option>
-      </select>
-    </div>
+  <h1>3x3 Micropad Remapper</h1>
 
-    <div class="keymap">
-      <div class="key-grid">
-        <!-- 3x3 Keys -->
-        <div class="key" data-key="0-0">A</div>
-        <div class="key" data-key="0-1">B</div>
-        <div class="key" data-key="0-2">C</div>
-        <div class="key" data-key="1-0">D</div>
-        <div class="key" data-key="1-1">E</div>
-        <div class="key" data-key="1-2">F</div>
-        <div class="key" data-key="2-0">G</div>
-        <div class="key" data-key="2-1">H</div>
-        <div class="key" data-key="2-2">I</div>
-      </div>
+  <select id="presetApp">
+    <option value="">-- Load App Shortcuts --</option>
+    <option value="fusion360">Fusion 360</option>
+    <option value="canva">Canva</option>
+    <option value="kicad">KiCad</option>
+    <option value="vscode">VS Code</option>
+    <option value="warthunder">War Thunder</option>
+  </select>
+  <button id="loadPreset">Apply Preset</button>
 
-      <div class="shortcuts-panel">
-        <h2>Assign Shortcut</h2>
-        <input type="text" id="shortcut-input" placeholder="Ctrl + Alt + M" />
-        <button id="assign">Assign</button>
+  <div id="activeModifiers"></div>
+  <button id="themeToggle">Switch to Dark Theme</button>
 
-        <h3>App Shortcuts</h3>
-        <select id="shortcut-templates">
-          <option value="">Select App Shortcut</option>
-          <option value="fusion360:Orbit">Fusion 360: Orbit</option>
-          <option value="fusion360:Pan">Fusion 360: Pan</option>
-          <option value="kicad:Route">KiCad: Route</option>
-          <option value="kicad:PlaceVia">KiCad: Place Via</option>
-          <option value="canva:Align">Canva: Align</option>
-          <option value="canva:Duplicate">Canva: Duplicate</option>
-        </select>
+  <div id="matrix"></div>
 
-        <h3>Media Controls</h3>
-        <button class="media-btn" data-shortcut="Play/Pause">▶️ Play/Pause</button>
-        <button class="media-btn" data-shortcut="Volume Up">🔊 Volume Up</button>
-        <button class="media-btn" data-shortcut="Volume Down">🔉 Volume Down</button>
-        <button class="media-btn" data-shortcut="Mute">🔇 Mute</button>
-      </div>
-    </div>
-
-    <footer>
-      <div id="device-info">Detecting device...</div>
-      <div id="os-info">Detecting OS...</div>
-    </footer>
-
-    <script src="script.js"></script>
+  <div id="modifiers">
+    <label><input type="checkbox" id="ctrlMod" /> Ctrl</label>
+    <label><input type="checkbox" id="altMod" /> Alt</label>
+    <label><input type="checkbox" id="shiftMod" /> Shift</label>
   </div>
+
+  <button id="exportBtn">Export Mapping</button>
+  <button id="sendBtn">Send to Device (Serial/WebUSB)</button>
+  <button id="saveEEPROM">Save to EEPROM</button>
+  <button id="genQR">Generate QR</button>
+  <canvas id="qrCanvas"></canvas>
+
+  <div id="testOutput">Key Output: <span id="lastKey">None</span></div>
+  <div id="connectionStatus">Device not connected</div>
+  <pre id="output"></pre>
+
+  <!-- Modal and overlay -->
+  <div id="modalOverlay"></div>
+  <div id="keyAssignModal">
+    <h3>Assign Key</h3>
+    <label>
+      Base Key:
+      <input type="text" id="modalBaseKey" placeholder="e.g. A, Enter, F5" />
+    </label>
+    <label><input type="checkbox" id="modalCtrl" /> Ctrl</label>
+    <label><input type="checkbox" id="modalAlt" /> Alt</label>
+    <label><input type="checkbox" id="modalShift" /> Shift</label>
+    <button id="modalSaveBtn">Save</button>
+    <button id="modalCancelBtn">Cancel</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
