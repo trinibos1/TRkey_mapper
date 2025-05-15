@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>3x3 Micropad Remapper</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>3x3 Micropad Remapper</h1>
@@ -19,9 +19,6 @@
   </select>
   <button id="loadPreset">Apply Preset</button>
 
-  <div id="activeModifiers"></div>
-  <button id="themeToggle">Switch to Dark Theme</button>
-
   <div id="matrix"></div>
 
   <div id="modifiers">
@@ -30,30 +27,18 @@
     <label><input type="checkbox" id="shiftMod" /> Shift</label>
   </div>
 
-  <button id="exportBtn">Export Mapping</button>
-  <button id="sendBtn">Send to Device (Serial/WebUSB)</button>
-  <button id="saveEEPROM">Save to EEPROM</button>
-  <button id="genQR">Generate QR</button>
-  <canvas id="qrCanvas"></canvas>
+  <div id="buttons">
+    <button id="connectBtn">Connect Device</button>
+    <button id="exportBtn">Export Mapping</button>
+    <button id="sendBtn">Send to Device (Serial/WebUSB)</button>
+    <button id="saveEEPROM">Save to EEPROM</button>
+    <button id="genQR">Generate QR</button>
+  </div>
 
+  <canvas id="qrCanvas"></canvas>
   <div id="testOutput">Key Output: <span id="lastKey">None</span></div>
   <div id="connectionStatus">Device not connected</div>
   <pre id="output"></pre>
-
-  <!-- Modal and overlay -->
-  <div id="modalOverlay"></div>
-  <div id="keyAssignModal">
-    <h3>Assign Key</h3>
-    <label>
-      Base Key:
-      <input type="text" id="modalBaseKey" placeholder="e.g. A, Enter, F5" />
-    </label>
-    <label><input type="checkbox" id="modalCtrl" /> Ctrl</label>
-    <label><input type="checkbox" id="modalAlt" /> Alt</label>
-    <label><input type="checkbox" id="modalShift" /> Shift</label>
-    <button id="modalSaveBtn">Save</button>
-    <button id="modalCancelBtn">Cancel</button>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="app.js"></script>
