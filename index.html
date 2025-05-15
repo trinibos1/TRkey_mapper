@@ -2,173 +2,153 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Micropad Configurator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Micropad Shortcut Mapper</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f0f2f5;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #444;
-    }
-    button {
-      margin: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background: #0066cc;
+      margin: 0;
+      background-color: #1e1e1e;
+      font-family: sans-serif;
       color: white;
+    }
+    .sidebar {
+      width: 220px;
+      background: #2b2b2b;
+      height: 100vh;
+      float: left;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+    }
+    .main {
+      margin-left: 220px;
+      padding: 1rem;
+    }
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 10px;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+    .key {
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 6px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
-    button:hover {
-      background: #005bb5;
+    .key:hover {
+      background: #444;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin: 2rem auto;
-      max-width: 400px;
-    }
-    .cell {
-      background: white;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    input {
+    select, button {
+      padding: 8px;
+      margin-top: 10px;
       width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      background: #2b2b2b;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 4px;
     }
-    #status {
-      margin-top: 1rem;
-      font-weight: bold;
-      color: green;
-      text-align: center;
+    #shortcutInput {
+      width: calc(100% - 20px);
+      margin-top: 10px;
+      padding: 10px;
+      background: #2b2b2b;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <h1>Micropad Configurator</h1>
-  <div style="text-align: center;">
-    <button onclick="connect()">🔌 Connect</button>
-    <button onclick="loadMapping()">📥 Load Mapping</button>
-    <button onclick="saveMapping()">💾 Save Mapping</button>
+  <div class="sidebar">
+    <h2>App Mode</h2>
+    <select id="appMode">
+      <option value="default">Default</option>
+      <option value="windows">Windows</option>
+      <option value="linux">Linux</option>
+      <option value="ios">iOS</option>
+      <option value="fusion360">Fusion 360</option>
+      <option value="kicad">KiCad</option>
+      <option value="canva">Canva</option>
+    </select>
+    <button onclick="downloadMapping()">Download Mapping</button>
+    <button onclick="uploadMapping()">Upload Mapping</button>
+  </div>
+  <div class="main">
+    <h1>Micropad 3x3 Shortcut Mapper</h1>
+    <div class="keyboard" id="keyboard"></div>
+    <input id="shortcutInput" placeholder="Enter shortcut here" />
   </div>
 
-  <div class="grid" id="grid"></div>
-
-  <div id="status">Not connected</div>
-
   <script>
-    let port;
-    let writer;
-    let reader;
-    let gridData = Array.from({length: 3}, () => Array(3).fill(""));
+    const keyboardEl = document.getElementById('keyboard');
+    const shortcutInput = document.getElementById('shortcutInput');
+    let selectedKey = null;
 
-    const gridElement = document.getElementById('grid');
-    const statusEl = document.getElementById('status');
+    const mapping = Array.from({ length: 3 }, () => Array(3).fill(''));
 
-    function createGrid() {
-      gridElement.innerHTML = '';
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-          const div = document.createElement('div');
-          div.className = 'cell';
-          div.innerHTML = `
-            <strong>[${row}, ${col}]</strong><br/>
-            <input id="input-${row}-${col}" value="${gridData[row][col]}" />
-          `;
-          gridElement.appendChild(div);
-        }
+    function renderKeyboard() {
+      keyboardEl.innerHTML = '';
+      mapping.forEach((row, rIdx) => {
+        row.forEach((val, cIdx) => {
+          const btn = document.createElement('div');
+          btn.className = 'key';
+          btn.textContent = val || `${rIdx},${cIdx}`;
+          btn.onclick = () => {
+            selectedKey = [rIdx, cIdx];
+            shortcutInput.value = mapping[rIdx][cIdx];
+          };
+          keyboardEl.appendChild(btn);
+        });
+      });
+    }
+
+    shortcutInput.addEventListener('input', () => {
+      if (selectedKey) {
+        const [r, c] = selectedKey;
+        mapping[r][c] = shortcutInput.value;
+        renderKeyboard();
       }
+    });
+
+    function downloadMapping() {
+      const blob = new Blob([JSON.stringify(mapping)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'micropad_mapping.json';
+      a.click();
     }
 
-    async function connect() {
-      try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-
-        writer = port.writable.getWriter();
-        reader = port.readable.getReader();
-
-        statusEl.textContent = "Connected ✅";
-
-        readLoop();
-      } catch (err) {
-        alert("Connection failed: " + err);
-      }
+    function uploadMapping() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+          const data = JSON.parse(reader.result);
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              mapping[i][j] = data[i][j];
+            }
+          }
+          renderKeyboard();
+        };
+        reader.readAsText(file);
+      };
+      input.click();
     }
 
-    async function readLoop() {
-      const decoder = new TextDecoderStream();
-      port.readable.pipeTo(decoder.writable);
-      const inputStream = decoder.readable;
-      const reader = inputStream.getReader();
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        console.log("[Serial]", value.trim());
-      }
-    }
-
-    async function sendCommand(cmd) {
-      const encoder = new TextEncoder();
-      await writer.write(encoder.encode(cmd + '\n'));
-    }
-
-    async function loadMapping() {
-      if (!writer) return alert("Not connected.");
-
-      await sendCommand("GET_MAPPING");
-
-      const decoder = new TextDecoderStream();
-      const inputStream = port.readable.pipeThrough(decoder);
-      const reader = inputStream.getReader();
-
-      const { value } = await reader.read();
-      const data = value.trim().replace(/\|/g, ',');
-      const list = data.split(',');
-
-      let index = 0;
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-          gridData[row][col] = list[index++] || "";
-          document.getElementById(`input-${row}-${col}`).value = gridData[row][col];
-        }
-      }
-
-      reader.cancel();
-      statusEl.textContent = "Mapping loaded ✅";
-    }
-
-    async function saveMapping() {
-      if (!writer) return alert("Not connected.");
-
-      let mapping = "";
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-          const value = document.getElementById(`input-${row}-${col}`).value;
-          gridData[row][col] = value;
-          mapping += value + ",";
-        }
-      }
-      mapping = mapping.slice(0, -1); // Remove last comma
-
-      await sendCommand("SETUP:" + mapping);
-      statusEl.textContent = "Mapping saved 💾";
-    }
-
-    createGrid();
+    renderKeyboard();
   </script>
 </body>
 </html>
