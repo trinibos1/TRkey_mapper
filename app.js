@@ -1,21 +1,39 @@
-// Globals
+// Elements
 const connectBtn = document.getElementById('connect-btn');
-const modeSelect = document.getElementById('mode-select');
 const statusEl = document.getElementById('status');
 const keypadEl = document.getElementById('keypad');
 const shortcutInput = document.getElementById('shortcut-input');
 const assignBtn = document.getElementById('assign-btn');
+const profileButtons = document.querySelectorAll('.profile-btn');
+const saveProfileBtn = document.getElementById('save-profile-btn');
 
 let osName = 'unknown';
 let selectedKey = null;
-let keyMappings = {
-  default: Array(9).fill(''), // 9 keys, empty shortcuts
-  fusion360: Array(9).fill(''),
-  kicad: Array(9).fill(''),
-  canva: Array(9).fill('')
-};
+let currentProfileIndex = 0;
 
-let pressedKeys = new Set();
+const NUM_KEYS = 9;
+
+// Load profiles from localStorage or init empty
+let profiles = [];
+
+function loadProfiles() {
+  const stored = localStorage.getItem('micropadProfiles');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length === 4) {
+        profiles = parsed;
+        return;
+      }
+    } catch {}
+  }
+  // Init empty profiles (each with 9 empty shortcuts)
+  profiles = Array(4).fill(null).map(() => Array(NUM_KEYS).fill(''));
+}
+
+function saveProfiles() {
+  localStorage.setItem('micropadProfiles', JSON.stringify(profiles));
+}
 
 // Utility to detect OS
 function detectOS() {
@@ -26,31 +44,35 @@ function detectOS() {
   return 'unknown';
 }
 
-// Update status with OS info
 function updateStatus() {
   statusEl.textContent = `Detected OS: ${osName}`;
 }
 
-// Render 3x3 keypad keys
+// Render keypad with shortcuts from current profile
 function renderKeypad() {
   keypadEl.innerHTML = '';
-  for (let i = 0; i < 9; i++) {
+  const shortcuts = profiles[currentProfileIndex];
+  for (let i = 0; i < NUM_KEYS; i++) {
     const keyDiv = document.createElement('div');
     keyDiv.className = 'key';
     keyDiv.dataset.index = i;
     keyDiv.tabIndex = 0;
     keyDiv.setAttribute('role', 'button');
     keyDiv.setAttribute('aria-pressed', 'false');
+    keyDiv.textContent = `Key ${i + 1}`;
 
-    keyDiv.innerHTML = `
-      <div class="key-label">Key ${i + 1}</div>
-      <div class="shortcut">${keyMappings[modeSelect.value][i] || ''}</div>
-    `;
+    // Add shortcut label inside key if assigned
+    if (shortcuts[i]) {
+      const shortcutLabel = document.createElement('div');
+      shortcutLabel.className = 'shortcut';
+      shortcutLabel.textContent = shortcuts[i];
+      keyDiv.appendChild(shortcutLabel);
+    }
 
     // Click to select key
     keyDiv.addEventListener('click', () => {
+      // Unselect previous
       if (selectedKey !== null) {
-        // Unselect previous
         const prev = keypadEl.querySelector(`.key[data-index="${selectedKey}"]`);
         if (prev) {
           prev.classList.remove('selected');
@@ -72,32 +94,35 @@ function renderKeypad() {
   }
 }
 
-// Listen for key combos for shortcut input
+// Shortcut input handlers
+let pressedKeys = new Set();
+
+function normalizeKey(key) {
+  if (key === 'Control') return 'Ctrl';
+  if (key === 'AltGraph') return 'AltGr';
+  if (key === ' ') return 'Space';
+  if (key === 'Meta') return osName === 'macos' ? 'Cmd' : 'Meta';
+  return key.length === 1 ? key.toUpperCase() : key;
+}
+
 function handleKeyDown(event) {
   if (selectedKey === null) return;
 
   event.preventDefault();
 
-  // Track pressed keys
   pressedKeys.add(event.key);
 
-  // Format pressed keys to a string
-  const keysArray = Array.from(pressedKeys);
+  // Sort modifiers first for consistency
+  const sortedKeys = Array.from(pressedKeys).sort((a, b) => {
+    const order = ['Control', 'Shift', 'Alt', 'Meta'];
+    const aIdx = order.indexOf(a);
+    const bIdx = order.indexOf(b);
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
 
-  // Normalize names for common keys (example)
-  const normalizeKey = (key) => {
-    if (key === 'Control') return 'Ctrl';
-    if (key === 'AltGraph') return 'AltGr';
-    if (key === ' ') return 'Space';
-    if (key === 'Meta') return osName === 'macos' ? 'Cmd' : 'Meta';
-    return key.length === 1 ? key.toUpperCase() : key;
-  };
-
-  const shortcutStr = keysArray
-    .map(normalizeKey)
-    .sort() // Sort so modifiers always first (basic)
-    .join(' + ');
-
+  const shortcutStr = sortedKeys.map(normalizeKey).join(' + ');
   shortcutInput.value = shortcutStr;
   assignBtn.disabled = false;
 }
@@ -107,35 +132,53 @@ function handleKeyUp(event) {
   pressedKeys.delete(event.key);
 }
 
-// Assign shortcut to selected key
 function assignShortcut() {
   if (selectedKey === null) return;
-  const mode = modeSelect.value;
-  keyMappings[mode][selectedKey] = shortcutInput.value;
+
+  profiles[currentProfileIndex][selectedKey] = shortcutInput.value;
   renderKeypad();
+
   shortcutInput.value = '';
   assignBtn.disabled = true;
-  // Optionally, send mapping to micropad device here
+  selectedKey = null;
+  pressedKeys.clear();
 }
 
-// Change mode updates displayed shortcuts
-modeSelect.addEventListener('change', () => {
-  selectedKey = null;
-  renderKeypad();
-  shortcutInput.value = '';
-  assignBtn.disabled = true;
+// Profile buttons
+profileButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('active')) return;
+
+    profileButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    currentProfileIndex = parseInt(btn.dataset.profile, 10);
+    selectedKey = null;
+    shortcutInput.value = '';
+    assignBtn.disabled = true;
+    pressedKeys.clear();
+
+    renderKeypad();
+  });
 });
 
-// Connect button dummy handler (you can replace with actual serial connection)
+// Save profile to localStorage
+saveProfileBtn.addEventListener('click', () => {
+  saveProfiles();
+  alert(`Profile ${currentProfileIndex + 1} saved!`);
+});
+
+// Connect button dummy
 connectBtn.addEventListener('click', () => {
   statusEl.textContent = 'Connected to Micropad (simulated)';
 });
 
-// Shortcut input key handlers
+// Shortcut input event listeners
 shortcutInput.addEventListener('keydown', handleKeyDown);
 shortcutInput.addEventListener('keyup', handleKeyUp);
 
-// Initialization
+// Init
 osName = detectOS();
 updateStatus();
+loadProfiles();
 renderKeypad();
