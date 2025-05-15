@@ -1,108 +1,122 @@
 
-````markdown
-# 🖥️ Micropad Web App (3×3 Macro Keypad Mapper)
-
-A cross-platform web-based configuration tool for a 3×3 micropad powered by an ESP32. This app allows you to map custom shortcuts for Windows, macOS, and Linux, including application-specific profiles for Fusion 360, KiCad, and Canva.
-
-## 🌐 Features
-
-- 🔌 **Web Serial Communication**: Connect to the micropad directly from the browser (Chrome-based).
-- 🧠 **Smart OS Detection**: Automatically detects the user's operating system and adjusts shortcuts accordingly.
-- 🎨 **App-Specific Modes**: Built-in shortcut presets for:
-  - Fusion 360
-  - KiCad
-  - Canva
-- 🎛️ **3×3 Interactive Key Mapping**: Click any key to assign commands or shortcuts.
-- 🎵 **Media Control**: Assign media keys like volume up/down, play/pause, etc.
-- 💾 **EEPROM Synchronization**: Saves configurations directly to your micropad’s memory.
-- 📦 **Modern UI**: Inspired by VIA configurator and designed for clarity and dark themes.
-
-## 🚀 Getting Started
-
-### 1. Clone or Download
-
-```bash
-git clone https://github.com/yourusername/micropad-web-app.git
-cd micropad-web-app
-````
-
-### 2. Run Locally
-
-Open `index.html` in any Chrome-based browser (e.g., Chrome, Edge).
-
-> ✅ Must be served over HTTPS or `localhost` to access serial ports.
-
-### 3. Connect to Device
-
-1. Plug in your micropad (running compatible firmware).
-2. Click **"Connect"** in the top bar.
-3. Start mapping!
 
 ---
 
-## 🧩 Folder Structure
+```markdown
+# 🎹 Micropad Key Mapper
 
-```
-📁 micropad-web-app
-├── index.html        # Main HTML file
-├── styles.css        # CSS styling
-├── micropad-app.js   # Core logic & serial communication
-└── README.md         # You're reading it
-```
+**Unlock the power of your 3x3 Micropad** — customize every key with your favorite shortcuts, switch between profiles, and connect effortlessly via USB serial. A sleek, modern web app designed for makers, coders, and creatives who want full control of their micro keyboard.
 
 ---
 
-## ⚙️ Supported Commands
+## 🚀 Features
 
-The micropad firmware must support the following serial commands:
-
-* `EXECUTE,row,col` – Trigger a shortcut
-* `SETUP:<mapping>` – Set the layout
-* `GET_MAPPING` – Fetch saved layout
-
-## 🛠️ Requirements
-
-* Chrome-based browser (for Web Serial API)
-* ESP32 with matching firmware
-* Optional: GitHub Pages for hosting
+- **Seamless Serial Connection:** Connect to your Micropad device via USB using the Web Serial API.
+- **Intuitive 3x3 Key Layout:** Visualize and map all 9 keys with a clean, interactive interface.
+- **4 Configurable Profiles:** Save and switch between multiple profiles to fit your workflow.
+- **OS-Aware Shortcuts:** Auto-detect Windows, macOS, or Linux and adapt shortcut labels accordingly.
+- **Custom Shortcut Mapping:** Assign complex key combos (e.g., Ctrl + Alt + M) to each pad button.
+- **Real-Time Communication:** Changes instantly sent to your Micropad for immediate effect.
+- **Persistent Storage:** Profiles saved locally in your browser for easy recall.
 
 ---
 
-## 📡 Hosting
+## 🔧 Getting Started
 
-You can deploy the app via:
+### Prerequisites
 
-* **GitHub Pages**: Recommended for simple, free hosting
-* **Local HTTP server**: Using `Live Server` in VSCode or `python -m http.server`
+- Micropad hardware connected via USB serial port (115200 baud).
+- A Chromium-based browser (Chrome, Edge, Opera) with Web Serial API support.
+- Optional: Serve files over a local web server for best compatibility (e.g., `live-server`, Python's `http.server`).
 
----
+### Installation
 
-## 📜 License
-
-MIT License
-
----
-
-## 🙏 Credits
-
-* Inspired by [usevia.app](https://usevia.app/)
-* Web Serial API via W3C
-* Designed for makers, engineers, and creators
-* Special thanks to **trinibos1** for contributions and support
+1. Clone or download this repo.
+2. Serve the files or open `index.html` in a compatible browser.
+3. Click **Connect to Micropad** and select your device.
+4. Map your shortcuts and save profiles.
 
 ---
 
-## 🧠 TODO
+## 🎯 How to Use
 
-* [ ] Export/import keymap to JSON
-* [ ] Add tooltip descriptions for all shortcut actions
-* [ ] Add community-made presets
+1. **Connect:** Click the connect button and authorize your Micropad device.
+2. **Select a Key:** Click any of the 9 keys in the 3x3 grid.
+3. **Assign Shortcut:** Enter your desired key combo in the input box, then click **Assign**.
+4. **Save Profile:** Store your mappings by clicking **Save Profile**.
+5. **Switch Profiles:** Toggle between 4 profiles anytime — perfect for different apps or workflows.
+6. **Disconnect:** When done, safely disconnect your Micropad.
 
 ---
 
-🛠 Built with ❤️ for ESP32 tinkerers and shortcut addicts.
+## 🔌 Serial Communication Protocol
+
+Commands sent to the device follow this format:
 
 ```
 
-If you want me to save it as a file or anything else, just say the word!
+SETUP:<keyIndex>:<shortcut>\n
+
 ```
+
+- `<keyIndex>`: Number between 0-8, representing the key on the 3x3 grid.
+- `<shortcut>`: Shortcut string, e.g. `Ctrl+Alt+M`.
+
+Example command:
+
+```
+
+SETUP:3\:Shift+F5
+
+```
+
+Ensure your Micropad firmware listens and parses these commands to update key mappings on the device.
+
+---
+
+## 💾 Profiles
+
+- 4 user profiles available, labeled **1** to **4**.
+- Each profile stores mappings for all keys.
+- Profiles saved in browser's local storage under `micropadProfiles`.
+- Persistent between sessions unless cleared.
+- Switch profiles on the fly for different usage contexts.
+
+---
+
+## 🌐 Supported Browsers
+
+| Browser           | Web Serial API Support |
+|-------------------|-----------------------|
+| Google Chrome     | ✅                    |
+| Microsoft Edge    | ✅                    |
+| Opera             | ✅                    |
+| Firefox           | ❌                    |
+| Safari            | ❌                    |
+
+---
+
+## 🎉 Credits
+
+- **Developed by:** [trinibos1]  
+- **Special Thanks:** trinibos1 — for invaluable insights and support.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🙌 Contribute
+
+Feel free to open issues or pull requests! Help improve the Micropad Key Mapper for everyone.
+
+---
+
+Happy mapping! 🎹✨
+```
+
+---
+
