@@ -1,77 +1,141 @@
-// micropad.js
+// Globals
+const connectBtn = document.getElementById('connect-btn');
+const modeSelect = document.getElementById('mode-select');
+const statusEl = document.getElementById('status');
+const keypadEl = document.getElementById('keypad');
+const shortcutInput = document.getElementById('shortcut-input');
+const assignBtn = document.getElementById('assign-btn');
 
-let serialPort;
-let writer;
-let selectedOS = "windows";
-let selectedApp = "default";
-
-const shortcutMappings = {
-  windows: {
-    default: ["Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y", "Alt+Tab", "Win+D", "Ctrl+Alt+Del", "Ctrl+S", "Ctrl+P"],
-    fusion360: ["Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "L", "E", "D", "Q", "X"],
-    kicad: ["R", "M", "Ctrl+R", "Ctrl+M", "Delete", "Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y"],
-    canva: ["T", "C", "L", "R", "Delete", "Ctrl+Z", "Ctrl+Y", "Ctrl+S", "Ctrl+Shift+K"]
-  },
-  macos: {
-    default: ["Cmd+C", "Cmd+V", "Cmd+Z", "Cmd+Y", "Cmd+Tab", "Cmd+H", "Cmd+Option+Esc", "Cmd+S", "Cmd+P"],
-    fusion360: ["Cmd+1", "Cmd+2", "Cmd+3", "Cmd+4", "L", "E", "D", "Q", "X"],
-    kicad: ["R", "M", "Cmd+R", "Cmd+M", "Delete", "Cmd+C", "Cmd+V", "Cmd+Z", "Cmd+Y"],
-    canva: ["T", "C", "L", "R", "Delete", "Cmd+Z", "Cmd+Y", "Cmd+S", "Cmd+Shift+K"]
-  },
-  linux: {
-    default: ["Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y", "Alt+Tab", "Ctrl+Alt+T", "Ctrl+Alt+Del", "Ctrl+S", "Ctrl+P"],
-    fusion360: ["Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "L", "E", "D", "Q", "X"],
-    kicad: ["R", "M", "Ctrl+R", "Ctrl+M", "Delete", "Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y"],
-    canva: ["T", "C", "L", "R", "Delete", "Ctrl+Z", "Ctrl+Y", "Ctrl+S", "Ctrl+Shift+K"]
-  }
+let osName = 'unknown';
+let selectedKey = null;
+let keyMappings = {
+  default: Array(9).fill(''), // 9 keys, empty shortcuts
+  fusion360: Array(9).fill(''),
+  kicad: Array(9).fill(''),
+  canva: Array(9).fill('')
 };
 
-async function connectSerial() {
-  try {
-    serialPort = await navigator.serial.requestPort();
-    await serialPort.open({ baudRate: 115200 });
-    writer = serialPort.writable.getWriter();
-    console.log("Connected to serial port");
-  } catch (error) {
-    console.error("Serial connection failed:", error);
+let pressedKeys = new Set();
+
+// Utility to detect OS
+function detectOS() {
+  const platform = navigator.platform.toLowerCase();
+  if (platform.indexOf('win') >= 0) return 'windows';
+  if (platform.indexOf('mac') >= 0) return 'macos';
+  if (platform.indexOf('linux') >= 0) return 'linux';
+  return 'unknown';
+}
+
+// Update status with OS info
+function updateStatus() {
+  statusEl.textContent = `Detected OS: ${osName}`;
+}
+
+// Render 3x3 keypad keys
+function renderKeypad() {
+  keypadEl.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const keyDiv = document.createElement('div');
+    keyDiv.className = 'key';
+    keyDiv.dataset.index = i;
+    keyDiv.tabIndex = 0;
+    keyDiv.setAttribute('role', 'button');
+    keyDiv.setAttribute('aria-pressed', 'false');
+
+    keyDiv.innerHTML = `
+      <div class="key-label">Key ${i + 1}</div>
+      <div class="shortcut">${keyMappings[modeSelect.value][i] || ''}</div>
+    `;
+
+    // Click to select key
+    keyDiv.addEventListener('click', () => {
+      if (selectedKey !== null) {
+        // Unselect previous
+        const prev = keypadEl.querySelector(`.key[data-index="${selectedKey}"]`);
+        if (prev) {
+          prev.classList.remove('selected');
+          prev.setAttribute('aria-pressed', 'false');
+        }
+      }
+      selectedKey = i;
+      keyDiv.classList.add('selected');
+      keyDiv.setAttribute('aria-pressed', 'true');
+
+      shortcutInput.value = '';
+      assignBtn.disabled = true;
+      pressedKeys.clear();
+      shortcutInput.placeholder = 'Press keys here (e.g. Ctrl + Alt + M)';
+      shortcutInput.focus();
+    });
+
+    keypadEl.appendChild(keyDiv);
   }
 }
 
-function updateMicropadDisplay() {
-  const grid = document.getElementById("micropad-grid");
-  grid.innerHTML = "";
+// Listen for key combos for shortcut input
+function handleKeyDown(event) {
+  if (selectedKey === null) return;
 
-  const shortcuts = shortcutMappings[selectedOS][selectedApp];
-  shortcuts.forEach((shortcut, index) => {
-    const key = document.createElement("div");
-    key.classList.add("key");
-    key.textContent = shortcut;
-    key.dataset.index = index;
-    key.onclick = () => sendCommand(index);
-    grid.appendChild(key);
-  });
+  event.preventDefault();
+
+  // Track pressed keys
+  pressedKeys.add(event.key);
+
+  // Format pressed keys to a string
+  const keysArray = Array.from(pressedKeys);
+
+  // Normalize names for common keys (example)
+  const normalizeKey = (key) => {
+    if (key === 'Control') return 'Ctrl';
+    if (key === 'AltGraph') return 'AltGr';
+    if (key === ' ') return 'Space';
+    if (key === 'Meta') return osName === 'macos' ? 'Cmd' : 'Meta';
+    return key.length === 1 ? key.toUpperCase() : key;
+  };
+
+  const shortcutStr = keysArray
+    .map(normalizeKey)
+    .sort() // Sort so modifiers always first (basic)
+    .join(' + ');
+
+  shortcutInput.value = shortcutStr;
+  assignBtn.disabled = false;
 }
 
-function sendCommand(index) {
-  const shortcut = shortcutMappings[selectedOS][selectedApp][index];
-  if (writer) {
-    writer.write(new TextEncoder().encode(`EXECUTE,${Math.floor(index / 3)},${index % 3};`));
-    console.log("Sent shortcut:", shortcut);
-  }
+function handleKeyUp(event) {
+  if (selectedKey === null) return;
+  pressedKeys.delete(event.key);
 }
 
-function setOS(os) {
-  selectedOS = os;
-  updateMicropadDisplay();
+// Assign shortcut to selected key
+function assignShortcut() {
+  if (selectedKey === null) return;
+  const mode = modeSelect.value;
+  keyMappings[mode][selectedKey] = shortcutInput.value;
+  renderKeypad();
+  shortcutInput.value = '';
+  assignBtn.disabled = true;
+  // Optionally, send mapping to micropad device here
 }
 
-function setApp(app) {
-  selectedApp = app;
-  updateMicropadDisplay();
-}
+// Change mode updates displayed shortcuts
+modeSelect.addEventListener('change', () => {
+  selectedKey = null;
+  renderKeypad();
+  shortcutInput.value = '';
+  assignBtn.disabled = true;
+});
 
-document.getElementById("connectBtn").onclick = connectSerial;
-document.getElementById("osSelector").onchange = (e) => setOS(e.target.value);
-document.getElementById("appSelector").onchange = (e) => setApp(e.target.value);
+// Connect button dummy handler (you can replace with actual serial connection)
+connectBtn.addEventListener('click', () => {
+  statusEl.textContent = 'Connected to Micropad (simulated)';
+});
 
-window.onload = updateMicropadDisplay;
+// Shortcut input key handlers
+shortcutInput.addEventListener('keydown', handleKeyDown);
+shortcutInput.addEventListener('keyup', handleKeyUp);
+
+// Initialization
+osName = detectOS();
+updateStatus();
+renderKeypad();
