@@ -1,86 +1,34 @@
+// app.js
+
+const modes = ['default', 'fusion360', 'kicad', 'canva'];
+const osList = ['windows', 'macos', 'linux'];
+
+let currentMode = 'default';
+let currentOS = detectOS();
+
+let shortcuts = {};
+
+// Initialize shortcuts object with empty strings
+for (const mode of modes) {
+  shortcuts[mode] = {};
+  for (const os of osList) {
+    shortcuts[mode][os] = [
+      ['', '', ''],
+      ['', '', ''],
+      ['', '', ''],
+    ];
+  }
+}
+
 const keyboard = document.getElementById('keyboard');
+const modeSelect = document.getElementById('modeSelect');
+const osDisplay = document.getElementById('osDisplay');
 const shortcutInput = document.getElementById('shortcutInput');
 const saveShortcutBtn = document.getElementById('saveShortcutBtn');
 const connectBtn = document.getElementById('connectBtn');
-const osDisplay = document.getElementById('osDisplay');
-
-const ROWS = 3;
-const COLS = 3;
+const statusSpan = document.getElementById('status');
 
 let selectedKey = null;
-let currentMode = 'default';
-
-// Predefined shortcuts by mode and OS
-const shortcuts = {
-  default: {
-    windows: [
-      ['Copy', 'Paste', 'Cut'],
-      ['Undo', 'Redo', 'Save'],
-      ['Find', 'Open', 'Print'],
-    ],
-    macos: [
-      ['Cmd+C', 'Cmd+V', 'Cmd+X'],
-      ['Cmd+Z', 'Shift+Cmd+Z', 'Cmd+S'],
-      ['Cmd+F', 'Cmd+O', 'Cmd+P'],
-    ],
-    linux: [
-      ['Ctrl+C', 'Ctrl+V', 'Ctrl+X'],
-      ['Ctrl+Z', 'Ctrl+Shift+Z', 'Ctrl+S'],
-      ['Ctrl+F', 'Ctrl+O', 'Ctrl+P'],
-    ],
-  },
-  fusion360: {
-    windows: [
-      ['S', 'Q', 'W'],
-      ['E', 'R', 'T'],
-      ['Y', 'U', 'I'],
-    ],
-    macos: [
-      ['S', 'Q', 'W'],
-      ['E', 'R', 'T'],
-      ['Y', 'U', 'I'],
-    ],
-    linux: [
-      ['S', 'Q', 'W'],
-      ['E', 'R', 'T'],
-      ['Y', 'U', 'I'],
-    ],
-  },
-  kicad: {
-    windows: [
-      ['Ctrl+M', 'Ctrl+N', 'Ctrl+O'],
-      ['Ctrl+P', 'Ctrl+Q', 'Ctrl+R'],
-      ['Ctrl+S', 'Ctrl+T', 'Ctrl+U'],
-    ],
-    macos: [
-      ['Cmd+M', 'Cmd+N', 'Cmd+O'],
-      ['Cmd+P', 'Cmd+Q', 'Cmd+R'],
-      ['Cmd+S', 'Cmd+T', 'Cmd+U'],
-    ],
-    linux: [
-      ['Ctrl+M', 'Ctrl+N', 'Ctrl+O'],
-      ['Ctrl+P', 'Ctrl+Q', 'Ctrl+R'],
-      ['Ctrl+S', 'Ctrl+T', 'Ctrl+U'],
-    ],
-  },
-  canva: {
-    windows: [
-      ['Ctrl+Z', 'Ctrl+Y', 'Ctrl+C'],
-      ['Ctrl+V', 'Ctrl+X', 'Ctrl+B'],
-      ['Ctrl+I', 'Ctrl+U', 'Ctrl+L'],
-    ],
-    macos: [
-      ['Cmd+Z', 'Cmd+Y', 'Cmd+C'],
-      ['Cmd+V', 'Cmd+X', 'Cmd+B'],
-      ['Cmd+I', 'Cmd+U', 'Cmd+L'],
-    ],
-    linux: [
-      ['Ctrl+Z', 'Ctrl+Y', 'Ctrl+C'],
-      ['Ctrl+V', 'Ctrl+X', 'Ctrl+B'],
-      ['Ctrl+I', 'Ctrl+U', 'Ctrl+L'],
-    ],
-  },
-};
 
 // Detect OS
 function detectOS() {
@@ -91,46 +39,44 @@ function detectOS() {
   return 'windows'; // default fallback
 }
 
-let currentOS = detectOS();
-osDisplay.textContent = `Detected OS: ${currentOS}`;
+// Update OS display
+function updateOSDisplay() {
+  osDisplay.textContent = currentOS.charAt(0).toUpperCase() + currentOS.slice(1);
+}
 
-// Generate keyboard keys
-function generateKeyboard() {
+// Build keyboard UI
+function buildKeyboard() {
   keyboard.innerHTML = '';
-  for (let r = 0; r < ROWS; r++) {
-    const rowDiv = document.createElement('div');
-    rowDiv.classList.add('key-row');
-    for (let c = 0; c < COLS; c++) {
-      const key = document.createElement('div');
-      key.classList.add('key');
-      key.dataset.row = r;
-      key.dataset.col = c;
-      key.textContent = shortcuts[currentMode][currentOS][r][c];
-      key.addEventListener('click', () => {
-        selectKey(key);
-      });
-      rowDiv.appendChild(key);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const btn = document.createElement('button');
+      btn.classList.add('key');
+      btn.dataset.row = r;
+      btn.dataset.col = c;
+      btn.textContent = shortcuts[currentMode][currentOS][r][c] || `K${r}${c}`;
+      btn.addEventListener('click', () => selectKey(btn));
+      keyboard.appendChild(btn);
     }
-    keyboard.appendChild(rowDiv);
   }
 }
 
-// Select a key to edit
-function selectKey(key) {
-  if (selectedKey) {
-    selectedKey.classList.remove('selected');
-  }
-  selectedKey = key;
-  selectedKey.classList.add('selected');
-  shortcutInput.value = selectedKey.textContent;
+// Select key for editing shortcut
+function selectKey(btn) {
+  if (selectedKey) selectedKey.classList.remove('selected');
+  selectedKey = btn;
+  btn.classList.add('selected');
+  const r = btn.dataset.row;
+  const c = btn.dataset.col;
+  shortcutInput.value = shortcuts[currentMode][currentOS][r][c] || '';
   shortcutInput.focus();
 }
 
-// Save edited shortcut
-saveShortcutBtn.addEventListener('click', () => {
+// Save shortcut for selected key
+saveShortcutBtn.addEventListener('click', async () => {
   if (!selectedKey) return alert('Select a key first!');
   const newShortcut = shortcutInput.value.trim();
   if (!newShortcut) return alert('Shortcut cannot be empty!');
+
   const r = selectedKey.dataset.row;
   const c = selectedKey.dataset.col;
   shortcuts[currentMode][currentOS][r][c] = newShortcut;
@@ -138,23 +84,92 @@ saveShortcutBtn.addEventListener('click', () => {
   shortcutInput.value = '';
   selectedKey.classList.remove('selected');
   selectedKey = null;
+
+  // Send updated shortcut to device
+  const command = `SETUP,${currentMode},${currentOS},${r},${c},${newShortcut}`;
+  await sendData(command);
 });
 
-// Mode switching
-document.querySelectorAll('.mode-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentMode = btn.dataset.mode;
-    generateKeyboard();
-  });
+// Handle mode change
+modeSelect.addEventListener('change', () => {
+  currentMode = modeSelect.value;
+  buildKeyboard();
+  shortcutInput.value = '';
+  if (selectedKey) {
+    selectedKey.classList.remove('selected');
+    selectedKey = null;
+  }
 });
 
-// Initial setup
-document.querySelector('.mode-btn[data-mode="default"]').classList.add('active');
-generateKeyboard();
+// Web Serial API variables
+let port;
+let reader;
+let outputStream;
+let keepReading = false;
 
-// Connect button logic placeholder
-connectBtn.addEventListener('click', () => {
-  alert('Connect functionality to be implemented');
+connectBtn.addEventListener('click', async () => {
+  if (port) {
+    // Disconnect
+    keepReading = false;
+    if (reader) {
+      await reader.cancel();
+      reader.releaseLock();
+    }
+    await port.close();
+    port = null;
+    connectBtn.textContent = 'Connect';
+    statusSpan.textContent = 'Disconnected';
+    return;
+  }
+
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    statusSpan.textContent = 'Connected';
+    connectBtn.textContent = 'Disconnect';
+
+    outputStream = port.writable.getWriter();
+    keepReading = true;
+    readLoop();
+  } catch (err) {
+    alert('Error connecting to serial port: ' + err);
+  }
 });
+
+async function readLoop() {
+  while (port.readable && keepReading) {
+    reader = port.readable.getReader();
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          const textDecoder = new TextDecoder();
+          const data = textDecoder.decode(value);
+          console.log('Received:', data);
+          // You can add logic to parse device responses here
+        }
+      }
+    } catch (error) {
+      console.error('Read error:', error);
+    } finally {
+      reader.releaseLock();
+    }
+  }
+}
+
+// Send data to the serial device
+async function sendData(data) {
+  if (!outputStream) {
+    alert('Serial port not connected!');
+    return;
+  }
+  const textEncoder = new TextEncoder();
+  const encoded = textEncoder.encode(data + '\n');
+  await outputStream.write(encoded);
+  console.log('Sent:', data);
+}
+
+// Initialize UI
+updateOSDisplay();
+buildKeyboard();
