@@ -1,85 +1,77 @@
-// script.js
+// micropad.js
 
-const keys = [
-  'K1', 'K2', 'K3',
-  'K4', 'K5', 'K6',
-  'K7', 'K8', 'K9'
-];
+let serialPort;
+let writer;
+let selectedOS = "windows";
+let selectedApp = "default";
 
-const osShortcuts = {
-  Windows: {
-    Copy: 'Ctrl + C',
-    Paste: 'Ctrl + V',
-    Undo: 'Ctrl + Z',
-    MediaPlayPause: 'MediaPlayPause'
+const shortcutMappings = {
+  windows: {
+    default: ["Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y", "Alt+Tab", "Win+D", "Ctrl+Alt+Del", "Ctrl+S", "Ctrl+P"],
+    fusion360: ["Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "L", "E", "D", "Q", "X"],
+    kicad: ["R", "M", "Ctrl+R", "Ctrl+M", "Delete", "Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y"],
+    canva: ["T", "C", "L", "R", "Delete", "Ctrl+Z", "Ctrl+Y", "Ctrl+S", "Ctrl+Shift+K"]
   },
-  macOS: {
-    Copy: 'Cmd + C',
-    Paste: 'Cmd + V',
-    Undo: 'Cmd + Z',
-    MediaPlayPause: 'F8'
+  macos: {
+    default: ["Cmd+C", "Cmd+V", "Cmd+Z", "Cmd+Y", "Cmd+Tab", "Cmd+H", "Cmd+Option+Esc", "Cmd+S", "Cmd+P"],
+    fusion360: ["Cmd+1", "Cmd+2", "Cmd+3", "Cmd+4", "L", "E", "D", "Q", "X"],
+    kicad: ["R", "M", "Cmd+R", "Cmd+M", "Delete", "Cmd+C", "Cmd+V", "Cmd+Z", "Cmd+Y"],
+    canva: ["T", "C", "L", "R", "Delete", "Cmd+Z", "Cmd+Y", "Cmd+S", "Cmd+Shift+K"]
   },
-  Linux: {
-    Copy: 'Ctrl + Shift + C',
-    Paste: 'Ctrl + Shift + V',
-    Undo: 'Ctrl + Z',
-    MediaPlayPause: 'MediaPlayPause'
+  linux: {
+    default: ["Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y", "Alt+Tab", "Ctrl+Alt+T", "Ctrl+Alt+Del", "Ctrl+S", "Ctrl+P"],
+    fusion360: ["Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "L", "E", "D", "Q", "X"],
+    kicad: ["R", "M", "Ctrl+R", "Ctrl+M", "Delete", "Ctrl+C", "Ctrl+V", "Ctrl+Z", "Ctrl+Y"],
+    canva: ["T", "C", "L", "R", "Delete", "Ctrl+Z", "Ctrl+Y", "Ctrl+S", "Ctrl+Shift+K"]
   }
 };
 
-const appShortcuts = {
-  Fusion360: ['Pan', 'Orbit', 'Zoom', 'Create Sketch'],
-  KiCad: ['Route Track', 'Place Via', 'Add Component'],
-  Canva: ['Group', 'Ungroup', 'Bring to Front']
-};
-
-const keyboardGrid = document.getElementById('keyboardGrid');
-const shortcutPanel = document.getElementById('shortcuts');
-const connectBtn = document.getElementById('connectBtn');
-
-let selectedOS = detectOS();
-
-function detectOS() {
-  const platform = navigator.platform.toLowerCase();
-  if (platform.includes('mac')) return 'macOS';
-  if (platform.includes('win')) return 'Windows';
-  if (platform.includes('linux')) return 'Linux';
-  return 'Windows'; // fallback
+async function connectSerial() {
+  try {
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 115200 });
+    writer = serialPort.writable.getWriter();
+    console.log("Connected to serial port");
+  } catch (error) {
+    console.error("Serial connection failed:", error);
+  }
 }
 
-function populateKeyboard() {
-  keyboardGrid.innerHTML = '';
-  keys.forEach((key, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'key';
-    btn.innerText = key;
-    btn.onclick = () => assignShortcut(key);
-    keyboardGrid.appendChild(btn);
+function updateMicropadDisplay() {
+  const grid = document.getElementById("micropad-grid");
+  grid.innerHTML = "";
+
+  const shortcuts = shortcutMappings[selectedOS][selectedApp];
+  shortcuts.forEach((shortcut, index) => {
+    const key = document.createElement("div");
+    key.classList.add("key");
+    key.textContent = shortcut;
+    key.dataset.index = index;
+    key.onclick = () => sendCommand(index);
+    grid.appendChild(key);
   });
 }
 
-function populateShortcuts() {
-  shortcutPanel.innerHTML = '';
-  const shortcuts = osShortcuts[selectedOS];
-  for (const action in shortcuts) {
-    const p = document.createElement('p');
-    p.innerText = `${action}: ${shortcuts[action]}`;
-    shortcutPanel.appendChild(p);
+function sendCommand(index) {
+  const shortcut = shortcutMappings[selectedOS][selectedApp][index];
+  if (writer) {
+    writer.write(new TextEncoder().encode(`EXECUTE,${Math.floor(index / 3)},${index % 3};`));
+    console.log("Sent shortcut:", shortcut);
   }
 }
 
-function assignShortcut(key) {
-  const assigned = prompt(`Assign shortcut for ${key}:`, 'Ctrl + Something');
-  if (assigned) alert(`Shortcut for ${key} set to ${assigned}`);
+function setOS(os) {
+  selectedOS = os;
+  updateMicropadDisplay();
 }
 
-function connectSerial() {
-  alert('Simulating device connection...');
-  // Implement Web Serial API if needed
+function setApp(app) {
+  selectedApp = app;
+  updateMicropadDisplay();
 }
 
-connectBtn.onclick = connectSerial;
+document.getElementById("connectBtn").onclick = connectSerial;
+document.getElementById("osSelector").onchange = (e) => setOS(e.target.value);
+document.getElementById("appSelector").onchange = (e) => setApp(e.target.value);
 
-// Initialize
-populateKeyboard();
-populateShortcuts();
+window.onload = updateMicropadDisplay;
