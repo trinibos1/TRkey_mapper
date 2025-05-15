@@ -3,46 +3,59 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Micropad Key Mapper</title>
+<title>Micropad VIA-style Mapper</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Micropad Key Mapper</h1>
-    <div class="connect-area">
-      <button id="connect-btn">Connect to Micropad</button>
-    </div>
-    <div class="profile-select">
-      <label>Select Profile:</label>
-      <button class="profile-btn active" data-profile="0">Profile 1</button>
-      <button class="profile-btn" data-profile="1">Profile 2</button>
-      <button class="profile-btn" data-profile="2">Profile 3</button>
-      <button class="profile-btn" data-profile="3">Profile 4</button>
-      <button id="save-profile-btn">Save Profile</button>
-    </div>
-    <div id="status" class="status">Detecting OS...</div>
+    <h1>Micropad VIA Mapper</h1>
+    <button id="connect-btn">Connect to Micropad</button>
+    <div id="device-info">Not connected</div>
   </header>
 
   <main>
-    <section class="keypad-container">
-      <div id="keypad" class="keypad">
-        <!-- 3x3 keys will be injected here -->
-      </div>
+    <section id="profiles">
+      <label for="profile-select">Profile:</label>
+      <select id="profile-select">
+        <option value="0">Profile 1</option>
+        <option value="1">Profile 2</option>
+        <option value="2">Profile 3</option>
+        <option value="3">Profile 4</option>
+      </select>
+      <button id="save-profile-btn">Save Profile</button>
+      <button id="load-profile-btn">Load Profile</button>
     </section>
 
-    <section class="shortcut-assign">
-      <h2>Assign Shortcut</h2>
+    <section id="key-grid">
+      <!-- 3x3 keys -->
+      <div class="key" data-key="0">0</div>
+      <div class="key" data-key="1">1</div>
+      <div class="key" data-key="2">2</div>
+      <div class="key" data-key="3">3</div>
+      <div class="key" data-key="4">4</div>
+      <div class="key" data-key="5">5</div>
+      <div class="key" data-key="6">6</div>
+      <div class="key" data-key="7">7</div>
+      <div class="key" data-key="8">8</div>
+    </section>
+
+    <section id="shortcut-assign">
+      <label for="shortcut-input">Assign Shortcut</label>
       <input
         type="text"
         id="shortcut-input"
-        placeholder="Press keys here (e.g. Ctrl + Alt + M)"
-        aria-label="Shortcut input"
-        readonly
+        placeholder="e.g. Ctrl + Alt + M"
+        disabled
       />
       <button id="assign-btn" disabled>Assign</button>
     </section>
+
+    <section id="status-section">
+      <div id="connection-status">Disconnected</div>
+      <div id="os-info"></div>
+    </section>
   </main>
 
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
