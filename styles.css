@@ -1,55 +1,91 @@
+/* style.css */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #181818;
-  color: #eee;
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1e1e1e;
+  color: #fff;
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #2a2a2a;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 20px;
 }
-h1 {
-  margin-bottom: 10px;
+
+.sidebar h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
 }
-#connectBtn {
-  margin-bottom: 20px;
-  padding: 10px 20px;
-  font-size: 18px;
-  background: #06c;
+
+.sidebar button,
+.sidebar select {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #3a3a3a;
+  color: #fff;
   border: none;
-  color: white;
+  cursor: pointer;
   border-radius: 5px;
-  cursor: pointer;
 }
-#connectBtn:disabled {
-  background: #444;
-  cursor: default;
+
+.main {
+  flex-grow: 1;
+  padding: 2rem;
 }
-#grid {
+
+.keypad {
   display: grid;
-  grid-template-columns: repeat(3, 120px);
-  grid-template-rows: repeat(3, 80px);
-  gap: 15px;
-}
-.key-btn {
-  background: #222;
-  border: 2px solid #555;
-  border-radius: 8px;
-  font-size: 18px;
-  color: #ddd;
-  cursor: pointer;
-  display: flex;
+  grid-template-columns: repeat(3, 80px);
+  gap: 10px;
   justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.key {
+  width: 80px;
+  height: 80px;
+  background-color: #444;
+  display: flex;
   align-items: center;
-  user-select: none;
-  transition: background 0.2s, border-color 0.2s;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
-.key-btn:hover {
-  background: #06c;
-  border-color: #09f;
+
+.key:hover {
+  background-color: #666;
 }
-#status {
-  margin-top: 20px;
-  font-size: 14px;
+
+.shortcut-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.shortcut-card {
+  background-color: #333;
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+.shortcut-card h4 {
+  margin: 0 0 0.5rem;
+}
+
+.connect-button {
+  background-color: #0a84ff;
+  color: white;
+  font-weight: bold;
+  margin-top: auto;
+}
+
+.status {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
   color: #aaa;
-  height: 20px;
 }
