@@ -11,12 +11,14 @@
     <h1>Micropad Key Mapper</h1>
     <div class="connect-area">
       <button id="connect-btn">Connect to Micropad</button>
-      <select id="mode-select" aria-label="Select Mode">
-        <option value="default">Default</option>
-        <option value="fusion360">Fusion 360</option>
-        <option value="kicad">KiCad</option>
-        <option value="canva">Canva</option>
-      </select>
+    </div>
+    <div class="profile-select">
+      <label>Select Profile:</label>
+      <button class="profile-btn active" data-profile="0">Profile 1</button>
+      <button class="profile-btn" data-profile="1">Profile 2</button>
+      <button class="profile-btn" data-profile="2">Profile 3</button>
+      <button class="profile-btn" data-profile="3">Profile 4</button>
+      <button id="save-profile-btn">Save Profile</button>
     </div>
     <div id="status" class="status">Detecting OS...</div>
   </header>
