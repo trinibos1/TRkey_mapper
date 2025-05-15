@@ -2,16 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MicroPad Mapper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Micropad Configurator</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="app">
+    <aside class="sidebar">
+      <h1 class="logo">Micropad</h1>
+      <nav>
+        <button class="tab active" data-tab="keymap">KEYMAP</button>
+        <button class="tab" data-tab="macros">MACROS</button>
+        <button class="tab" data-tab="media">MEDIA</button>
+        <button class="tab" data-tab="os">OS</button>
+        <button class="tab" data-tab="apps">APPS</button>
+        <button class="tab" data-tab="settings">SETTINGS</button>
+      </nav>
+    </aside>
 
-  <h1>MicroPad Mapper</h1>
-  <button id="connectBtn">Connect to MicroPad</button>
-  <div id="grid"></div>
-  <div id="status"></div>
+    <main class="main">
+      <header class="toolbar">
+        <div class="layer-select">
+          <span>LAYER</span>
+          <button data-layer="0" class="layer active">0</button>
+          <button data-layer="1" class="layer">1</button>
+          <button data-layer="2" class="layer">2</button>
+          <button data-layer="3" class="layer">3</button>
+        </div>
+        <button id="connectBtn">Connect</button>
+      </header>
+
+      <section class="keyboard-container">
+        <div id="keyboardGrid" class="grid-3x3">
+          <!-- Keys inserted by JS -->
+        </div>
+      </section>
+
+      <section class="shortcuts-panel">
+        <h2>Available Shortcuts</h2>
+        <div id="shortcuts">
+          <!-- Shortcuts filled by JS -->
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>
