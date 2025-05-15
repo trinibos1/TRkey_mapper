@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Micropad Mapper</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Micropad Key Mapper</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-container">
-    <header>
-      <h1>Micropad Key Mapper</h1>
+  <header>
+    <h1>Micropad Key Mapper</h1>
+    <div class="connect-area">
       <button id="connect-btn">Connect to Micropad</button>
-      <select id="mode-select">
+      <select id="mode-select" aria-label="Select Mode">
         <option value="default">Default</option>
         <option value="fusion360">Fusion 360</option>
         <option value="kicad">KiCad</option>
         <option value="canva">Canva</option>
-        <option value="media">Media Controls</option>
       </select>
-    </header>
+    </div>
+    <div id="status" class="status">Detecting OS...</div>
+  </header>
 
-    <main>
-      <section class="keyboard-grid" id="keyboard-grid">
-        <!-- JS will populate the 3x3 keys -->
-      </section>
+  <main>
+    <section class="keypad-container">
+      <div id="keypad" class="keypad">
+        <!-- 3x3 keys will be injected here -->
+      </div>
+    </section>
 
-      <section class="shortcut-options">
-        <h2>Assign Shortcut</h2>
-        <input type="text" id="shortcut-input" placeholder="Ctrl + Alt + M" />
-        <button id="assign-btn">Assign</button>
-      </section>
-    </main>
-
-    <footer>
-      <p id="os-info">Detecting OS...</p>
-    </footer>
-  </div>
+    <section class="shortcut-assign">
+      <h2>Assign Shortcut</h2>
+      <input
+        type="text"
+        id="shortcut-input"
+        placeholder="Press keys here (e.g. Ctrl + Alt + M)"
+        aria-label="Shortcut input"
+        readonly
+      />
+      <button id="assign-btn" disabled>Assign</button>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>
