@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Micropad Configurator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #0066cc;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005bb5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 2rem auto;
+      max-width: 400px;
+    }
+    .cell {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Micropad Configurator</h1>
+  <div style="text-align: center;">
+    <button onclick="connect()">🔌 Connect</button>
+    <button onclick="loadMapping()">📥 Load Mapping</button>
+    <button onclick="saveMapping()">💾 Save Mapping</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div id="status">Not connected</div>
+
+  <script>
+    let port;
+    let writer;
+    let reader;
+    let gridData = Array.from({length: 3}, () => Array(3).fill(""));
+
+    const gridElement = document.getElementById('grid');
+    const statusEl = document.getElementById('status');
+
+    function createGrid() {
+      gridElement.innerHTML = '';
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const div = document.createElement('div');
+          div.className = 'cell';
+          div.innerHTML = `
+            <strong>[${row}, ${col}]</strong><br/>
+            <input id="input-${row}-${col}" value="${gridData[row][col]}" />
+          `;
+          gridElement.appendChild(div);
+        }
+      }
+    }
+
+    async function connect() {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        writer = port.writable.getWriter();
+        reader = port.readable.getReader();
+
+        statusEl.textContent = "Connected ✅";
+
+        readLoop();
+      } catch (err) {
+        alert("Connection failed: " + err);
+      }
+    }
+
+    async function readLoop() {
+      const decoder = new TextDecoderStream();
+      port.readable.pipeTo(decoder.writable);
+      const inputStream = decoder.readable;
+      const reader = inputStream.getReader();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        console.log("[Serial]", value.trim());
+      }
+    }
+
+    async function sendCommand(cmd) {
+      const encoder = new TextEncoder();
+      await writer.write(encoder.encode(cmd + '\n'));
+    }
+
+    async function loadMapping() {
+      if (!writer) return alert("Not connected.");
+
+      await sendCommand("GET_MAPPING");
+
+      const decoder = new TextDecoderStream();
+      const inputStream = port.readable.pipeThrough(decoder);
+      const reader = inputStream.getReader();
+
+      const { value } = await reader.read();
+      const data = value.trim().replace(/\|/g, ',');
+      const list = data.split(',');
+
+      let index = 0;
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          gridData[row][col] = list[index++] || "";
+          document.getElementById(`input-${row}-${col}`).value = gridData[row][col];
+        }
+      }
+
+      reader.cancel();
+      statusEl.textContent = "Mapping loaded ✅";
+    }
+
+    async function saveMapping() {
+      if (!writer) return alert("Not connected.");
+
+      let mapping = "";
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const value = document.getElementById(`input-${row}-${col}`).value;
+          gridData[row][col] = value;
+          mapping += value + ",";
+        }
+      }
+      mapping = mapping.slice(0, -1); // Remove last comma
+
+      await sendCommand("SETUP:" + mapping);
+      statusEl.textContent = "Mapping saved 💾";
+    }
+
+    createGrid();
+  </script>
+</body>
+</html>
