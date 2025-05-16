@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>3x3 Micropad Remapper</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Micropad Remapper - Via Keyboard Style</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>3x3 Micropad Remapper</h1>
 
+<header>
+  <h1>Micropad Remapper</h1>
   <div class="controls">
-    <select id="presetApp">
-      <option value="">-- Load App Shortcuts --</option>
+    <select id="presetApp" aria-label="Select App Preset">
+      <option value="">Load Preset...</option>
       <option value="fusion360">Fusion 360</option>
       <option value="canva">Canva</option>
       <option value="kicad">KiCad</option>
@@ -19,37 +20,36 @@
       <option value="warthunder">War Thunder</option>
     </select>
     <button id="loadPreset">Apply Preset</button>
-  </div>
-
-  <div id="matrix" class="matrix"></div>
-
-  <div id="modifiers" class="modifiers">
-    <label><input type="checkbox" id="ctrlMod" /> Ctrl</label>
-    <label><input type="checkbox" id="altMod" /> Alt</label>
-    <label><input type="checkbox" id="shiftMod" /> Shift</label>
-  </div>
-
-  <div class="controls">
     <button id="connectBtn">Connect Device</button>
-    <button id="sendBtn">Send to Device</button>
-    <button id="saveEEPROM">Save to EEPROM</button>
-    <button id="disconnectBtn">Disconnect Device</button>
-    <button id="exportBtn">Export Mapping</button>
-    <button id="genQR">Generate QR</button>
-    <button id="themeToggle">Dark Theme</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+    <button id="themeToggle" title="Toggle Dark/Light Theme">🌙</button>
   </div>
+</header>
 
-  <canvas id="qrCanvas"></canvas>
+<main>
+  <div id="matrix" aria-label="3 by 3 key matrix" role="grid"></div>
+</main>
 
-  <div id="testOutput" class="testOutput">
-    Key Output: <span id="lastKey">None</span>
+<section id="modifiers" aria-label="Modifier keys">
+  <label><input type="checkbox" id="ctrlMod"> Ctrl</label>
+  <label><input type="checkbox" id="altMod"> Alt</label>
+  <label><input type="checkbox" id="shiftMod"> Shift</label>
+</section>
+
+<div id="statusBar" aria-live="polite">Device not connected.</div>
+
+<!-- Modal -->
+<div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1">
+  <div class="modal">
+    <h2 id="modalTitle">Assign Key</h2>
+    <input type="text" id="keyInput" aria-describedby="modalDesc" placeholder="Enter key or shortcut (e.g. A, Ctrl+S)" autocomplete="off" />
+    <div id="modalDesc" style="font-size: 0.85rem; margin-bottom: 20px; color: #666;">
+      Use modifiers with key name, e.g. Ctrl+S or Alt+F4.
+    </div>
+    <button id="saveKeyBtn">Save</button>
   </div>
+</div>
 
-  <div id="connectionStatus" class="status">Device not connected</div>
-
-  <pre id="output" class="output"></pre>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
