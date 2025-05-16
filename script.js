@@ -1,43 +1,35 @@
+// Elements
 const matrix = document.getElementById("matrix");
 const output = document.getElementById("output");
-const qrCanvas = document.getElementById("qrCanvas");
 const testOutput = document.getElementById("lastKey");
 const statusDiv = document.getElementById("connectionStatus");
-
-const ctrlMod = document.getElementById("ctrlMod");
-const altMod = document.getElementById("altMod");
-const shiftMod = document.getElementById("shiftMod");
-
-const presetSelect = document.getElementById("presetApp");
-const loadPresetBtn = document.getElementById("loadPreset");
-
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
 const exportBtn = document.getElementById("exportBtn");
 const sendBtn = document.getElementById("sendBtn");
 const saveEEPROMBtn = document.getElementById("saveEEPROM");
 const genQRBtn = document.getElementById("genQR");
-
-const themeToggle = document.getElementById("themeToggle");
+const qrCanvas = document.getElementById("qrCanvas");
 
 let port = null;
 let writer = null;
 let reader = null;
-let keepReading = false;
+let deviceConnected = false;
 
+// 3x3 mapping
 const mapping = Array(3).fill().map(() => Array(3).fill(""));
 
+// Icon map for display
 const iconMap = {
   "MediaPlayPause": "⏯",
   "MediaNextTrack": "⏭",
   "MediaVolumeMute": "🔇",
   "Ctrl+S": "💾",
   "Ctrl+Z": "↶",
-  "Ctrl+Y": "↷",
-  "Ctrl+C": "📋",
-  "Ctrl+V": "📥",
-  "Delete": "⌫",
-  "Shift+Delete": "❌"
+  "Ctrl+Y": "↷"
 };
 
+// Preset shortcuts for apps
 const presets = {
   fusion360: [["Ctrl+Z", "Ctrl+Y", "Ctrl+S"], ["L", "D", "C"], ["E", "X", "H"]],
   canva: [["Ctrl+C", "Ctrl+V", "Ctrl+Z"], ["T", "R", "L"], ["Delete", "G", "B"]],
@@ -46,7 +38,7 @@ const presets = {
   warthunder: [["G", "F", "H"], ["V", "M", "N"], ["B", "T", "Y"]]
 };
 
-// Create grid keys
+// Initialize matrix UI keys
 function createMatrix() {
   matrix.innerHTML = "";
   for (let r = 0; r < 3; r++) {
@@ -55,33 +47,33 @@ function createMatrix() {
       btn.className = "key";
       btn.dataset.row = r;
       btn.dataset.col = c;
-      btn.draggable = true;
+      btn.textContent = `${r},${c}`;
       btn.onclick = () => assignKey(btn, r, c);
+      btn.draggable = true;
       btn.ondragstart = dragStart;
       btn.ondrop = dropKey;
       btn.ondragover = e => e.preventDefault();
       matrix.appendChild(btn);
     }
   }
-  updateMatrixDisplay();
 }
 
-// Assign key prompt
+// Assign key to matrix position with modifier toggles
 function assignKey(btn, r, c) {
-  const base = prompt("Enter key or shortcut:", mapping[r][c]);
+  const base = prompt("Enter key:", mapping[r][c]);
   if (base !== null) {
     let mod = "";
-    if (ctrlMod.checked) mod += "Ctrl+";
-    if (altMod.checked) mod += "Alt+";
-    if (shiftMod.checked) mod += "Shift+";
+    if (document.getElementById("ctrlMod").checked) mod += "Ctrl+";
+    if (document.getElementById("altMod").checked) mod += "Alt+";
+    if (document.getElementById("shiftMod").checked) mod += "Shift+";
     const fullKey = mod + base;
     mapping[r][c] = fullKey;
-    btn.textContent = iconMap[fullKey] || fullKey || `${r},${c}`;
+    btn.textContent = iconMap[fullKey] || fullKey;
     testOutput.textContent = fullKey;
   }
 }
 
-// Drag & drop support
+// Drag and drop handlers for rearranging keys
 function dragStart(e) {
   e.dataTransfer.setData("text/plain", JSON.stringify({
     row: e.target.dataset.row,
@@ -99,7 +91,6 @@ function dropKey(e) {
   updateMatrixDisplay();
 }
 
-// Refresh UI keys display
 function updateMatrixDisplay() {
   document.querySelectorAll(".key").forEach(btn => {
     const r = btn.dataset.row, c = btn.dataset.col;
@@ -108,9 +99,131 @@ function updateMatrixDisplay() {
   });
 }
 
-// Load preset shortcuts
-loadPresetBtn.onclick = () => {
-  const selected = presetSelect.value;
+// Export mapping JSON
+exportBtn.onclick = () => {
+  const result = {
+    os: detectOS(),
+    mapping: mapping
+  };
+  output.textContent = JSON.stringify(result, null, 2);
+};
+
+// Send mapping to device
+sendBtn.onclick = () => {
+  if (!deviceConnected) {
+    alert("Connect device first!");
+    return;
+  }
+  const payload = `SETUP:${JSON.stringify(mapping)}\n`;
+  sendToDevice(payload);
+};
+
+// Save mapping to EEPROM on device
+saveEEPROMBtn.onclick = () => {
+  if (!deviceConnected) {
+    alert("Connect device first!");
+    return;
+  }
+  sendToDevice("SAVE\n");
+};
+
+// Generate QR code with current mapping
+genQRBtn.onclick = () => {
+  const data = JSON.stringify({ mapping });
+  QRCode.toCanvas(qrCanvas, data, err => {
+    if (err) alert("QR generation failed");
+  });
+};
+
+// OS detection helper
+function detectOS() {
+  const platform = navigator.platform.toLowerCase();
+  if (platform.includes("mac")) return "macOS";
+  if (platform.includes("win")) return "Windows";
+  if (platform.includes("linux")) return "Linux";
+  return "Unknown";
+}
+
+// Serial connection handlers
+async function connectDevice() {
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+
+    writer = port.writable.getWriter();
+    reader = port.readable.getReader();
+
+    statusDiv.textContent = "Device connected";
+    connectBtn.disabled = true;
+    disconnectBtn.disabled = false;
+    deviceConnected = true;
+
+    readLoop();
+  } catch (err) {
+    statusDiv.textContent = "Connection failed: " + err.message;
+  }
+}
+
+async function disconnectDevice() {
+  try {
+    if (reader) {
+      await reader.cancel();
+      reader.releaseLock();
+      reader = null;
+    }
+    if (writer) {
+      writer.releaseLock();
+      writer = null;
+    }
+    if (port) {
+      await port.close();
+      port = null;
+    }
+    deviceConnected = false;
+    statusDiv.textContent = "Device disconnected";
+    connectBtn.disabled = false;
+    disconnectBtn.disabled = true;
+  } catch (err) {
+    statusDiv.textContent = "Disconnection error: " + err.message;
+  }
+}
+
+async function readLoop() {
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) {
+        const text = new TextDecoder().decode(value);
+        console.log("Received:", text);
+        // Optional: show incoming data in UI here
+      }
+    }
+  } catch (err) {
+    console.error("Read loop error:", err);
+  }
+}
+
+async function sendToDevice(data) {
+  if (!deviceConnected || !writer) {
+    alert("Device not connected.");
+    return;
+  }
+  try {
+    const encoded = new TextEncoder().encode(data);
+    await writer.write(encoded);
+  } catch (err) {
+    alert("Failed to send data: " + err.message);
+  }
+}
+
+// Event listeners for connect/disconnect buttons
+connectBtn.addEventListener("click", connectDevice);
+disconnectBtn.addEventListener("click", disconnectDevice);
+
+// Load preset app shortcuts
+document.getElementById("loadPreset").onclick = () => {
+  const selected = document.getElementById("presetApp").value;
   if (presets[selected]) {
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 3; c++) {
@@ -121,132 +234,6 @@ loadPresetBtn.onclick = () => {
   }
 };
 
-// Export JSON mapping
-exportBtn.onclick = () => {
-  const result = {
-    os: detectOS(),
-    mapping
-  };
-  output.textContent = JSON.stringify(result, null, 2);
-};
-
-// Generate QR code
-genQRBtn.onclick = () => {
-  const data = JSON.stringify({ mapping });
-  QRCode.toCanvas(qrCanvas, data, err => {
-    if (err) alert("QR generation failed");
-  });
-};
-
-// Detect OS
-function detectOS() {
-  const platform = navigator.platform.toLowerCase();
-  if (platform.includes("mac")) return "macOS";
-  if (platform.includes("win")) return "Windows";
-  if (platform.includes("linux")) return "Linux";
-  return "Unknown";
-}
-
-// Theme toggle
-themeToggle.onclick = () => {
-  document.body.classList.toggle("dark-theme");
-  themeToggle.textContent = document.body.classList.contains("dark-theme") ? "Light Theme" : "Dark Theme";
-};
-
-// ==== Web Serial ====
-
-async function connectDevice() {
-  if (port) {
-    output.textContent = "Already connected.";
-    return;
-  }
-  try {
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-
-    const encoder = new TextEncoderStream();
-    encoder.readable.pipeTo(port.writable);
-    writer = encoder.writable.getWriter();
-
-    const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-    reader = decoder.readable.getReader();
-
-    statusDiv.textContent = "Device connected";
-
-    keepReading = true;
-    readLoop();
-
-  } catch (err) {
-    output.textContent = "Connection failed: " + err;
-  }
-}
-
-async function readLoop() {
-  while (keepReading && reader) {
-    try {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) {
-        output.textContent += "\nDevice: " + value.trim();
-        output.scrollTop = output.scrollHeight;
-      }
-    } catch (err) {
-      output.textContent += "\nRead error: " + err;
-      break;
-    }
-  }
-}
-
-async function sendToDevice(data) {
-  if (!writer) {
-    alert("Device not connected");
-    return;
-  }
-  try {
-    await writer.write(data);
-    output.textContent += `\nSent: ${data.trim()}`;
-    output.scrollTop = output.scrollHeight;
-  } catch (err) {
-    alert("Send failed: " + err);
-  }
-}
-
-async function disconnectDevice() {
-  keepReading = false;
-  if (reader) {
-    await reader.cancel();
-    reader.releaseLock();
-    reader = null;
-  }
-  if (writer) {
-    await writer.close();
-    writer.releaseLock();
-    writer = null;
-  }
-  if (port) {
-    await port.close();
-    port = null;
-  }
-  statusDiv.textContent = "Device disconnected";
-}
-
-// Button event bindings
-document.getElementById("connectBtn").onclick = connectDevice;
-
-sendBtn.onclick = async () => {
-  const payload = "SETUP:" + JSON.stringify(mapping) + "\n";
-  await sendToDevice(payload);
-};
-
-saveEEPROMBtn.onclick = async () => {
-  await sendToDevice("SAVE\n");
-};
-
-// Disconnect device on unload
-window.addEventListener("beforeunload", async () => {
-  if (port) await disconnectDevice();
-});
-
-// Initialization
+// Initialize UI
 createMatrix();
+disconnectBtn.disabled = true;
