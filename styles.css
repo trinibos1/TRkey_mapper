@@ -1,128 +1,199 @@
-:root {
-  --bg-color: #f0f0f0;
-  --text-color: #222;
-  --key-bg: #fff;
-  --key-border: #333;
-  --hover-bg: #ddd;
-  --modifier-active: #6c63ff;
-  --status-color: green;
+/* Reset */
+* {
+  box-sizing: border-box;
 }
-
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  text-align: center;
-  padding: 20px;
-  background: var(--bg-color);
-  color: var(--text-color);
-  transition: background 0.3s, color 0.3s;
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  --bg: #f5f5f7;
+  --fg: #222;
+  --key-bg: white;
+  --key-border: #ddd;
+  --key-shadow: rgba(0,0,0,0.1);
+  --hover-bg: #eaeaea;
+  --active-bg: #d4d4d8;
+  --status-bg: white;
+  --status-fg: #555;
+  --modal-bg: white;
+  --modal-shadow: rgba(0,0,0,0.15);
+  --control-bg: white;
+  --control-border: #ccc;
+  --control-hover: #0078d7;
 }
 
-.dark-theme {
-  --bg-color: #222;
-  --text-color: #eee;
-  --key-bg: #333;
-  --key-border: #888;
-  --hover-bg: #444;
-  --modifier-active: #9a8cff;
-  --status-color: #6df06d;
+/* Dark theme override */
+body.dark {
+  --bg: #1e1e1e;
+  --fg: #ddd;
+  --key-bg: #2e2e2e;
+  --key-border: #444;
+  --key-shadow: rgba(0,0,0,0.8);
+  --hover-bg: #3a3a3a;
+  --active-bg: #505050;
+  --status-bg: #2a2a2a;
+  --status-fg: #aaa;
+  --modal-bg: #2b2b2b;
+  --modal-shadow: rgba(0,0,0,0.9);
+  --control-bg: #2e2e2e;
+  --control-border: #555;
+  --control-hover: #3399ff;
 }
 
-h1 {
-  margin-bottom: 10px;
+header {
+  background: var(--control-bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-
+header h1 {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 0;
+}
 .controls {
-  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+select, button {
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  user-select: none;
+}
+select:hover, button:hover:not(:disabled) {
+  border-color: var(--control-hover);
+  color: var(--control-hover);
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+#themeToggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--fg);
+  padding: 6px;
 }
 
-.matrix {
+main {
+  flex-grow: 1;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#matrix {
   display: grid;
   grid-template-columns: repeat(3, 90px);
-  gap: 12px;
-  justify-content: center;
-  margin: 20px auto;
+  grid-gap: 14px;
 }
 
 .key {
   background: var(--key-bg);
-  border: 2px solid var(--key-border);
-  border-radius: 8px;
+  box-shadow: 0 2px 5px var(--key-shadow);
+  border-radius: 12px;
+  border: 1px solid var(--key-border);
   height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  font-size: 22px;
-  padding: 5px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--fg);
   user-select: none;
-  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
-
 .key:hover {
   background: var(--hover-bg);
-  border-color: var(--modifier-active);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+.key:active {
+  background: var(--active-bg);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.modifiers {
-  margin: 10px 0;
+#modifiers {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  color: var(--fg);
 }
-
-.modifiers label {
-  margin: 0 15px;
-  font-weight: bold;
-}
-
-.modifiers input[type="checkbox"]:checked + label {
-  color: var(--modifier-active);
-}
-
-.testOutput {
-  margin-top: 15px;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.status {
-  margin-top: 15px;
-  font-weight: bold;
-  color: var(--status-color);
-}
-
-.output {
-  background: #111;
-  color: #0f0;
-  padding: 12px;
-  margin-top: 20px;
-  max-height: 150px;
-  overflow-y: auto;
-  text-align: left;
-  font-family: monospace;
-  border-radius: 6px;
-  user-select: text;
-}
-
-canvas#qrCanvas {
-  margin-top: 10px;
-  border: 1px solid var(--key-border);
-  border-radius: 6px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-button {
-  padding: 8px 15px;
-  margin: 0 5px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1.5px solid var(--key-border);
+#modifiers label {
   cursor: pointer;
-  background: var(--key-bg);
-  color: var(--text-color);
-  transition: background 0.2s, color 0.2s;
+  font-weight: 600;
+  color: var(--fg);
+}
+#modifiers input[type="checkbox"] {
+  margin-right: 6px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
-button:hover {
-  background: var(--modifier-active);
-  color: #fff;
+#statusBar {
+  background: var(--status-bg);
+  padding: 8px 20px;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+  font-size: 0.9rem;
+  color: var(--status-fg);
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  background: var(--modal-bg);
+  border-radius: 14px;
+  padding: 24px 32px;
+  max-width: 360px;
+  width: 90vw;
+  box-shadow: 0 10px 25px var(--modal-shadow);
+  text-align: center;
+  font-size: 1rem;
+}
+.modal input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--control-border);
+  font-size: 1rem;
+  margin-bottom: 20px;
+  outline-offset: 2px;
+  color: var(--fg);
+  background: var(--key-bg);
+}
+.modal button {
+  background: #0078d7
