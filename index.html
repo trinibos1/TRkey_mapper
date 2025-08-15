@@ -30,7 +30,7 @@
         html, body, #root {
             min-height: 100%; /* Ensure they take at least full height, but can grow */
             margin: 0;
-            /* Removed overflow: hidden; */
+            /* Removed overflow: hidden; as it can hide content when modals are shown */
         }
     </style>
 </head>
@@ -353,14 +353,17 @@
             ],
         };
 
-        const NUM_LAYERS_PICO = 2; // Matches the NUM_LAYERS in the Pico code
-        // Updated initialMultiLayerGrid to include a 'macros' key for consistency with Pico's layers.json
-        const initialMultiLayerGrid = Array(NUM_LAYERS_PICO).fill().map((_, layerIdx) => ({
-            name: `Layer ${layerIdx}`,
-            labels: Array(9).fill(''), // 3x3 grid, flattened to 9 labels
-            keys: Array(9).fill(null), // 3x3 grid, flattened to 9 keys (null for empty)
-            macros: [] // Initialize with empty macros list
-        }));
+        const MIN_LAYERS = 1;
+        const MAX_LAYERS = 10;
+        const DEFAULT_LAYERS = 2; // Default number of layers for initial load if no profile exists
+
+        // Helper function to create an empty layer object
+        const createEmptyLayer = (index) => ({
+            name: `Layer ${index}`,
+            labels: Array(9).fill(''),
+            keys: Array(9).fill(null),
+            macros: [] // Macros are technically global to the app but stored on Layer 0 in JSON
+        });
 
 
         // Modal component (formerly from src/components/Modal.js)
@@ -462,7 +465,7 @@
         };
 
         // KeymapGrid component (formerly from src/components/KeymapGrid.js)
-        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer }) => {
+        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers }) => {
             const { useState, useEffect } = React;
             // The keymap prop is now an array of layer objects, each with 'keys' and 'labels'
             // We need to transform the 1D 'keys' and 'labels' arrays into a 3x3 grid for display
@@ -486,10 +489,9 @@
                     }
                     // For macros, use the macro name as description
                     if (keyCombo.startsWith("MACRO_")) {
-                        const macroName = keyCombo.replace("_", " "); // e.g., "MACRO 1"
-                        // Here, we'd ideally look up the actual macro name from the macros state
-                        // For now, we'll use the generated name
-                        description = macroName;
+                        const macroNum = keyCombo.split('_')[1];
+                        // If you want to show the actual macro name, you'd need to pass the macros array here
+                        description = `Macro ${macroNum}`;
                     }
 
                     return { combo: keyCombo, description: description };
@@ -499,8 +501,8 @@
 
             return (
                 <div className="flex flex-col items-center">
-                    <div className="flex space-x-2 mb-4">
-                        {[...Array(NUM_LAYERS_PICO)].map((_, index) => ( // Assuming NUM_LAYERS_PICO layers
+                    <div className="flex flex-wrap justify-center gap-2 mb-4"> {/* Use flex-wrap for responsiveness */}
+                        {[...Array(numLayers)].map((_, index) => ( // Render buttons based on numLayers
                             <button
                                 key={`layer-btn-${index}`}
                                 onClick={() => setCurrentLayer(index)}
@@ -866,12 +868,31 @@
         };
 
         // Settings component (formerly from src/components/Settings.js)
-        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea }) => {
+        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea, numLayers, setNumLayers }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">SETTINGS</h1>
                     <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Layer Configuration</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <label htmlFor="num-layers" className="text-lg text-zinc-200 mr-4">Number of Layers:</label>
+                            <input
+                                type="number"
+                                id="num-layers"
+                                value={numLayers}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    if (!isNaN(value)) {
+                                        setNumLayers(Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, value)));
+                                    }
+                                }}
+                                min={MIN_LAYERS}
+                                max={MAX_LAYERS}
+                                className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white text-center"
+                            />
+                        </div>
+
                         <h2 className="text-2xl font-bold text-red-300 mb-4">Import JSON Configuration</h2>
                         <textarea
                             className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y"
@@ -1155,9 +1176,36 @@
                 addLog(`Delete response for ${fname}: ${response}`, "info");
             };
 
+            // New state for number of layers
+            const [numLayers, setNumLayers] = useState(DEFAULT_LAYERS);
 
-            // Updated initialGrid to be multi-layered, now including 'macros' key
-            const [keymap, setKeymap] = useState(initialMultiLayerGrid);
+            // State for the keymap, initialized based on numLayers
+            const [keymap, setKeymap] = useState(() => Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
+            
+            // Effect to update keymap when numLayers changes
+            useEffect(() => {
+                setKeymap(prevKeymap => {
+                    const newKeymap = Array(numLayers).fill().map((_, i) => {
+                        if (prevKeymap[i]) {
+                            return prevKeymap[i]; // Keep existing layer data
+                        } else {
+                            return createEmptyLayer(i); // Create new empty layer
+                        }
+                    });
+                    return newKeymap;
+                });
+
+                // Adjust currentLayer if it's out of bounds
+                setCurrentLayer(prevCurrentLayer => {
+                    if (prevCurrentLayer >= numLayers) {
+                        return numLayers > 0 ? numLayers - 1 : 0; // Go to last layer or 0 if no layers (min is 1 so never 0)
+                    }
+                    return prevCurrentLayer;
+                });
+                addLog(`Number of layers changed to ${numLayers}.`, "info");
+            }, [numLayers]);
+
+
             const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
             const [showModal, setShowModal] = useState(false);
             const [modalContent, setModalContent] = useState({ title: "", message: "" });
@@ -1172,7 +1220,7 @@
 
             const [macros, setMacros] = useState([
                 { id: 1, name: "Macro 1", sequence: "Hello World!" }, // Renamed for consistency with Pico parsing
-                { id: 2, name: "Macro 2", sequence: "John Doe\nSoftware Engineer" }, // Renamed for consistency
+                { id: 2, name: "Macro 2", sequence: "control+alt+t" }, // Example macro
             ]);
             const [nextMacroId, setNextMacroId] = useState(3);
 
@@ -1340,7 +1388,8 @@
                 const profileData = {
                     keymap: keymap, // Save the multi-layer keymap
                     potentiometerConfig: potentiometerConfig,
-                    macros: macros
+                    macros: macros,
+                    numLayers: numLayers // Save the number of layers
                 };
                 localStorage.setItem("trkey_profile", JSON.stringify(profileData));
                 setModalContent({
@@ -1355,16 +1404,36 @@
                 const saved = localStorage.getItem("trkey_profile");
                 if (saved) {
                     const profileData = JSON.parse(saved);
-                    // Ensure loaded keymap matches expected multi-layer structure
-                    if (profileData.keymap && Array.isArray(profileData.keymap) && profileData.keymap.length === initialMultiLayerGrid.length) {
-                        setKeymap(profileData.keymap);
-                    } else {
-                        setKeymap(initialMultiLayerGrid); // Fallback to empty multi-layer grid
-                        console.warn("Loaded keymap structure mismatch, resetting to initial multi-layer grid.");
-                        addLog("Loaded keymap structure mismatch, resetting to initial multi-layer grid.", "warn");
-                    }
+                    
+                    const loadedNumLayers = profileData.numLayers || DEFAULT_LAYERS;
+                    const clampedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedNumLayers));
+                    setNumLayers(clampedNumLayers);
+
+                    // Re-initialize keymap based on loadedNumLayers (or clamped)
+                    const newKeymap = Array(clampedNumLayers).fill().map((_, i) => {
+                        if (profileData.keymap && profileData.keymap[i]) {
+                            // Deep copy to ensure independence
+                            return { ...profileData.keymap[i], 
+                                keys: [...profileData.keymap[i].keys], 
+                                labels: [...profileData.keymap[i].labels] 
+                            };
+                        } else {
+                            return createEmptyLayer(i);
+                        }
+                    });
+                    setKeymap(newKeymap);
+
                     setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 34, function: 'volume', customAction: '' });
                     setMacros(profileData.macros || []);
+
+                    // Adjust currentLayer if it's out of bounds after loading
+                    setCurrentLayer(prevCurrentLayer => {
+                        if (prevCurrentLayer >= clampedNumLayers) {
+                            return clampedNumLayers > 0 ? clampedNumLayers - 1 : 0;
+                        }
+                        return prevCurrentLayer;
+                    });
+
                     setModalContent({
                         title: "Profile Loaded",
                         message: "Profile loaded successfully."
@@ -1373,9 +1442,11 @@
                 } else {
                     setModalContent({
                         title: "No Profile Found",
-                        message: "No saved profile found."
+                        message: "No saved profile found. Initializing with default layers."
                     });
-                    addLog("No saved profile found in browser storage.", "info");
+                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
+                    setNumLayers(DEFAULT_LAYERS);
+                    addLog("No saved profile found in browser storage. Initialized with default layers.", "info");
                 }
                 setShowModal(true);
             };
@@ -1385,7 +1456,8 @@
                 // Transform the internal multi-layer keymap state to the Pico-friendly layers.json format
                 const layersForExport = []; // Array of layer objects
 
-                keymap.forEach((layerData, lIdx) => {
+                // Use the current numLayers for export
+                keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
                     // Ensure layerData has 'name', 'labels', 'keys'
                     const layerName = layerData.name || `Layer ${lIdx}`;
                     const keys = layerData.keys.map(key => key || ""); // Replace null with empty string
@@ -1446,7 +1518,8 @@
 
                     // Transform the internal multi-layer keymap state to the Pico-friendly layers.json format
                     const layersForUpload = [];
-                    keymap.forEach((layerData, lIdx) => {
+                    // Use the current numLayers for upload
+                    keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
                         const layerName = layerData.name || `Layer ${lIdx}`;
                         const keys = layerData.keys.map(key => key || "");
                         const labels = layerData.labels.map(label => label || "");
@@ -1567,44 +1640,54 @@
 
                     // Expecting an array of layer objects for layers.json
                     if (Array.isArray(parsedJson)) {
-                        const newKeymap = Array(NUM_LAYERS_PICO).fill().map((_, layerIdx) => ({
-                            name: `Layer ${layerIdx}`,
-                            labels: Array(9).fill(''),
-                            keys: Array(9).fill(null),
-                            macros: []
-                        }));
+                        const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, parsedJson.length));
+                        setNumLayers(loadedNumLayers); // Update the numLayers state
+
+                        const newKeymap = Array(loadedNumLayers).fill().map((_, layerIdx) => {
+                            if (parsedJson[layerIdx]) {
+                                return {
+                                    name: parsedJson[layerIdx].name || `Layer ${layerIdx}`,
+                                    labels: Array.isArray(parsedJson[layerIdx].labels) && parsedJson[layerIdx].labels.length === 9
+                                        ? [...parsedJson[layerIdx].labels]
+                                        : Array(9).fill(''),
+                                    keys: Array.isArray(parsedJson[layerIdx].keys) && parsedJson[layerIdx].keys.length === 9
+                                        ? [...parsedJson[layerIdx].keys]
+                                        : Array(9).fill(null),
+                                    macros: parsedJson[layerIdx].macros || []
+                                };
+                            } else {
+                                return createEmptyLayer(layerIdx);
+                            }
+                        });
+
                         let loadedMacros = [];
                         let maxMacroId = 0;
 
-                        parsedJson.forEach((layerData, lIdx) => {
-                            if (lIdx < NUM_LAYERS_PICO) { // Only load up to NUM_LAYERS_PICO
-                                if (layerData.keys && Array.isArray(layerData.keys) && layerData.keys.length === 9) {
-                                    newKeymap[lIdx].keys = [...layerData.keys]; // Directly assign keys array
-                                }
-                                if (layerData.labels && Array.isArray(layerData.labels) && layerData.labels.length === 9) {
-                                    newKeymap[lIdx].labels = [...layerData.labels]; // Directly assign labels array
-                                }
-                                if (layerData.name) {
-                                    newKeymap[lIdx].name = layerData.name;
-                                }
-
-                                // Load macros if present in this layer (Pico doc suggests macros per layer, typically first)
-                                if (layerData.macros && Array.isArray(layerData.macros)) {
-                                    const newMacrosForLayer = layerData.macros.map((m) => {
-                                        const id = nextMacroId + loadedMacros.length; // Assign a temporary ID
-                                        maxMacroId = Math.max(maxMacroId, id);
-                                        return { id: id, name: m.name, sequence: m.sequence };
-                                    });
-                                    loadedMacros = [...loadedMacros, ...newMacrosForLayer];
-                                }
+                        // Consolidate macros from all loaded layers (though Pico expects them on layer 0)
+                        parsedJson.forEach(layerData => {
+                            if (layerData.macros && Array.isArray(layerData.macros)) {
+                                const newMacrosForLayer = layerData.macros.map((m) => {
+                                    const id = nextMacroId + loadedMacros.length; // Assign a temporary ID
+                                    maxMacroId = Math.max(maxMacroId, id);
+                                    return { id: id, name: m.name, sequence: m.sequence };
+                                });
+                                loadedMacros = [...loadedMacros, ...newMacrosForLayer];
                             }
                         });
+                        
                         setKeymap(newKeymap);
                         setMacros(loadedMacros);
                         setNextMacroId(maxMacroId + 1); // Update nextMacroId based on loaded macros
 
                         // Potentiometer config is not part of Pico's layers.json, so reset or keep default
                         setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
+
+                        setCurrentLayer(prevCurrentLayer => {
+                            if (prevCurrentLayer >= loadedNumLayers) {
+                                return loadedNumLayers > 0 ? loadedNumLayers - 1 : 0;
+                            }
+                            return prevCurrentLayer;
+                        });
 
 
                         setModalContent({
@@ -1719,6 +1802,7 @@
                                     selectedKeymapCell={selectedKeymapCell} /* New prop */
                                     handleKeymapCellClick={handleKeymapCellClick} /* New prop */
                                     clearCurrentLayer={clearCurrentLayer} /* New prop */
+                                    numLayers={numLayers} /* Pass numLayers to KeymapGrid */
                                 />
                                 <h2 className="text-3xl font-bold text-red-400 mb-6">SHORTCUTS</h2>
                                 <ShortcutPool
@@ -1777,6 +1861,8 @@
                                     jsonInput={jsonInput}
                                     setJsonInput={setJsonInput}
                                     loadJsonFromTextArea={loadJsonFromTextArea}
+                                    numLayers={numLayers} /* Pass numLayers */
+                                    setNumLayers={setNumLayers} /* Pass setNumLayers */
                                 />
                             </div>
                         )}
@@ -1811,3 +1897,4 @@
     </script>
 </body>
 </html>
+s
