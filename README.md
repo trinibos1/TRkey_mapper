@@ -1,6 +1,6 @@
 # 3x3 Micropad Remapper
 
-A powerful web-based configuration tool for your 3x3 ESP32-powered micropad keyboard.
+A powerful web-based configuration tool for your 3x3 pico-powered micropad keyboard.
 
 ---
 
