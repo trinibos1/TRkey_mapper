@@ -1,4 +1,3 @@
-
 # ⚙️ 3x3 Micropad Remapper
 
 A powerful web-based configuration tool for your 3x3 Pico-powered micropad keyboard. This tool provides an intuitive interface for customizing your micropad's key bindings, including advanced features like macros and peripheral controls, and allows direct communication with your device via Web Serial API.
@@ -69,6 +68,47 @@ This application is provided as a **single HTML file (`index.html`)** for ease o
 
 ---
 
+## 📡 Communication Protocol (Web Serial)
+
+The web application communicates with the Pico via a simple command-based serial protocol.
+
+* **Baud Rate:** $115200$ bps
+* **Line Endings:** All commands sent from the host (web app) to the Pico must be terminated with a newline character (`\n`).
+* **Response Termination:** Responses from the Pico are terminated by specific markers:
+    * `<EOF>`: End of File marker, used after sending file data (e.g., during `GET`).
+    * `<END>`: End of message marker, used after sending text-based responses (e.g., during `DEL` success/failure).
+
+Here's how specific file operations work:
+
+### ⬆️ Upload (PUT)
+
+The host initiates a file upload, then sends the raw byte data of the file.
+
+1.  **Host sends:** `PUT <filename>\n` (e.g., `PUT layers.json\n`)
+2.  **Host sends:** Raw binary data of the file in chunks.
+3.  **Host sends:** `<EOF>` marker after all data is sent.
+4.  **Pico Response:** The Pico processes the incoming data. A typical response after successful reception would be a simple confirmation message, often terminated by `<END>`.
+
+### ⬇️ Download (GET)
+
+The host requests a file from the Pico, and the Pico responds by sending the file's raw byte data.
+
+1.  **Host sends:** `GET <filename>\n` (e.g., `GET layers.json\n`)
+2.  **Pico sends:** Raw binary data of the requested file in chunks.
+3.  **Pico sends:** `<EOF>` marker after all data is sent.
+4.  **Host Processing:** The web application reads data until `<EOF>` is received, then reconstructs the file from the received chunks.
+
+### 🗑️ Delete (DEL)
+
+The host requests the Pico to delete a specified file.
+
+1.  **Host sends:** `DEL <filename>\n` (e.g., `DEL layers.json\n`)
+2.  **Pico Response:** The Pico attempts to delete the file. It sends a message indicating success or failure.
+    * **Success Example:** `File layers.json deleted successfully.<END>`
+    * **Failure Example:** `Error: File not found or could not be deleted.<END>`
+
+---
+
 ## 🛠️ Development Notes
 
 * **Web Serial API:** Enables direct USB serial communication between the browser and your Pico.
@@ -103,4 +143,4 @@ For feature requests, bug reports, or any questions, please open an issue on the
 
 ---
 
-*Built for efficient, customizable keypad configuration with modern web tech.* 
+*Built for efficient, customizable keypad configuration with modern web tech.*
