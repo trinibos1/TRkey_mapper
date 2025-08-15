@@ -1,128 +1,107 @@
-# 3x3 Micropad Remapper
+Here's a new, comprehensive README for your 3x3 Micropad Remapper, consolidated into a single document:
 
-A powerful web-based configuration tool for your 3x3 pico-powered micropad keyboard.
+# ⚙️ 3x3 Micropad Remapper
 
----
-
-## Features
-
-- **Full key remapping:** Click keys to assign shortcuts or single keys, with modifier toggles (Ctrl, Alt, Shift).
-- **Drag-and-drop layout editing:** Rearrange keys intuitively by dragging them.
-- **Preset profiles:** Quickly load predefined shortcuts for popular apps including:
-  - Fusion 360
-  - Canva
-  - KiCad
-  - VS Code
-  - War Thunder
-- **Serial communication:** Connect your micropad device via Web Serial API:
-  - Auto-detect and auto-connect if previously paired
-  - Send JSON-based mappings
-  - Save mappings to device EEPROM persistently
-  - Disconnect safely
-- **Live key output preview:** See what key or shortcut is currently assigned/edited.
-- **QR code generation:** Export your key mapping config as a scannable QR code for easy sharing or backup.
-- **Responsive and interactive UI:**
-  - Smooth fade-in modals and overlays
-  - Hover states and active modifier indicators
-  - Theme toggle between light and dark modes using CSS variables
-- **Profiles support:** Save/load user profiles with custom mappings.
-- **Shortcut suggestion UI:** Shows shortcut suggestions for keys and apps.
-- **Gamepad/WebHID support:** (planned for extension)
-- **Custom icons and themes:** Display shortcut icons like ⏯, 💾, 🔇 on keys.
-- **Physical device echo:** Feedback loop showing assigned key updates in real-time.
-- **Persistent profile saving:** Store profiles in local storage for quick reloading.
+A powerful web-based configuration tool for your 3x3 Pico-powered micropad keyboard. This tool provides an intuitive interface for customizing your micropad's key bindings, including advanced features like macros and peripheral controls, and allows direct communication with your device via Web Serial API.
 
 ---
 
-## How to Use
+## ✨ Features
 
-1. **Open `index.html`** in a modern Chromium browser (Chrome, Edge) with Web Serial API enabled.
-2. **Assign keys:**
-   - Click any key to open the assignment modal.
-   - Enter the key or shortcut (e.g. `A`, `Ctrl+S`, `MediaPlayPause`).
-   - Use modifier toggles (Ctrl, Alt, Shift) to combine modifiers.
-   - Click Save.
-3. **Drag & drop keys** within the 3x3 grid to rearrange layouts.
-4. **Load presets:**
-   - Select your app from the dropdown.
-   - Click *Apply Preset* to load predefined shortcuts.
-5. **Manage profiles:**
-   - Save your current layout as a profile.
-   - Load saved profiles from local storage.
-6. **Connect your device:**
-   - Click *Connect Device*.
-   - Grant serial permission.
-   - Auto-connect attempts on page load if previously connected.
-7. **Send your layout:**
-   - Click *Send to Device* to transmit JSON configuration.
-   - Click *Save to EEPROM* to persist the config on hardware.
-8. **Export/Share:**
-   - Export the mapping JSON to a file or clipboard.
-   - Generate a QR code for easy transfer.
-9. **Switch themes:**
-   - Click *Dark Theme* toggle to switch UI modes instantly.
-10. **Disconnect:** Click *Disconnect Device* to close serial connection safely.
+* **Full Key Remapping:** Easily assign single keys or complex shortcuts to any of the 9 keys on your micropad. The intuitive drag-and-drop interface or a simple click-and-assign method makes configuration straightforward.
+* **Multi-Layer Support:** Configure up to 2 distinct layers for your keymap, allowing you to switch between different sets of commands on the fly.
+* **Drag-and-Drop Layout Editing:** Rearrange key assignments intuitively by dragging them from one cell to another within the 3x3 grid.
+* **Macro Management:** Create and manage custom **macros** with specific key sequences. These can be assigned to any key, enabling complex actions with a single press.
+* **Peripheral Controls:** Configure external peripherals like potentiometers to control **volume**, **scrolling**, or even **custom QMK keycodes**, enhancing your micropad's versatility.
+* **Persistent Profile Saving:** Your keymap, macro definitions, and peripheral configurations can be **saved and loaded directly from your browser's local storage**, ensuring your settings are retained between sessions.
+* **Configuration Export:** Export your entire configuration as a **`layers.json`** file, compatible with your Pico-powered micropad firmware. This file defines all layers, key assignments, and macros.
+* **Web Serial Device Upload:** Directly connect to your Pico-powered micropad device via the **Web Serial API** (supported on Chromium-based browsers) to upload your `layers.json` configuration. You can also **check the existing file** on your device or **delete it**.
+* **Live Key Tester:** Use the integrated **Key Tester** to see detailed information about any key pressed on your physical keyboard, which is helpful for debugging and identifying keycodes.
+* **Responsive and Interactive UI:** The user interface is designed to be responsive, providing a consistent experience across various screen sizes. It features smooth modals, clear hover states, and easy navigation.
+* **Comprehensive Logging:** A **device log** is available to monitor the communication and operations performed with your Pico, aiding in troubleshooting.
 
 ---
 
-## File Structure
+## 🚀 How to Use
 
-- `index.html`: Main app UI, layout, and markup.
-- `styles.css`: Styling for grid, modal, buttons, themes, responsiveness.
-- `app.js`: Logic for UI, serial communication, presets, profiles, QR code, theme toggle.
-
----
-
-## Requirements
-
-- Chromium-based browser (Chrome, Edge) with Web Serial API support.
-- Micropad device connected via USB serial (baud rate 115200).
-- Micropad firmware that understands JSON `SETUP` and `SAVE` commands over serial.
-
----
-
-## Development Notes
-
-- The app uses **Web Serial API** for direct USB serial communication — only supported on desktop Chromium browsers.
-- Profiles are stored in **localStorage** to persist mappings between sessions.
-- The **QR code generator** uses [QRCode.js](https://github.com/davidshimjs/qrcodejs).
-- UI interactions use **CSS transitions** and **flexbox/grid** for responsive design.
-- Drag-and-drop uses native HTML5 Drag and Drop API.
-- Modifier toggles dynamically prepend to keys on assignment.
-- Shortcut suggestions can be extended by editing `presets` and `iconMap` in `app.js`.
-
----
-
-## Extending the App
-
-- Add new app presets by editing the `presets` object in `app.js`.
-- Add custom icons by extending the `iconMap`.
-- Integrate WebHID/Gamepad support for advanced device input handling.
-- Improve profiles UI with import/export JSON files.
-- Add cloud sync or backend integration for profile sharing.
+1.  **Open `index.html`** in a modern Chromium-based browser (like Chrome or Edge). Ensure Web Serial API is enabled in your browser settings if you encounter issues.
+2.  **Navigate the Interface:**
+    * Use the **sidebar** on the left to switch between different configuration tabs: KEYMAP, MACROS, CONTROLS, SAVE + LOAD, SETTINGS, and KEY TESTER.
+3.  **Configure Your Keymap (KEYMAP Tab):**
+    * The central **3x3 grid** represents your micropad.
+    * **Assign Keys:**
+        * **Drag and Drop:** Drag a desired shortcut from the "SHORTCUTS" section (below the grid) directly onto a key cell in the 3x3 grid.
+        * **Click-to-Assign:** Click a key cell in the 3x3 grid to select it (it will highlight). Then, click any shortcut in the "SHORTCUTS" list to assign it to the selected cell.
+    * **Rearrange Keys:** Drag keys within the 3x3 grid to swap their positions.
+    * **Clear a Key:** Click the small 'X' button in the top-right corner of any assigned key cell to clear its assignment.
+    * **Manage Layers:** Use the "Layer 0", "Layer 1", etc., buttons above the grid to switch between and configure different layers. You can also click "Clear Current Layer" to clear all assignments on the active layer.
+4.  **Manage Macros (MACROS Tab):**
+    * Click **"Add New Macro"** to define a custom macro by providing a name and a key sequence (e.g., "Hello World!").
+    * **Edit** or **Delete** existing macros using the respective buttons next to each macro entry.
+5.  **Configure Peripherals (CONTROLS Tab):**
+    * Enable the **potentiometer** and configure its assigned **analog pin** and **function** (Volume Control, Scroll, or Custom QMK Keycode).
+6.  **Save, Load & Transfer (SAVE + LOAD Tab):**
+    * **Save Profile to Browser:** Saves your current configuration to your browser's local storage.
+    * **Load Profile from Browser:** Loads your last saved configuration from browser storage.
+    * **Export Configuration as layers.json:** Generates a `layers.json` file for you to download. You can then **drag this file onto your `CIRCUITPY` drive** when your Pico is connected to your computer in USB Mass Storage mode.
+    * **Connect to Device:** Click to establish a serial connection with your Pico-powered micropad. You may be prompted to select the device.
+    * **Upload layers.json to Device:** Sends your current configuration directly to the connected Pico via Web Serial.
+    * **Check layers.json on Device:** Retrieves the `layers.json` file from your connected Pico and displays its content in the Settings tab.
+    * **Delete layers.json on Device:** Removes the `layers.json` file from your connected Pico.
+    * **Show Device Log:** Toggle to view a real-time log of communication with your connected device.
+7.  **Import Configuration (SETTINGS Tab):**
+    * Paste an existing `layers.json` configuration into the text area and click **"Load JSON"** to apply it to the configurator.
+8.  **Test Your Keys (KEY TESTER Tab):**
+    * Simply press keys on your physical keyboard to see their `key` and `code` values, along with active modifier keys (Ctrl, Shift, Alt, Meta).
 
 ---
 
-## Troubleshooting
+## 📁 File Structure
 
-- If serial connection fails, check browser permissions and USB device access.
-- Web Serial API only works in secure contexts (https or localhost).
-- Refresh page to reset state if UI misbehaves.
-- Use Chrome/Edge latest stable for best compatibility.
+This application is provided as a **single HTML file (`index.html`)** for ease of use. All HTML markup, CSS styling, and JavaScript/React logic are embedded within this file.
 
 ---
 
-## License
+## 📋 Requirements
 
-MIT License — free to use, modify, and distribute.
+* **Chromium-based browser (Chrome, Edge):** The Web Serial API, crucial for direct device communication, is primarily supported by these browsers.
+* **Micropad device:** A Pico-powered micropad keyboard.
+* **Micropad firmware:** Your device must be running compatible firmware that understands JSON configuration commands over serial (specifically, expecting a `layers.json` file containing keymap, peripheral, and macro data).
 
 ---
 
-## Contact
+## 🛠️ Development Notes
 
-For feature requests or issues, open a GitHub issue or contact the maintainer.
+* **Web Serial API:** Enables direct USB serial communication between the browser and your Pico.
+* **Local Storage:** User profiles are persisted locally in your browser for quick access.
+* **React & Tailwind CSS:** The UI is built using React for component-based development and styled efficiently with Tailwind CSS for a modern, responsive design.
+* **`@babel/standalone`:** Used to transpile JSX directly in the browser, allowing the single-file React setup.
+
+---
+
+## 🐛 Troubleshooting
+
+* **Serial Connection Fails:**
+    * Ensure your browser is Chromium-based (Chrome, Edge).
+    * Verify your Pico is properly connected via USB.
+    * Check browser permissions and ensure you've granted access to the serial port.
+    * The Web Serial API typically requires a secure context (HTTPS) or localhost.
+    * Confirm your Pico's firmware is correctly set up for serial communication at **115200 baud rate**.
+* **UI Misbehaves:** Try refreshing the page to reset the application state.
+* **JSON Import Errors:** Ensure the pasted JSON strictly follows the `layers.json` structure expected by the application.
+
+---
+
+## ⚖️ License
+
+This project is open-source, distributed under the **MIT License**. Feel free to use, modify, and distribute it as you see fit.
+
+---
+
+## ✉️ Contact
+
+For feature requests, bug reports, or any questions, please open an issue on the GitHub repository or contact the project maintainer.
 
 ---
 
 *Built for efficient, customizable keypad configuration with modern web tech.*
-
