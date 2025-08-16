@@ -1,4 +1,4 @@
-# ⚙️ 3x3 Micropad Remapper
+# ⚙️ 3x3 Micropad Remapper and soon to be keyboard remapper
 
 A powerful web-based configuration tool for your 3x3 Pico-powered micropad keyboard. This tool provides an intuitive interface for customizing your micropad's key bindings, including advanced features like macros and peripheral controls, and allows direct communication with your device via Web Serial API.
 
@@ -7,7 +7,7 @@ A powerful web-based configuration tool for your 3x3 Pico-powered micropad keybo
 ## ✨ Features
 
 * **Full Key Remapping:** Easily assign single keys or complex shortcuts to any of the 9 keys on your micropad. The intuitive drag-and-drop interface or a simple click-and-assign method makes configuration straightforward.
-* **Multi-Layer Support:** Configure up to 2 distinct layers for your keymap, allowing you to switch between different sets of commands on the fly.
+* **Multi-Layer Support:** Configure up to 10 distinct layers for your keymap, allowing you to switch between different sets of commands on the fly.
 * **Drag-and-Drop Layout Editing:** Rearrange key assignments intuitively by dragging them from one cell to another within the 3x3 grid.
 * **Macro Management:** Create and manage custom **macros** with specific key sequences. These can be assigned to any key, enabling complex actions with a single press.
 * **Peripheral Controls:** Configure external peripherals like potentiometers to control **volume**, **scrolling**, or even **custom QMK keycodes**, enhancing your micropad's versatility.
