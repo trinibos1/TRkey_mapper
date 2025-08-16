@@ -63,7 +63,7 @@ This application is provided as a **single HTML file (`index.html`)** for ease o
 ## 📋 Requirements
 
 * **Chromium-based browser (Chrome, Edge):** The Web Serial API, crucial for direct device communication, is primarily supported by these browsers.
-* **Micropad device:** A Pico-powered micropad keyboard.
+* **Micropad device:** A Pico-powered micropad keyboard using trkey.
 * **Micropad firmware:** Your device must be running compatible firmware that understands JSON configuration commands over serial (specifically, expecting a `layers.json` file containing keymap, peripheral, and macro data).
 
 ---
