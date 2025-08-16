@@ -45,7 +45,7 @@
         const ReactDOM = window.ReactDOM;
 
         // Constants with ALL shortcuts from the PDF, adapted for CircuitPython Keycode names
-        const presets = {
+        const basePresets = {
             "STANDARD_KEYS": [
                 { combo: "A", description: "A" },
                 { combo: "B", description: "B" },
@@ -233,12 +233,12 @@
                 { combo: "ALT_SHIFT_E", description: "Export" },
             ],
             "MEDIA_CONTROLS": [
-                { combo: "VOLUME_INCREMENT", description: "Vol+" },
-                { combo: "VOLUME_DECREMENT", description: "Vol-" },
+                { combo: "VOLUME_INCREMENT", description: "Vol Up" },
+                { combo: "VOLUME_DECREMENT", description: "Vol Down" },
                 { combo: "MUTE", description: "Mute" },
-                { combo: "PLAY_PAUSE", description: "P&P" },
-                { combo: "SCAN_PREVIOUS_TRACK", description: "-Trk" },
-                { combo: "SCAN_NEXT_TRACK", description: "+Trk" },
+                { combo: "PLAY_PAUSE", description: "Play/Pse" },
+                { combo: "SCAN_PREVIOUS_TRACK", description: "Prev Trk" },
+                { combo: "SCAN_NEXT_TRACK", description: "Next Trk" },
             ],
             "MOUSE_ACTIONS": [
                 { combo: "MOUSE_BUTTON_1", description: "L Click" },
@@ -346,12 +346,30 @@
                 { combo: "ALT_TWO", description: "Lyr Vw 2" },
                 { combo: "ALT_THREE", description: "Lyr Vw 3" },
                 { combo: "ALT_FOUR", description: "Lyr Vw 4" },
-                { combo: "ALT_FIVE", description: "Lyr w 5" },
+                { combo: "ALT_FIVE", description: "Lyr Vw 5" },
             ],
             "FUSION360_SPECIFIC": [
                 { combo: "SHIFT_SCROLL", description: "Pan" },
             ],
         };
+
+        // Dynamically create the "ALL_SHORTCUTS" category
+        const allShortcuts = [];
+        const seenCombos = new Set(); // To prevent duplicates
+        for (const category in basePresets) {
+            basePresets[category].forEach(shortcut => {
+                if (!seenCombos.has(shortcut.combo)) {
+                    allShortcuts.push(shortcut);
+                    seenCombos.add(shortcut.combo);
+                }
+            });
+        }
+
+        const presets = {
+            "ALL_SHORTCUTS": allShortcuts,
+            ...basePresets
+        };
+
 
         const MIN_LAYERS = 1;
         const MAX_LAYERS = 10;
@@ -1897,4 +1915,3 @@
     </script>
 </body>
 </html>
-s
