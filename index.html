@@ -30,7 +30,7 @@
         html, body, #root {
             min-height: 100%; /* Ensure they take at least full height, but can grow */
             margin: 0;
-            /* Removed overflow: hidden; as it can hide content when modals are shown */
+            /* Removed overflow: hidden; */
         }
     </style>
 </head>
@@ -38,353 +38,285 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // All React component code consolidated here
+        // Helper function to shorten labels for the OLED display
+        const getShortLabel = (description) => {
+            const mappings = {
+                "Volume Up": "Vol+",
+                "Volume Down": "Vol-",
+                "Play/Pause": "Play",
+                "Previous Track": "Prev",
+                "Next Track": "Next",
+                "Left Control": "LCtrl",
+                "Right Control": "RCtrl",
+                "Left Shift": "LShft",
+                "Right Shift": "RShft",
+                "Left Alt": "LAlt",
+                "Right Alt": "RAlt",
+                "Left GUI (Win/Cmd)": "LGui",
+                "Right GUI (Win/Cmd)": "RGui",
+                "Backspace": "Bksp",
+                "Delete Key": "Del",
+                "Escape Key": "Esc",
+                "Spacebar": "Space",
+                "Insert Key": "Ins",
+                "Page Up": "PgUp",
+                "Page Down": "PgDn",
+                "Print Screen": "PrtSc",
+                "Scroll Lock": "ScLk",
+                "Num Lock": "NumLk",
+                "Keypad Slash": "KP_Sl",
+                "Keypad Asterisk": "KP_As",
+                "Keypad Minus": "KP_Mn",
+                "Keypad Plus": "KP_Pl",
+                "Keypad Enter": "KP_En",
+                "Keypad One": "KP_1",
+                "Keypad Two": "KP_2",
+                "Keypad Three": "KP_3",
+                "Keypad Four": "KP_4",
+                "Keypad Five": "KP_5",
+                "Keypad Six": "KP_6",
+                "Keypad Seven": "KP_7",
+                "Keypad Eight": "KP_8",
+                "Keypad Nine": "KP_9",
+                "Keypad Zero": "KP_0",
+                "Keypad Period": "KP_.",
+                "Non-US Slash": "NonSl",
+                "Application Key": "App",
+                "Comma": "Comm",
+                "Period": "Perd",
+                "Grave Accent": "Grave",
+                "Minus": "Minus",
+                "Equals": "Equls",
+                "Left Bracket": "LBrkt",
+                "Right Bracket": "RBrkt",
+                "Backslash": "BkSl",
+                "Semicolon": "SemiC",
+                "Quote": "Quote",
+                "Slash": "Slash",
+                "Ctrl+C (Copy)": "Copy",
+                "Ctrl+V (Paste)": "Paste",
+                "Ctrl+X (Cut)": "Cut",
+                "Ctrl+Z (Undo)": "Undo",
+                "Ctrl+Y (Redo)": "Redo",
+                "Ctrl+S (Save)": "Save",
+                "Ctrl+A (Select All)": "SelAll",
+                "Ctrl+F (Find)": "Find",
+                "Ctrl+P (Print)": "Print",
+                "Alt+Tab (App Switch)": "AltTab",
+                "Win+D (Show Desktop)": "Win+D",
+                "Ctrl+Shift+Esc (Task Manager)": "TskMgr",
+                "Alt+Enter (Toggle Fullscreen)": "FullSc",
+                "Ctrl+Alt+Del (System Options)": "CtrlAD",
+                "Ctrl+W (Close Tab/Window)": "Close",
+                "Ctrl+N (New File/Window)": "New",
+                "Ctrl+O (Open File)": "Open",
+                "Ctrl+Q (Quit Application)": "Quit",
+                "Left Click": "LClick",
+                "Right Click": "RClick",
+                "Middle Click": "MClick",
+                "Scroll Up": "ScrlUp",
+                "Scroll Down": "ScrlDn",
+                "Alt + Drag (Custom)": "AltDrg",
+                "Shift + Drag (Custom)": "ShfDrg",
+                "Ctrl + Click (Custom)": "C+Clk",
+                "Double Click (Custom)": "DClick",
+                "Macro Slot 1": "Macr1",
+                "Macro Slot 2": "Macr2",
+                "Macro Slot 3": "Macr3",
+                "Toggle Layer 1 (on/off)": "Tg L1",
+                "Momentary Layer 1 (hold)": "Mo L1",
+                "Jump to Layer 0": "To L0",
+                "System Power": "Power",
+                "System Sleep": "Sleep",
+                "System Wake": "Wake",
+            };
 
-        // Explicitly get React and ReactDOM from the window object
-        const React = window.React;
-        const ReactDOM = window.ReactDOM;
+            if (mappings[description]) {
+                return mappings[description];
+            }
 
-        // Constants with ALL shortcuts from the PDF, adapted for CircuitPython Keycode names
-        const basePresets = {
-            "STANDARD_KEYS": [
-                { combo: "A", description: "A" },
-                { combo: "B", description: "B" },
-                { combo: "C", description: "C" },
-                { combo: "D", description: "D" },
-                { combo: "E", description: "E" },
-                { combo: "F", description: "F" },
-                { combo: "G", description: "G" },
-                { combo: "H", description: "H" },
-                { combo: "I", description: "I" },
-                { combo: "J", description: "J" },
-                { combo: "K", description: "K" },
-                { combo: "L", description: "L" },
-                { combo: "M", description: "M" },
-                { combo: "N", description: "N" },
-                { combo: "O", description: "O" },
-                { combo: "P", description: "P" },
-                { combo: "Q", description: "Q" },
-                { combo: "R", description: "R" },
-                { combo: "S", description: "S" },
-                { combo: "T", description: "T" },
-                { combo: "U", description: "U" },
-                { combo: "V", description: "V" },
-                { combo: "W", description: "W" },
-                { combo: "X", description: "X" },
-                { combo: "Y", description: "Y" },
-                { combo: "Z", description: "Z" },
-                { combo: "ONE", description: "1" },
-                { combo: "TWO", description: "2" },
-                { combo: "THREE", description: "3" },
-                { combo: "FOUR", description: "4" },
-                { combo: "FIVE", description: "5" },
-                { combo: "SIX", description: "6" },
-                { combo: "SEVEN", description: "7" },
-                { combo: "EIGHT", description: "8" },
-                { combo: "NINE", description: "9" },
-                { combo: "ZERO", description: "0" },
-                { combo: "ENTER", description: "Enter" },
-                { combo: "ESCAPE", description: "Esc" },
-                { combo: "TAB", description: "Tab" },
-                { combo: "SPACEBAR", description: "Space" },
-                { combo: "BACKSPACE", description: "Bksp" },
-                { combo: "DELETE", description: "Del" },
-                { combo: "CAPS_LOCK", description: "Caps" },
-                { combo: "F1", description: "F1" },
-                { combo: "F2", description: "F2" },
-                { combo: "F3", description: "F3" },
-                { combo: "F4", description: "F4" },
-                { combo: "F5", description: "F5" },
-                { combo: "F6", description: "F6" },
-                { combo: "F7", description: "F7" },
-                { combo: "F8", description: "F8" },
-                { combo: "F9", description: "F9" },
-                { combo: "F10", description: "F10" },
-                { combo: "F11", description: "F11" },
-                { combo: "F12", description: "F12" },
-                { combo: "PRINT_SCREEN", description: "PrtSc" },
-                { combo: "SCROLL_LOCK", description: "ScrLk" },
-                { combo: "PAUSE", description: "Pause" },
-                { combo: "INSERT", description: "Ins" },
-                { combo: "HOME", description: "Home" },
-                { combo: "PAGE_UP", description: "PgUp" },
-                { combo: "PAGE_DOWN", description: "PgDn" },
-                { combo: "END", description: "End" },
-                { combo: "RIGHT_ARROW", description: "R Arrow" },
-                { combo: "LEFT_ARROW", description: "L Arrow" },
-                { combo: "DOWN_ARROW", description: "Dn Arrow" },
-                { combo: "UP_ARROW", description: "Up Arrow" },
-                { combo: "KEYPAD_NUMLOCK", description: "NumLk" },
-                { combo: "KEYPAD_SLASH", description: "Kp /" },
-                { combo: "KEYPAD_ASTERISK", description: "Kp *" },
-                { combo: "KEYPAD_MINUS", description: "Kp -" },
-                { combo: "KEYPAD_PLUS", description: "Kp +" },
-                { combo: "KEYPAD_ENTER", description: "Kp Ent" },
-                { combo: "KEYPAD_ONE", description: "Kp 1" },
-                { combo: "KEYPAD_TWO", description: "Kp 2" },
-                { combo: "KEYPAD_THREE", description: "Kp 3" },
-                { combo: "KEYPAD_FOUR", description: "Kp 4" },
-                { combo: "KEYPAD_FIVE", description: "Kp 5" },
-                { combo: "KEYPAD_SIX", description: "Kp 6" },
-                { combo: "KEYPAD_SEVEN", description: "Kp 7" },
-                { combo: "KEYPAD_EIGHT", description: "Kp 8" },
-                { combo: "KEYPAD_NINE", description: "Kp 9" },
-                { combo: "KEYPAD_ZERO", description: "Kp 0" },
-                { combo: "KEYPAD_PERIOD", description: "Kp ." },
-                { combo: "NON_US_SLASH", description: "Non-US /" },
-                { combo: "APPLICATION", description: "App Key" },
-                { combo: "COMMA", description: "Comma" },
-                { combo: "PERIOD", description: "Period" },
-                { combo: "GRAVE_ACCENT", description: "Grave" },
-                { combo: "MINUS", description: "Minus" },
-                { combo: "EQUAL", description: "Equal" },
-                { combo: "LEFT_BRACKET", description: "L Brkt" },
-                { combo: "RIGHT_BRACKET", description: "R Brkt" },
-                { combo: "BACKSLASH", description: "Bcksl" },
-                { combo: "SEMICOLON", description: "Semicln" },
-                { combo: "QUOTE", description: "Quote" },
-                { combo: "SLASH", description: "Slash" },
-            ],
-            "MODIFIER_KEYS": [
-                { combo: "LEFT_CONTROL", description: "L Ctrl" },
-                { combo: "LEFT_SHIFT", description: "L Shift" },
-                { combo: "LEFT_ALT", description: "L Alt" },
-                { combo: "LEFT_GUI", description: "L GUI" },
-                { combo: "RIGHT_CONTROL", description: "R Ctrl" },
-                { combo: "RIGHT_SHIFT", description: "R Shift" },
-                { combo: "RIGHT_ALT", description: "R Alt" },
-                { combo: "RIGHT_GUI", description: "R GUI" },
-            ],
-            "COMBINATION_SHORTCUTS": [
-                { combo: "CONTROL_C", description: "Copy" },
-                { combo: "CONTROL_V", description: "Paste" },
-                { combo: "CONTROL_X", description: "Cut" },
-                { combo: "CONTROL_Z", description: "Undo" },
-                { combo: "CONTROL_Y", description: "Redo" },
-                { combo: "CONTROL_S", description: "Save" },
-                { combo: "ALT_TAB", description: "App Switch" },
-                { combo: "GUI_D", description: "Desktop" },
-                { combo: "CONTROL_SHIFT_ESCAPE", description: "TaskMgr" },
-                { combo: "CONTROL_A", description: "Sel All" },
-                { combo: "CONTROL_F", description: "Find" },
-                { combo: "CONTROL_P", description: "Print" },
-                { combo: "CONTROL_L", description: "Align L" },
-                { combo: "CONTROL_R", description: "Align R" },
-                { combo: "CONTROL_E", description: "Align C" },
-                { combo: "CONTROL_D", description: "Dupe" },
-                { combo: "CONTROL_G", description: "Group" },
-                { combo: "CONTROL_U", description: "Ungrp" },
-                { combo: "CONTROL_K", description: "Link" },
-                { combo: "CONTROL_H", description: "Replace" },
-                { combo: "CONTROL_B", description: "Bold" },
-                { combo: "CONTROL_I", description: "Italic" },
-                { combo: "CONTROL_U", description: "Undrl" },
-                { combo: "ALT_ENTER", description: "Fullscreen" },
-                { combo: "SHIFT_ARROW", description: "Nudge" },
-                { combo: "SHIFT_SPACEBAR", description: "Cycle Units" },
-                { combo: "CONTROL_SPACEBAR", description: "Suggest" },
-                { combo: "CONTROL_FORWARD_SLASH", description: "Comment" },
-                { combo: "ALT_UP_ARROW", description: "Line Up" },
-                { combo: "ALT_DOWN_ARROW", description: "Line Dn" },
-                { combo: "SHIFT_ALT_DOWN_ARROW", description: "Copy Line" },
-                { combo: "CONTROL_SHIFT_K", description: "Del Line" },
-                { combo: "CONTROL_ENTER", description: "Ins Line B" },
-                { combo: "CONTROL_SHIFT_ENTER", description: "Ins Line A" },
-                { combo: "CONTROL_SHIFT_RIGHT_BRACKET", description: "Jmp Brkt" },
-                { combo: "CONTROL_TAB", description: "Next Edit" },
-                { combo: "CONTROL_SHIFT_TAB", description: "Prev Edit" },
-                { combo: "CONTROL_W", description: "Close Tab" },
-                { combo: "CONTROL_ALT_T", description: "Terminal" },
-                { combo: "CONTROL_SHIFT_P", description: "Cmd Pal" },
-                { combo: "CONTROL_GRAVE_ACCENT", description: "Term Tog" },
-                { combo: "CONTROL_B", description: "Side Tog" },
-                { combo: "CONTROL_J", description: "Panel Tog" },
-                { combo: "CONTROL_SHIFT_E", description: "Explorer" },
-                { combo: "CONTROL_SHIFT_F", description: "File Srch" },
-                { combo: "CONTROL_SHIFT_G", description: "Git" },
-                { combo: "CONTROL_SHIFT_D", description: "Debug" },
-                { combo: "CONTROL_SHIFT_X", description: "Extens" },
-                { combo: "CONTROL_SHIFT_S", description: "Save As" },
-                { combo: "CONTROL_N", description: "New File" },
-                { combo: "CONTROL_O", description: "Open File" },
-                { combo: "CONTROL_Q", description: "Quit App" },
-                { combo: "CONTROL_ALT_DELETE", description: "Force Quit" },
-                { combo: "CONTROL_SHIFT", description: "Walk" },
-                { combo: "CONTROL_F1", description: "Switch Class" },
-                { combo: "ALT_V", description: "View Chg" },
-                { combo: "ALT_M", description: "Minimap" },
-                { combo: "CONTROL_R", description: "Reload" },
-                { combo: "ALT_F4", description: "Close Win" },
-                { combo: "CONTROL_Y", description: "Chat" },
-                { combo: "CONTROL_G", description: "Gun View" },
-                { combo: "CONTROL_T", description: "Anchor" },
-                { combo: "CONTROL_SHIFT_M", description: "Model" },
-                { combo: "CONTROL_ALT_T", description: "Terrain" },
-                { combo: "CONTROL_SHIFT_R", description: "Run" },
-                { combo: "CONTROL_SHIFT_T", description: "Test" },
-                { combo: "CONTROL_SHIFT_F", description: "Search All" },
-                { combo: "CONTROL_SHIFT_D", description: "Download" },
-                { combo: "CONTROL_SHIFT_C", description: "Output" },
-                { combo: "CONTROL_SHIFT_H", description: "View Exp" },
-                { combo: "CONTROL_SHIFT_X", description: "Props" },
-                { combo: "CONTROL_SHIFT_E", description: "Toolbox" },
-                { combo: "ALT_LEFT_BRACKET", description: "Lyr Back" },
-                { combo: "ALT_RIGHT_BRACKET", description: "Lyr Fwd" },
-                { combo: "ALT_SHIFT_E", description: "Export" },
-            ],
-            "MEDIA_CONTROLS": [
-                { combo: "VOLUME_INCREMENT", description: "Vol Up" },
-                { combo: "VOLUME_DECREMENT", description: "Vol Down" },
-                { combo: "MUTE", description: "Mute" },
-                { combo: "PLAY_PAUSE", description: "Play/Pse" },
-                { combo: "SCAN_PREVIOUS_TRACK", description: "Prev Trk" },
-                { combo: "SCAN_NEXT_TRACK", description: "Next Trk" },
-            ],
-            "MOUSE_ACTIONS": [
-                { combo: "MOUSE_BUTTON_1", description: "L Click" },
-                { combo: "MOUSE_BUTTON_2", description: "R Click" },
-                { combo: "MOUSE_BUTTON_3", description: "M Click" },
-                { combo: "MOUSE_WHEEL_UP", description: "Scroll Up" },
-                { combo: "MOUSE_WHEEL_DOWN", description: "Scroll Dn" },
-                { combo: "ALT_DRAG", description: "Alt Drag" },
-                { combo: "SHIFT_DRAG", description: "Shft Drag" },
-                { combo: "CONTROL_CLICK", description: "Ctrl Click" },
-                { combo: "CONTROL_MIDDLE_CLICK", description: "Ctrl M Click" },
-                { combo: "SHIFT_LEFT_CLICK", description: "Shft L Click" },
-                { combo: "SHIFT_RIGHT_CLICK", description: "Shft R Click" },
-                { combo: "DOUBLE_CLICK", description: "Dbl Click" },
-            ],
-            "MACROS": [
-                { combo: "MACRO_1", description: "Macro 1" },
-                { combo: "MACRO_2", description: "Macro 2" },
-                { combo: "MACRO_3", description: "Macro 3" },
-            ],
-            "LAYER_CONTROLS": [
-                { combo: "TG_1", description: "Toggle L1" },
-                { combo: "MO_1", description: "Moment L1" },
-                { combo: "TO_0", description: "To L0" },
-            ],
-            "SYSTEM_CONTROLS": [
-                { combo: "POWER", description: "Power" },
-                { combo: "SLEEP", description: "Sleep" },
-                { combo: "WAKE", description: "Wake" },
-            ],
-            "RGB_LIGHTING_CONTROLS": [
-                { combo: "RGB_TOG", description: "RGB Tog" },
-                { combo: "RGB_MOD", description: "RGB Mode" },
-                { combo: "RGB_HUI", description: "RGB Hue+" },
-                { combo: "RGB_HUD", description: "RGB Hue-" },
-                { combo: "RGB_SAI", description: "RGB Sat+" },
-                { combo: "RGB_SAD", description: "RGB Sat-" },
-                { combo: "RGB_VAI", description: "RGB Val+" },
-                { combo: "RGB_VAD", description: "RGB Val-" },
-            ],
-            "MINECRAFT_SPECIFIC": [
-                { combo: "W_KEY", description: "Fwd" },
-                { combo: "A_KEY", description: "Left" },
-                { combo: "S_KEY", description: "Bck" },
-                { combo: "D_KEY", description: "Right" },
-                { combo: "DOUBLE_SPACE", description: "Fly Tog" },
-                { combo: "NUMBER_HOVER", description: "Hotbar" },
-                { combo: "F3_D", description: "Clr Chat" },
-                { combo: "F3_N", description: "GM Swch" },
-                { combo: "F3_C", description: "Crash" },
-                { combo: "F3_A", description: "Reload" },
-            ],
-            "WAR_THUNDER_SPECIFIC": [
-                { combo: "W_S_THROTTLE", description: "Throttle" },
-                { combo: "A_D_RUDDER", description: "Rudder" },
-                { combo: "Q_E_ROLL", description: "Roll" },
-                { combo: "HOLD_T", description: "Mark" },
-                { combo: "HOLD_SHIFT", description: "Sprint" },
-                { combo: "HOLD_F", description: "Plant" },
-                { combo: "CONTROL_NUMBER", description: "Squad" },
-                { combo: "SHIFT_ONE", description: "Fm 1" },
-                { combo: "SHIFT_TWO", description: "Fm 2" },
-                { combo: "SHIFT_THREE", description: "Fm 3" },
-                { combo: "SHIFT_FOUR", description: "Fm 4" },
-            ],
-            "ROBLOX_STUDIO_SPECIFIC": [
-                { combo: "ARROW_KEYS_NUDGE", description: "Nudge" },
-            ],
-            "LINUX_COMMANDS": [
-                { combo: "MACRO_LS", description: "ls" },
-                { combo: "MACRO_CD", description: "cd" },
-                { combo: "MACRO_PWD", description: "pwd" },
-                { combo: "MACRO_MKDIR", description: "mkdir" },
-                { combo: "MACRO_RM", description: "rm" },
-                { combo: "MACRO_CP", description: "cp" },
-                { combo: "MACRO_MV", description: "mv" },
-                { combo: "MACRO_SUDO", description: "sudo" },
-                { combo: "MACRO_MAN", description: "man" },
-                { combo: "MACRO_TOP", description: "top" },
-                { combo: "MACRO_PS", description: "ps" },
-                { combo: "MACRO_KILL", description: "kill" },
-                { combo: "MACRO_GREP", description: "grep" },
-                { combo: "MACRO_CHMOD", description: "chmod" },
-                { combo: "MACRO_CHOWN", description: "chown" },
-                { combo: "MACRO_NANO", description: "nano" },
-                { combo: "MACRO_VIM", description: "vim" },
-                { combo: "MACRO_DF", description: "df" },
-                { combo: "MACRO_DU", description: "du" },
-                { combo: "MACRO_TAR", description: "tar" },
-                { combo: "MACRO_ZIP_UNZIP", description: "zip/unzip" },
-                { combo: "MACRO_SSH", description: "ssh" },
-                { combo: "MACRO_SCP", description: "scp" },
-                { combo: "MACRO_WGET", description: "wget" },
-                { combo: "MACRO_CURL", description: "curl" },
-                { combo: "MACRO_ALIAS", description: "alias" },
-                { combo: "MACRO_HISTORY", description: "history" },
-                { combo: "MACRO_CLEAR", description: "clear" },
-                { combo: "MACRO_REBOOT", description: "reboot" },
-                { combo: "MACRO_SHUTDOWN", description: "shutdown" },
-                { combo: "MACRO_UPTIME", description: "uptime" },
-            ],
-            "KICAD_SPECIFIC": [
-                { combo: "CONTROL_SCROLL", description: "Zoom" },
-                { combo: "ALT_ONE", description: "Lyr Vw 1" },
-                { combo: "ALT_TWO", description: "Lyr Vw 2" },
-                { combo: "ALT_THREE", description: "Lyr Vw 3" },
-                { combo: "ALT_FOUR", description: "Lyr Vw 4" },
-                { combo: "ALT_FIVE", description: "Lyr Vw 5" },
-            ],
-            "FUSION360_SPECIFIC": [
-                { combo: "SHIFT_SCROLL", description: "Pan" },
-            ],
+            // Fallback: truncate to 6 characters if longer, otherwise use as is.
+            // Ensure at least 4 chars by padding if necessary.
+            let label = description;
+            if (label.length > 6) {
+                label = label.substring(0, 6);
+            }
+            if (label.length < 4 && description.length >=4) {
+                 // If the short label is less than 4, and original was at least 4, use original up to 4 chars
+                 label = description.substring(0,4);
+            }
+            // If original was genuinely short, just use it.
+            return label;
         };
 
-        // Dynamically create the "ALL_SHORTCUTS" category
-        const allShortcuts = [];
-        const seenCombos = new Set(); // To prevent duplicates
-        for (const category in basePresets) {
-            basePresets[category].forEach(shortcut => {
-                if (!seenCombos.has(shortcut.combo)) {
-                    allShortcuts.push(shortcut);
-                    seenCombos.add(shortcut.combo);
-                }
-            });
-        }
 
+        // Define all categories first
+        const STANDARD_KEYS = [
+            { combo: "A", description: "A" }, { combo: "B", description: "B" }, { combo: "C", description: "C" },
+            { combo: "D", description: "D" }, { combo: "E", description: "E" }, { combo: "F", description: "F" },
+            { combo: "G", description: "G" }, { combo: "H", description: "H" }, { combo: "I", description: "I" },
+            { combo: "J", description: "J" }, { combo: "K", description: "K" }, { combo: "L", description: "L" },
+            { combo: "M", description: "M" }, { combo: "N", description: "N" }, { combo: "O", description: "O" },
+            { combo: "P", description: "P" }, { combo: "Q", description: "Q" }, { combo: "R", description: "R" },
+            { combo: "S", description: "S" }, { combo: "T", description: "T" }, { combo: "U", description: "U" },
+            { combo: "V", description: "V" }, { combo: "W", description: "W" }, { combo: "X", description: "X" },
+            { combo: "Y", description: "Y" }, { combo: "Z", description: "Z" },
+            { combo: "ONE", description: "1" }, { combo: "TWO", description: "2" }, { combo: "THREE", description: "3" },
+            { combo: "FOUR", description: "4" }, { combo: "FIVE", description: "5" }, { combo: "SIX", description: "6" },
+            { combo: "SEVEN", description: "7" }, { combo: "EIGHT", description: "8" }, { combo: "NINE", description: "9" },
+            { combo: "ZERO", description: "0" },
+            { combo: "ENTER", description: "Enter Key" },
+            { combo: "ESCAPE", description: "Escape Key" },
+            { combo: "TAB", description: "Tab Key" },
+            { combo: "SPACEBAR", description: "Spacebar" },
+            { combo: "BACKSPACE", description: "Backspace" },
+            { combo: "DELETE", description: "Delete Key" },
+            { combo: "CAPS_LOCK", description: "Caps Lock" },
+            { combo: "F1", description: "F1 Key" }, { combo: "F2", description: "F2 Key" }, { combo: "F3", description: "F3 Key" },
+            { combo: "F4", description: "F4 Key" }, { combo: "F5", description: "F5 Key" }, { combo: "F6", description: "F6 Key" },
+            { combo: "F7", description: "F7 Key" }, { combo: "F8", description: "F8 Key" }, { combo: "F9", description: "F9 Key" },
+            { combo: "F10", description: "F10 Key" }, { combo: "F11", description: "F11 Key" }, { combo: "F12", description: "F12 Key" },
+            { combo: "PRINT_SCREEN", description: "Print Screen" },
+            { combo: "SCROLL_LOCK", description: "Scroll Lock" },
+            { combo: "PAUSE", description: "Pause Break" },
+            { combo: "INSERT", description: "Insert Key" },
+            { combo: "HOME", description: "Home Key" },
+            { combo: "PAGE_UP", description: "Page Up" },
+            { combo: "PAGE_DOWN", description: "Page Down" },
+            { combo: "END", description: "End Key" },
+            { combo: "RIGHT_ARROW", description: "Right Arrow" },
+            { combo: "LEFT_ARROW", description: "Left Arrow" },
+            { combo: "DOWN_ARROW", description: "Down Arrow" },
+            { combo: "UP_ARROW", description: "Up Arrow" },
+            { combo: "KEYPAD_NUMLOCK", description: "Num Lock" },
+            { combo: "KEYPAD_SLASH", description: "Keypad Slash" },
+            { combo: "KEYPAD_ASTERISK", description: "Keypad Asterisk" },
+            { combo: "KEYPAD_MINUS", description: "Keypad Minus" },
+            { combo: "KEYPAD_PLUS", description: "Keypad Plus" },
+            { combo: "KEYPAD_ENTER", description: "Keypad Enter" },
+            { combo: "KEYPAD_ONE", description: "Keypad 1" }, { combo: "KEYPAD_TWO", description: "Keypad 2" }, { combo: "KEYPAD_THREE", description: "Keypad 3" },
+            { combo: "KEYPAD_FOUR", description: "Keypad 4" }, { combo: "KEYPAD_FIVE", description: "Keypad 5" }, { combo: "KEYPAD_SIX", description: "Keypad 6" },
+            { combo: "KEYPAD_SEVEN", description: "Keypad 7" }, { combo: "KEYPAD_EIGHT", description: "Keypad 8" }, { combo: "KEYPAD_NINE", description: "Keypad 9" },
+            { combo: "KEYPAD_ZERO", description: "Keypad 0" },
+            { combo: "KEYPAD_PERIOD", description: "Keypad Period" },
+            { combo: "NON_US_SLASH", description: "Non-US Slash" },
+            { combo: "APPLICATION", description: "Application Key" },
+            { combo: "COMMA", description: "Comma" },
+            { combo: "PERIOD", description: "Period" },
+            { combo: "GRAVE_ACCENT", description: "Grave Accent" },
+            { combo: "MINUS", description: "Minus" },
+            { combo: "EQUAL", description: "Equals" },
+            { combo: "LEFT_BRACKET", description: "Left Bracket" },
+            { combo: "RIGHT_BRACKET", description: "Right Bracket" },
+            { combo: "BACKSLASH", description: "Backslash" },
+            { combo: "SEMICOLON", description: "Semicolon" },
+            { combo: "QUOTE", description: "Quote" },
+            { combo: "SLASH", description: "Slash" },
+        ];
+
+        const MODIFIER_KEYS = [
+            { combo: "LEFT_CONTROL", description: "Left Control" },
+            { combo: "LEFT_SHIFT", description: "Left Shift" },
+            { combo: "LEFT_ALT", description: "Left Alt" },
+            { combo: "LEFT_GUI", description: "Left GUI (Win/Cmd)" },
+            { combo: "RIGHT_CONTROL", description: "Right Control" },
+            { combo: "RIGHT_SHIFT", description: "Right Shift" },
+            { combo: "RIGHT_ALT", description: "Right Alt" },
+            { combo: "RIGHT_GUI", description: "Right GUI (Win/Cmd)" },
+        ];
+
+        const COMMON_COMBINATIONS = [
+            { combo: "CONTROL_C", description: "Ctrl+C (Copy)" },
+            { combo: "CONTROL_V", description: "Ctrl+V (Paste)" },
+            { combo: "CONTROL_X", description: "Ctrl+X (Cut)" },
+            { combo: "CONTROL_Z", description: "Ctrl+Z (Undo)" },
+            { combo: "CONTROL_Y", description: "Ctrl+Y (Redo)" },
+            { combo: "CONTROL_S", description: "Ctrl+S (Save)" },
+            { combo: "CONTROL_A", description: "Ctrl+A (Select All)" },
+            { combo: "CONTROL_F", description: "Ctrl+F (Find)" },
+            { combo: "CONTROL_P", description: "Ctrl+P (Print)" },
+            { combo: "ALT_TAB", description: "Alt+Tab (App Switch)" },
+            { combo: "GUI_D", description: "Win+D (Show Desktop)" },
+            { combo: "CONTROL_SHIFT_ESCAPE", description: "Ctrl+Shift+Esc (Task Manager)" },
+            { combo: "ALT_ENTER", description: "Alt+Enter (Toggle Fullscreen)" },
+            { combo: "CONTROL_ALT_DELETE", description: "Ctrl+Alt+Del (System Options)" },
+            { combo: "CONTROL_W", description: "Ctrl+W (Close Tab/Window)" },
+            { combo: "CONTROL_N", description: "Ctrl+N (New File/Window)" },
+            { combo: "CONTROL_O", description: "Ctrl+O (Open File)" },
+            { combo: "CONTROL_Q", description: "Ctrl+Q (Quit Application)" },
+        ];
+
+        const MEDIA_CONTROLS = [
+            { combo: "VOLUME_INCREMENT", description: "Volume Up" },
+            { combo: "VOLUME_DECREMENT", description: "Volume Down" },
+            { combo: "MUTE", description: "Mute/Unmute" },
+            { combo: "PLAY_PAUSE", description: "Play/Pause" },
+            { combo: "SCAN_PREVIOUS_TRACK", description: "Previous Track" },
+            { combo: "SCAN_NEXT_TRACK", description: "Next Track" },
+        ];
+
+        const MOUSE_ACTIONS = [
+            { combo: "MOUSE_BUTTON_1", description: "Left Click" },
+            { combo: "MOUSE_BUTTON_2", description: "Right Click" },
+            { combo: "MOUSE_BUTTON_3", description: "Middle Click" },
+            { combo: "MOUSE_WHEEL_UP", description: "Scroll Up" },
+            { combo: "MOUSE_WHEEL_DOWN", description: "Scroll Down" },
+            // These would require custom CircuitPython mouse control logic if they are not simple button presses
+            { combo: "ALT_DRAG", description: "Alt + Drag (Custom)" },
+            { combo: "SHIFT_DRAG", description: "Shift + Drag (Custom)" },
+            { combo: "CONTROL_CLICK", description: "Ctrl + Click (Custom)" },
+            { combo: "DOUBLE_CLICK", description: "Double Click (Custom)" },
+        ];
+
+        const MACROS = [
+            { combo: "MACRO_1", description: "Macro Slot 1" },
+            { combo: "MACRO_2", description: "Macro Slot 2" },
+            { combo: "MACRO_3", description: "Macro Slot 3" },
+        ];
+
+        const LAYER_CONTROLS = [
+            { combo: "TG_1", description: "Toggle Layer 1 (on/off)" },
+            { combo: "MO_1", description: "Momentary Layer 1 (hold)" },
+            { combo: "TO_0", description: "Jump to Layer 0" },
+        ];
+
+        const SYSTEM_CONTROLS = [
+            { combo: "POWER", description: "System Power" },
+            { combo: "SLEEP", description: "System Sleep" },
+            { combo: "WAKE", description: "System Wake" },
+        ];
+
+        // Combine all shortcuts into a single array for the "ALL SHORTCUTS" category
+        const ALL_SHORTCUTS = [
+            ...STANDARD_KEYS,
+            ...MODIFIER_KEYS,
+            ...COMMON_COMBINATIONS,
+            ...MEDIA_CONTROLS,
+            ...MOUSE_ACTIONS,
+            ...MACROS,
+            ...LAYER_CONTROLS,
+            ...SYSTEM_CONTROLS
+        ];
+
+
+        // The main presets object used by the app
         const presets = {
-            "ALL_SHORTCUTS": allShortcuts,
-            ...basePresets
+            "ALL SHORTCUTS": ALL_SHORTCUTS,
+            "STANDARD KEYS": STANDARD_KEYS,
+            "MODIFIER KEYS": MODIFIER_KEYS,
+            "COMMON COMBINATIONS": COMMON_COMBINATIONS,
+            "MEDIA CONTROLS": MEDIA_CONTROLS,
+            "MOUSE ACTIONS": MOUSE_ACTIONS,
+            "MACROS": MACROS,
+            "LAYER CONTROLS": LAYER_CONTROLS,
+            "SYSTEM CONTROLS": SYSTEM_CONTROLS,
         };
 
-
-        const MIN_LAYERS = 1;
-        const MAX_LAYERS = 10;
-        const DEFAULT_LAYERS = 2; // Default number of layers for initial load if no profile exists
-
-        // Helper function to create an empty layer object
-        const createEmptyLayer = (index) => ({
-            name: `Layer ${index}`,
-            labels: Array(9).fill(''),
-            keys: Array(9).fill(null),
-            macros: [] // Macros are technically global to the app but stored on Layer 0 in JSON
-        });
+        const NUM_LAYERS_PICO = 2; // Matches the NUM_LAYERS in the Pico code
+        const initialMultiLayerGrid = Array(NUM_LAYERS_PICO).fill().map(() => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null })));
 
 
-        // Modal component (formerly from src/components/Modal.js)
+        // Modal component (unchanged)
         const Modal = ({ show, title, message, onClose }) => {
             if (!show) return null;
             return (
@@ -405,7 +337,7 @@
             );
         };
 
-        // Confirmation Modal (formerly from src/components/ConfirmationModal.js)
+        // Confirmation Modal (unchanged)
         const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
             if (!show) return null;
             return (
@@ -432,9 +364,9 @@
             );
         };
 
-        // Sidebar component (formerly from src/components/Sidebar.js)
+        // Sidebar component (unchanged)
         const Sidebar = ({ activeTab, setActiveTab }) => {
-            const { useState, useEffect } = React; // Ensure React hooks are imported within component scope
+            const { useState, useEffect } = React;
             return (
                 <div className="w-64 bg-zinc-900 p-6 flex flex-col border-r border-zinc-700 shadow-xl">
                     <div className="text-2xl font-bold text-red-500 mb-8">Trkey</div>
@@ -460,7 +392,7 @@
                             </li>
                             <li>
                                 <a href="#" onClick={() => setActiveTab('save-load')} className={`flex items-center ${activeTab === 'save-load' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 1 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
                                     SAVE + LOAD
                                 </a>
                             </li>
@@ -482,45 +414,13 @@
             );
         };
 
-        // KeymapGrid component (formerly from src/components/KeymapGrid.js)
-        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers }) => {
+        // KeymapGrid component (updated for Pico NUM_LAYERS)
+        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick }) => {
             const { useState, useEffect } = React;
-            // The keymap prop is now an array of layer objects, each with 'keys' and 'labels'
-            // We need to transform the 1D 'keys' and 'labels' arrays into a 3x3 grid for display
-            const currentLayerData = keymap[currentLayer] || { keys: Array(9).fill(null), labels: Array(9).fill('') };
-
-            // Helper to get the key/label for a specific grid cell
-            const getCellContent = (rIdx, cIdx) => {
-                const flatIndex = rIdx * 3 + cIdx;
-                const keyCombo = currentLayerData.keys[flatIndex];
-                const keyLabel = currentLayerData.labels[flatIndex];
-                
-                if (keyCombo) {
-                    // Find the description from presets if available
-                    let description = keyLabel; // Default to label
-                    for (const category in presets) {
-                        const found = presets[category].find(p => p.combo === keyCombo);
-                        if (found) {
-                            description = found.description;
-                            break;
-                        }
-                    }
-                    // For macros, use the macro name as description
-                    if (keyCombo.startsWith("MACRO_")) {
-                        const macroNum = keyCombo.split('_')[1];
-                        // If you want to show the actual macro name, you'd need to pass the macros array here
-                        description = `Macro ${macroNum}`;
-                    }
-
-                    return { combo: keyCombo, description: description };
-                }
-                return null;
-            };
-
             return (
                 <div className="flex flex-col items-center">
-                    <div className="flex flex-wrap justify-center gap-2 mb-4"> {/* Use flex-wrap for responsiveness */}
-                        {[...Array(numLayers)].map((_, index) => ( // Render buttons based on numLayers
+                    <div className="flex space-x-2 mb-4">
+                        {[...Array(NUM_LAYERS_PICO)].map((_, index) => ( // Use NUM_LAYERS_PICO
                             <button
                                 key={`layer-btn-${index}`}
                                 onClick={() => setCurrentLayer(index)}
@@ -530,70 +430,57 @@
                                 Layer {index}
                             </button>
                         ))}
-                        <button
-                            onClick={clearCurrentLayer}
-                            className="px-4 py-2 rounded-lg font-semibold bg-red-800 text-white hover:bg-red-700 transition-colors duration-200 shadow-md"
-                            title="Clear all keys on the current layer"
-                        >
-                            Clear Current Layer
-                        </button>
                     </div>
                     <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
-                        {Array(3).fill().map((_, rIdx) => ( // Iterate for 3 rows
-                            Array(3).fill().map((_, cIdx) => { // Iterate for 3 columns
-                                const cellContent = getCellContent(rIdx, cIdx);
-                                const flatIndex = rIdx * 3 + cIdx;
-                                return (
-                                    <div
-                                        key={`${rIdx}-${cIdx}`}
-                                        className={`relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
-                                                    hover:border-red-500 transition-all duration-200 cursor-pointer
-                                                    ${selectedKeymapCell && selectedKeymapCell.row === rIdx && selectedKeymapCell.col === cIdx && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-900 bg-opacity-30' : ''}`}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => handleDrop(e, rIdx, cIdx)}
-                                        draggable
-                                        onDragStart={(e) => handleKeymapDragStart(e, cellContent, rIdx, cIdx)}
-                                        onDragEnd={handleDragEnd}
-                                        onClick={() => handleKeymapCellClick(rIdx, cIdx, currentLayer)}
-                                    >
-                                        {cellContent ? (
-                                            <>
-                                                <span className="text-2xl font-bold text-red-300">{cellContent.combo}</span>
-                                                <span className="text-sm text-zinc-400 text-center mt-1">{cellContent.description}</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-zinc-500">Drag & Drop Here</span>
-                                        )}
-                                        {cellContent && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); clearKeymapCell(rIdx, cIdx); }}
-                                                className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
-                                                title="Clear cell"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        )}
-                                    </div>
-                                );
-                            })
+                        {keymap[currentLayer].map((row, rIdx) => ( // Access keymap for currentLayer
+                            row.map((cell, cIdx) => (
+                                <div
+                                    key={`${rIdx}-${cIdx}`}
+                                    className={`relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
+                                                hover:border-red-500 transition-all duration-200 cursor-grab
+                                                ${selectedKeymapCell && selectedKeymapCell.row === rIdx && selectedKeymapCell.col === cIdx && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500' : ''}`}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => handleDrop(e, rIdx, cIdx)}
+                                    draggable
+                                    onDragStart={(e) => handleKeymapDragStart(e, cell, rIdx, cIdx)}
+                                    onDragEnd={handleDragEnd}
+                                    onClick={() => handleKeymapCellClick(rIdx, cIdx, currentLayer)}
+                                >
+                                    {cell.tap ? (
+                                        <>
+                                            <span className="text-2xl font-bold text-red-300">{cell.tap.combo}</span>
+                                            <span className="text-sm text-zinc-400 text-center mt-1">{cell.tap.description}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-zinc-500">Drag & Drop Here</span>
+                                    )}
+                                    {(cell.tap || cell.hold) && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); clearKeymapCell(rIdx, cIdx); }}
+                                            className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
+                                            title="Clear cell"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ))
                         ))}
                     </div>
                 </div>
             );
         };
 
-        // ShortcutPool component (formerly from src/components/ShortcutPool.js)
+        // ShortcutPool component (unchanged, but presets are updated)
         const ShortcutPool = ({ shortcutPool, draggedShortcut, handleShortcutDragStart, handleDragEnd, selectedKeymapCell, handleShortcutClick }) => {
-            const { useState, useEffect, useMemo } = React; // Added useMemo
+            const { useState, useEffect, useMemo } = React;
             const [searchTerm, setSearchTerm] = useState('');
-            // Initialize selectedCategory to the first key in shortcutPool
             const [selectedCategory, setSelectedCategory] = useState(Object.keys(shortcutPool)[0]);
 
-            // Filter shortcuts based on selected category and search term
             const filteredShortcuts = useMemo(() => {
-                if (!selectedCategory) return []; // No category selected yet
+                if (!selectedCategory) return [];
 
                 const categoryShortcuts = shortcutPool[selectedCategory] || [];
                 if (!searchTerm) return categoryShortcuts;
@@ -644,26 +531,18 @@
                             {filteredShortcuts.length > 0 ? (
                                 filteredShortcuts.map((shortcut, sIdx) => (
                                     <div
-                                        key={`${selectedCategory}-${sIdx}`} // Ensure unique key
-                                        className={`bg-zinc-600 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer text-center /* Changed cursor to pointer */
+                                        key={`${selectedCategory}-${sIdx}`}
+                                        className={`bg-zinc-600 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer text-center
                                                     ${draggedShortcut === shortcut ? 'opacity-50 border-red-500 border-2' : 'border-2 border-zinc-600'}
-                                                    ${selectedKeymapCell ? 'hover:bg-blue-700 hover:border-blue-400' : 'hover:bg-zinc-500 hover:border-red-400'} /* Conditional hover */
+                                                    ${selectedKeymapCell ? 'hover:bg-blue-700 hover:border-blue-400' : 'hover:bg-zinc-500 hover:border-red-400'}
                                                     transition-all duration-200`}
                                         draggable
                                         onDragStart={(e) => handleShortcutDragStart(e, shortcut)}
                                         onDragEnd={handleDragEnd}
-                                        onClick={() => handleShortcutClick(shortcut)} /* Added onClick */
+                                        onClick={() => handleShortcutClick(shortcut)}
                                     >
                                         <span className="font-medium text-lg">{shortcut.combo}</span>
                                         <span className="text-sm text-zinc-300">{shortcut.description}</span>
-                                        {selectedKeymapCell && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleShortcutClick(shortcut); }}
-                                                className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm transition-colors duration-200"
-                                            >
-                                                Assign
-                                            </button>
-                                        )}
                                     </div>
                                 ))
                             ) : (
@@ -675,7 +554,7 @@
             );
         };
 
-        // MacroManagement component (formerly from src/components/MacroManagement.js)
+        // MacroManagement component (unchanged)
         const MacroManagement = ({ macros, addMacro, editMacro, deleteMacro }) => {
             const { useState, useEffect } = React;
             return (
@@ -723,80 +602,23 @@
             );
         };
 
-        // PeripheralControls component (formerly from src/components/PeripheralControls.js)
-        const PeripheralControls = ({ potentiometerConfig, setPotentiometerConfig }) => {
+        // PeripheralControls component (removed potentiometer, as Pico doc doesn't mention it)
+        const PeripheralControls = () => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">PERIPHERAL CONTROLS</h1>
-
-                    <div className="w-full max-w-xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
-                        <h2 className="text-2xl font-bold text-red-300 mb-4">Potentiometer Configuration</h2>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <label htmlFor="potentiometer-enable" className="text-lg text-zinc-200">Enable Potentiometer:</label>
-                                <input
-                                    type="checkbox"
-                                    id="potentiometer-enable"
-                                    checked={potentiometerConfig.enabled}
-                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-                                    className="form-checkbox h-6 w-6 text-red-600 rounded focus:ring-red-500"
-                                />
-                            </div>
-
-                            {potentiometerConfig.enabled && (
-                                <>
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="potentiometer-pin" className="text-lg text-zinc-200">Analog Pin:</label>
-                                        <input
-                                            type="number"
-                                            id="potentiometer-pin"
-                                            value={potentiometerConfig.pin}
-                                            onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, pin: parseInt(e.target.value) || 0 }))}
-                                            className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="potentiometer-function" className="text-lg text-zinc-200">Function:</label>
-                                        <select
-                                            id="potentiometer-function"
-                                            value={potentiometerConfig.function}
-                                            onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, function: e.target.value }))}
-                                            className="bg-zinc-800 border border-zinc-600 rounded-md p-2 text-white"
-                                        >
-                                            <option value="volume">Volume Control</option>
-                                            <option value="scroll">Scroll</option>
-                                            <option value="custom">Custom QMK Keycode</option>
-                                        </select>
-                                    </div>
-
-                                    {potentiometerConfig.function === 'custom' && (
-                                        <div className="flex items-center justify-between">
-                                            <label htmlFor="custom-action" className="text-lg text-zinc-200">Custom QMK Keycode:</label>
-                                            <input
-                                                type="text"
-                                                id="custom-action"
-                                                value={potentiometerConfig.customAction}
-                                                onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, customAction: e.target.value }))}
-                                                placeholder="e.g., KC_MPLY"
-                                                className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-48 text-white"
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
+                    <p className="text-zinc-400 text-lg">No peripheral controls configurable for Raspberry Pi Pico in this version.</p>
+                    <p className="text-zinc-400 text-md mt-2">The provided documentation does not include potentiometer support for the Pico.</p>
                 </div>
             );
         };
 
-        // SaveLoad component (formerly from src/components/SaveLoad.js)
-        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown }) => {
+        // SaveLoad component (updated for Pico file transfer method)
+        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap }) => { // Removed uploadToDevice
             const { useState, useEffect } = React;
             return (
-                <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
+                <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">SAVE & LOAD PROFILE</h1>
                     <div className="flex flex-col space-y-4 w-full max-w-md">
                         <button
@@ -820,97 +642,18 @@
                         <div className="bg-zinc-700 rounded-xl p-4 text-zinc-300 text-center text-sm border border-zinc-600">
                             To upload to Pico: Save the exported `layers.json` file, then drag and drop it onto your `CIRCUITPY` drive.
                         </div>
-                        <h2 className="text-2xl font-bold text-red-300 mt-8 mb-4">Device Operations (Web Serial)</h2>
-                        {!isConnected ? (
-                            <button
-                                onClick={handleConnectPico}
-                                className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                            >
-                                Connect to Device
-                            </button>
-                        ) : (
-                            <>
-                                <p className="text-green-400 text-center text-lg font-semibold">Connected to Pico!</p>
-                                <button
-                                    onClick={uploadToDevice}
-                                    className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                                >
-                                    Upload layers.json to Device
-                                </button>
-                                <button
-                                    onClick={() => handleGetFile("layers.json")}
-                                    className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                                >
-                                    Check layers.json on Device
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteFile("layers.json")}
-                                    className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                                >
-                                    Delete layers.json on Device
-                                </button>
-                            </>
-                        )}
-
-                        {/* Log Display Dropdown */}
-                        <div className="mt-8 w-full">
-                            <button
-                                onClick={toggleLogDropdown}
-                                className="w-full bg-zinc-600 hover:bg-zinc-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold flex justify-between items-center"
-                            >
-                                Show Device Log
-                                <svg className={`w-5 h-5 transition-transform duration-200 ${showLogDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-                            {showLogDropdown && (
-                                <div className="bg-zinc-700 rounded-xl p-4 mt-4 shadow-lg border border-zinc-600">
-                                    <textarea
-                                        readOnly
-                                        value={logs.join('\n')}
-                                        className="w-full h-48 bg-zinc-800 border border-zinc-600 rounded-md p-3 text-white font-mono text-sm resize-y custom-scrollbar"
-                                        placeholder="Device log messages will appear here..."
-                                    ></textarea>
-                                    <button
-                                        onClick={clearLogs}
-                                        className="mt-3 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200 text-sm font-semibold w-full"
-                                    >
-                                        Clear Log
-                                    </button>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
             );
         };
 
-        // Settings component (formerly from src/components/Settings.js)
-        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea, numLayers, setNumLayers }) => {
+        // Settings component (unchanged)
+        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea }) => {
             const { useState, useEffect } = React;
             return (
-                <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
+                <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">SETTINGS</h1>
                     <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
-                        <h2 className="text-2xl font-bold text-red-300 mb-4">Layer Configuration</h2>
-                        <div className="flex items-center justify-between mb-6">
-                            <label htmlFor="num-layers" className="text-lg text-zinc-200 mr-4">Number of Layers:</label>
-                            <input
-                                type="number"
-                                id="num-layers"
-                                value={numLayers}
-                                onChange={(e) => {
-                                    const value = parseInt(e.target.value);
-                                    if (!isNaN(value)) {
-                                        setNumLayers(Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, value)));
-                                    }
-                                }}
-                                min={MIN_LAYERS}
-                                max={MAX_LAYERS}
-                                className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white text-center"
-                            />
-                        </div>
-
                         <h2 className="text-2xl font-bold text-red-300 mb-4">Import JSON Configuration</h2>
                         <textarea
                             className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y"
@@ -929,46 +672,27 @@
             );
         };
 
-        // KeyTester component (formerly from src/components/KeyTester.js)
+        // KeyTester component (unchanged)
         const KeyTester = ({ activeTab }) => {
             const { useState, useEffect } = React;
             const [pressedKeys, setPressedKeys] = useState([]);
-            const [modifierState, setModifierState] = useState({
-                ctrlKey: false,
-                shiftKey: false,
-                altKey: false,
-                metaKey: false, // Windows key or Command key on Mac
-            });
 
             useEffect(() => {
                 if (activeTab === 'keytester') {
                     const handleKeyDown = (e) => {
-                        e.preventDefault(); // Prevent default browser actions for keys
+                        e.preventDefault();
                         setPressedKeys(prev => {
                             const newKey = { key: e.key, code: e.code, timestamp: Date.now() };
-                            // Only add if not already present to avoid duplicates for held keys
-                            if (!prev.some(k => k.code === e.code)) {
-                                return [...prev, newKey];
+                            if (!prev.some(k => k.code === e.code && k.type === 'down')) {
+                                return [...prev, { ...newKey, type: 'down' }];
                             }
                             return prev;
-                        });
-                        setModifierState({
-                            ctrlKey: e.ctrlKey,
-                            shiftKey: e.shiftKey,
-                            altKey: e.altKey,
-                            metaKey: e.metaKey,
                         });
                     };
 
                     const handleKeyUp = (e) => {
                         e.preventDefault();
                         setPressedKeys(prev => prev.filter(k => k.code !== e.code));
-                        setModifierState({
-                            ctrlKey: e.ctrlKey,
-                            shiftKey: e.shiftKey,
-                            altKey: e.altKey,
-                            metaKey: e.metaKey,
-                        });
                     };
 
                     window.addEventListener('keydown', handleKeyDown);
@@ -980,279 +704,60 @@
                     };
                 } else {
                     setPressedKeys([]);
-                    setModifierState({
-                        ctrlKey: false,
-                        shiftKey: false,
-                        altKey: false,
-                        metaKey: false,
-                    });
                 }
             }, [activeTab]);
 
-            const clearPressedKeys = () => {
-                setPressedKeys([]);
-                setModifierState({
-                    ctrlKey: false,
-                    shiftKey: false,
-                    altKey: false,
-                    metaKey: false,
-                });
-            };
-
             return (
-                <div className="flex flex-col items-center w-full p-8">
+                <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">KEY TESTER</h1>
-                    <p className="text-zinc-300 mb-6 text-lg text-center">Press any key on your keyboard to see its details and active modifiers.</p>
-
-                    <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 min-h-[250px] flex flex-col items-center">
-                        <div className="flex justify-center space-x-4 mb-6 w-full">
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${modifierState.ctrlKey ? 'bg-blue-600 text-white' : 'bg-zinc-600 text-zinc-300'}`}>Ctrl</span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${modifierState.shiftKey ? 'bg-blue-600 text-white' : 'bg-zinc-600 text-zinc-300'}`}>Shift</span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${modifierState.altKey ? 'bg-blue-600 text-white' : 'bg-zinc-600 text-zinc-300'}`}>Alt</span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${modifierState.metaKey ? 'bg-blue-600 text-white' : 'bg-zinc-600 text-zinc-300'}`}>Meta (Win/Cmd)</span>
-                        </div>
-
-                        <div className="flex-1 flex flex-wrap items-center justify-center gap-4 w-full">
-                            {pressedKeys.length === 0 ? (
-                                <p className="text-zinc-400 text-xl">No keys pressed...</p>
-                            ) : (
-                                pressedKeys.map((keyInfo, index) => (
-                                    <div
-                                        key={keyInfo.code + '-' + keyInfo.timestamp}
-                                        className="bg-zinc-600 rounded-lg p-4 shadow-md border border-zinc-500 flex flex-col items-center justify-center min-w-[120px] transform transition-transform duration-100 hover:scale-105"
-                                    >
-                                        <span className="text-xl font-bold text-red-300">{keyInfo.key === ' ' ? 'Space' : keyInfo.key === '' ? 'Unknown' : keyInfo.key}</span>
-                                        <span className="text-sm text-zinc-400 mt-1">{keyInfo.code}</span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                        <button
-                            onClick={clearPressedKeys}
-                            className="mt-6 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                        >
-                            Clear Pressed Keys
-                        </button>
+                    <p className="text-zinc-300 mb-6 text-lg">Press any key on your keyboard to see its details.</p>
+                    <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 min-h-[200px] flex flex-wrap items-center justify-center gap-4">
+                        {pressedKeys.length === 0 ? (
+                            <p className="text-zinc-400 text-xl">No keys pressed...</p>
+                        ) : (
+                            pressedKeys.map((keyInfo, index) => (
+                                <div
+                                    key={keyInfo.code + '-' + keyInfo.timestamp}
+                                    className="bg-zinc-600 rounded-lg p-4 shadow-md border border-zinc-500 flex flex-col items-center justify-center min-w-[120px]"
+                                >
+                                    <span className="text-xl font-bold text-red-300">{keyInfo.key === ' ' ? 'Space' : keyInfo.key}</span>
+                                    <span className="text-sm text-zinc-400 mt-1">{keyInfo.code}</span>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             );
         };
 
 
-        // Main App component (formerly from src/App.js)
+        // Main App component
         function App() {
             const { useState, useEffect, useCallback } = React;
 
-            // Web Serial state
-            const [port, setPort] = useState(null);
-            const [reader, setReader] = useState(null);
-            const [writer, setWriter] = useState(null);
-            const [isConnected, setIsConnected] = useState(false);
-            const encoder = new TextEncoder();
-            const decoder = new TextDecoder();
-
-            // Log state
-            const [logs, setLogs] = useState([]);
-            const [showLogDropdown, setShowLogDropdown] = useState(false);
-
-            const addLog = (message, type = 'info') => {
-                const timestamp = new Date().toLocaleTimeString();
-                setLogs(prevLogs => [`[${timestamp}] [${type.toUpperCase()}] ${message}`, ...prevLogs].slice(0, 50)); // Keep last 50 logs
-            };
-
-            const clearLogs = () => {
-                setLogs([]);
-            };
-
-            const toggleLogDropdown = () => {
-                setShowLogDropdown(prev => !prev);
-            };
-
-            // Web Serial Utility Functions
-            const connectPico = async () => {
-                try {
-                    addLog("Attempting to connect to Pico...", "info");
-                    const selectedPort = await navigator.serial.requestPort();
-                    await selectedPort.open({ baudRate: 115200 });
-                    const newWriter = selectedPort.writable.getWriter();
-                    const newReader = selectedPort.readable.getReader();
-
-                    setPort(selectedPort);
-                    setWriter(newWriter);
-                    setReader(newReader);
-                    setIsConnected(true);
-                    setModalContent({
-                        title: "Connection Successful",
-                        message: "Successfully connected to Pico!"
-                    });
-                    addLog("Successfully connected to Pico!", "success");
-
-                    // Listen for disconnect
-                    selectedPort.addEventListener('disconnect', () => {
-                        setIsConnected(false);
-                        setPort(null);
-                        setReader(null);
-                        setWriter(null);
-                        setModalContent({
-                            title: "Disconnected",
-                            message: "Pico disconnected."
-                        });
-                        addLog("Pico disconnected.", "warn");
-                        setShowModal(true);
-                    });
-
-                } catch (error) {
-                    setIsConnected(false);
-                    setModalContent({
-                        title: "Connection Failed",
-                        message: "Failed to connect to Pico: " + error.message
-                    });
-                    addLog(`Failed to connect to Pico: ${error.message}`, "error");
-                } finally {
-                    setShowModal(true);
-                }
-            };
-
-            // Send a command (LIST, DEL filename, etc.)
-            const sendCommand = async (cmd) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot send command.", "error");
-                    throw new Error("Not connected to Pico.");
-                }
-                addLog(`Sending command: ${cmd}`, "info");
-                await writer.write(encoder.encode(cmd + "\n"));
-            };
-
-            // Read response until <END> or <EOF>
-            const readResponse = async (until = "<END>") => {
-                let out = "";
-                while (true) {
-                    const { value } = await reader.read();
-                    if (!value) break;
-                    const text = decoder.decode(value);
-                    out += text;
-                    if (out.includes(until)) break;
-                }
-                addLog(`Received response (until '${until}'):\n${out}`, "info");
-                return out;
-            };
-
-            // Upload a file to Pico
-            const putFile = async (file) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot upload file.", "error");
-                    throw new Error("Not connected to Pico.");
-                }
-                addLog(`Initiating upload for ${file.name}...`, "info");
-                await sendCommand("PUT " + file.name);
-                await new Promise(r => setTimeout(r, 100));
-
-                const buf = new Uint8Array(await file.arrayBuffer());
-                const chunkSize = 256;
-                for (let i = 0; i < buf.length; i += chunkSize) {
-                    await writer.write(buf.slice(i, i + chunkSize));
-                    await new Promise(r => setTimeout(r, 1));
-                }
-                await writer.write(encoder.encode("<EOF>"));
-                addLog(`Uploaded ${file.name} chunks. Waiting for Pico confirmation.`, "info");
-            };
-
-            // Download file from Pico (modified to not trigger download, just return content)
-            const getFile = async (filename) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot get file.", "error");
-                    throw new Error("Not connected to Pico.");
-                }
-                addLog(`Initiating request for ${filename}...`, "info");
-                await sendCommand("GET " + filename);
-                const chunks = [];
-                while (true) {
-                    const { value } = await reader.read();
-                    if (!value) break;
-                    const view = new Uint8Array(value);
-                    const text = decoder.decode(view);
-                    if (text.includes("<EOF>")) {
-                        chunks.push(view.slice(0, text.indexOf("<EOF>")));
-                        break;
-                    }
-                    chunks.push(view);
-                }
-                const blob = new Blob(chunks);
-                addLog(`Received content for ${filename}.`, "success");
-                return blob; // Return blob to allow further processing (e.g., loading into textarea)
-            };
-
-            // Delete a file
-            const deleteFile = async (fname) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot delete file.", "error");
-                    throw new Error("Not connected to Pico.");
-                }
-                addLog(`Attempting to delete ${fname}...`, "info");
-                await sendCommand("DEL " + fname);
-                const response = await readResponse();
-                addLog(`Delete response for ${fname}: ${response}`, "info");
-            };
-
-            // New state for number of layers
-            const [numLayers, setNumLayers] = useState(DEFAULT_LAYERS);
-
-            // State for the keymap, initialized based on numLayers
-            const [keymap, setKeymap] = useState(() => Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
-            
-            // Effect to update keymap when numLayers changes
-            useEffect(() => {
-                setKeymap(prevKeymap => {
-                    const newKeymap = Array(numLayers).fill().map((_, i) => {
-                        if (prevKeymap[i]) {
-                            return prevKeymap[i]; // Keep existing layer data
-                        } else {
-                            return createEmptyLayer(i); // Create new empty layer
-                        }
-                    });
-                    return newKeymap;
-                });
-
-                // Adjust currentLayer if it's out of bounds
-                setCurrentLayer(prevCurrentLayer => {
-                    if (prevCurrentLayer >= numLayers) {
-                        return numLayers > 0 ? numLayers - 1 : 0; // Go to last layer or 0 if no layers (min is 1 so never 0)
-                    }
-                    return prevCurrentLayer;
-                });
-                addLog(`Number of layers changed to ${numLayers}.`, "info");
-            }, [numLayers]);
-
-
+            const [keymap, setKeymap] = useState(initialMultiLayerGrid);
+            // Initialize shortcut pool to use all defined presets
             const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
             const [showModal, setShowModal] = useState(false);
             const [modalContent, setModalContent] = useState({ title: "", message: "" });
             const [draggedShortcut, setDraggedShortcut] = useState(null);
             const [activeTab, setActiveTab] = useState('keymap');
             const [jsonInput, setJsonInput] = useState('');
-            const [currentLayer, setCurrentLayer] = useState(0); // New state for active layer in UI
-            // New state for click-to-assign functionality
-            const [selectedKeymapCell, setSelectedKeymapCell] = useState(null); // {row, col, layer} or null
-            // New state for Web Serial API support
-            const [webSerialSupported, setWebSerialSupported] = useState(false);
+            const [currentLayer, setCurrentLayer] = useState(0);
+            const [selectedKeymapCell, setSelectedKeymapCell] = useState(null);
 
             const [macros, setMacros] = useState([
-                { id: 1, name: "Macro 1", sequence: "Hello World!" }, // Renamed for consistency with Pico parsing
-                { id: 2, name: "Macro 2", sequence: "control+alt+t" }, // Example macro
+                { id: 1, name: "Hello World", sequence: "Hello World!" },
+                { id: 2, name: "Signature", sequence: "John Doe\nSoftware Engineer" },
             ]);
             const [nextMacroId, setNextMacroId] = useState(3);
 
-            const [potentiometerConfig, setPotentiometerConfig] = useState({
-                enabled: false,
-                pin: 34,
-                function: 'volume',
-                customAction: ''
-            });
+            // Potentiometer config removed as it's not in Pico documentation
+            // const [potentiometerConfig, setPotentiometerConfig] = useState({ /* ... */ });
 
-            // Load profile on component mount and check Web Serial API support
+            // Load profile on component mount
             useEffect(() => {
                 loadProfile();
-                setWebSerialSupported('serial' in navigator);
             }, []);
 
             // Handlers for drag and drop
@@ -1265,59 +770,44 @@
                     droppedItem = JSON.parse(data);
                 } catch (error) {
                     console.error("Failed to parse dropped data:", error);
-                    addLog(`Failed to parse dropped data: ${error.message}`, "error");
                     setDraggedShortcut(null);
                     return;
                 }
 
                 const newKeymap = JSON.parse(JSON.stringify(keymap));
-                const flatIndex = row * 3 + col;
 
                 if (droppedItem.isKeymapCell) {
                     const sourceRow = droppedItem.sourceRow;
                     const sourceCol = droppedItem.sourceCol;
                     const sourceLayer = droppedItem.sourceLayer;
-                    const sourceFlatIndex = sourceRow * 3 + sourceCol;
 
                     if (sourceLayer === currentLayer) {
-                        // Swap logic for same layer
-                        const tempKey = newKeymap[currentLayer].keys[flatIndex];
-                        const tempLabel = newKeymap[currentLayer].labels[flatIndex];
-
-                        newKeymap[currentLayer].keys[flatIndex] = newKeymap[currentLayer].keys[sourceFlatIndex];
-                        newKeymap[currentLayer].labels[flatIndex] = newKeymap[currentLayer].labels[sourceFlatIndex];
-
-                        newKeymap[currentLayer].keys[sourceFlatIndex] = tempKey;
-                        newKeymap[currentLayer].labels[sourceFlatIndex] = tempLabel;
+                        const tempCell = newKeymap[currentLayer][row][col];
+                        newKeymap[currentLayer][row][col] = newKeymap[currentLayer][sourceRow][sourceCol];
+                        newKeymap[currentLayer][sourceRow][sourceCol] = tempCell;
                     } else {
-                        // Copy from another layer
-                        newKeymap[currentLayer].keys[flatIndex] = droppedItem.cell.combo;
-                        newKeymap[currentLayer].labels[flatIndex] = droppedItem.cell.description;
+                        newKeymap[currentLayer][row][col] = droppedItem.cell;
                     }
                 } else {
-                    // Assign new shortcut
-                    newKeymap[currentLayer].keys[flatIndex] = droppedItem.combo;
-                    newKeymap[currentLayer].labels[flatIndex] = droppedItem.description;
+                    newKeymap[currentLayer][row][col] = { tap: droppedItem, hold: null };
                 }
 
                 setKeymap(newKeymap);
                 setDraggedShortcut(null);
-                setSelectedKeymapCell(null); // Clear any active cell selection after drag-drop
-                addLog(`Key assigned to Layer ${currentLayer}, Row ${row}, Col ${col}.`, "info");
+                setSelectedKeymapCell(null);
             };
 
 
-            const handleKeymapDragStart = (e, cellContent, row, col) => {
-                // Pass the combo and description for dragging
-                const dragData = JSON.stringify({ isKeymapCell: true, cell: cellContent, sourceRow: row, sourceCol: col, sourceLayer: currentLayer });
+            const handleKeymapDragStart = (e, cell, row, col) => {
+                const dragData = JSON.stringify({ isKeymapCell: true, cell: cell, sourceRow: row, sourceCol: col, sourceLayer: currentLayer });
                 e.dataTransfer.setData("text/plain", dragData);
-                setSelectedKeymapCell(null); // Clear any active cell selection on drag start
+                setSelectedKeymapCell(null);
             };
 
             const handleShortcutDragStart = (e, shortcut) => {
                 e.dataTransfer.setData("text/plain", JSON.stringify(shortcut));
                 setDraggedShortcut(shortcut);
-                setSelectedKeymapCell(null); // Clear any active cell selection on drag start
+                setSelectedKeymapCell(null);
             };
 
             const handleDragEnd = () => {
@@ -1325,161 +815,94 @@
             };
 
             const clearKeymapCell = (rIdx, cIdx) => {
-                const flatIndex = rIdx * 3 + cIdx;
-                const updatedKeymap = keymap.map((layer, lIdx) => {
-                    if (lIdx === currentLayer) {
-                        const newKeys = [...layer.keys];
-                        const newLabels = [...layer.labels];
-                        newKeys[flatIndex] = null; // Set key to null
-                        newLabels[flatIndex] = ''; // Clear label
-                        return { ...layer, keys: newKeys, labels: newLabels };
-                    }
-                    return layer;
-                });
+                const updatedKeymap = keymap.map((layer, lIdx) =>
+                    lIdx === currentLayer
+                        ? layer.map((r, rowIdx) =>
+                              r.map((cell, colIdx) =>
+                                  (rowIdx === rIdx && colIdx === cIdx) ? { tap: null, hold: null } : cell
+                              )
+                          )
+                        : layer
+                );
                 setKeymap(updatedKeymap);
-                setSelectedKeymapCell(null); // Clear selection if the cleared cell was selected
-                addLog(`Keymap cell Layer ${currentLayer}, Row ${rIdx}, Col ${cIdx} cleared.`, "info");
+                setSelectedKeymapCell(null);
             };
 
-            // New handler for clicking a keymap cell
             const handleKeymapCellClick = (row, col, layer) => {
-                // If the clicked cell is already selected, deselect it
                 if (selectedKeymapCell && selectedKeymapCell.row === row && selectedKeymapCell.col === col && selectedKeymapCell.layer === layer) {
                     setSelectedKeymapCell(null);
-                    addLog(`Deselected keymap cell Layer ${layer}, Row ${row}, Col ${col}.`, "info");
                 } else {
-                    // Otherwise, select this cell
                     setSelectedKeymapCell({ row, col, layer });
-                    addLog(`Selected keymap cell Layer ${layer}, Row ${row}, Col ${col}.`, "info");
                 }
             };
 
-            // New handler for clicking a shortcut in the pool
             const handleShortcutClick = (shortcut) => {
                 if (selectedKeymapCell) {
                     const { row, col, layer } = selectedKeymapCell;
-                    const flatIndex = row * 3 + col;
                     const newKeymap = JSON.parse(JSON.stringify(keymap));
-                    newKeymap[layer].keys[flatIndex] = shortcut.combo;
-                    newKeymap[layer].labels[flatIndex] = shortcut.description; // Store description as label
+                    newKeymap[layer][row][col] = { tap: shortcut, hold: null };
                     setKeymap(newKeymap);
-                    setSelectedKeymapCell(null); // Clear selection after assignment
-                    addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Row ${row}, Col ${col}.`, "info");
+                    setSelectedKeymapCell(null);
                 } else {
-                    // Optionally, you could show a modal or message if no cell is selected
                     setModalContent({
                         title: "No Keymap Cell Selected",
                         message: "Please click a keymap cell first to select it, then click a shortcut to assign it."
                     });
                     setShowModal(true);
-                    addLog("Attempted to assign shortcut without selecting a keymap cell.", "warn");
                 }
-            };
-
-            // New handler to clear all cells on the current layer
-            const clearCurrentLayer = () => {
-                setModalContent({
-                    title: "Confirm Clear Layer",
-                    message: `Are you sure you want to clear all keys on Layer ${currentLayer}? This action cannot be undone.`,
-                    onConfirm: () => {
-                        const updatedKeymap = keymap.map((layer, lIdx) =>
-                            lIdx === currentLayer
-                                ? { ...layer, keys: Array(9).fill(null), labels: Array(9).fill('') } // Clear keys and labels
-                                : layer
-                        );
-                        setKeymap(updatedKeymap);
-                        setSelectedKeymapCell(null); // Clear any active cell selection
-                        setShowModal(false);
-                        addLog(`All keys on Layer ${currentLayer} cleared.`, "info");
-                    },
-                    onCancel: () => {
-                        setShowModal(false);
-                        addLog(`Clear Layer ${currentLayer} cancelled.`, "info");
-                    }
-                });
-                setShowModal(true);
             };
 
 
             // Profile Management
             const saveProfile = () => {
                 const profileData = {
-                    keymap: keymap, // Save the multi-layer keymap
-                    potentiometerConfig: potentiometerConfig,
-                    macros: macros,
-                    numLayers: numLayers // Save the number of layers
+                    keymap: keymap,
+                    // potentiometerConfig removed
+                    macros: macros
                 };
-                localStorage.setItem("trkey_profile", JSON.stringify(profileData));
+                localStorage.setItem("trkey_profile_pico", JSON.stringify(profileData)); // Changed key for Pico profile
                 setModalContent({
                     title: "Profile Saved",
                     message: "Profile saved to browser storage."
                 });
                 setShowModal(true);
-                addLog("Profile saved to browser storage.", "info");
             };
 
             const loadProfile = () => {
-                const saved = localStorage.getItem("trkey_profile");
+                const saved = localStorage.getItem("trkey_profile_pico"); // Changed key for Pico profile
                 if (saved) {
                     const profileData = JSON.parse(saved);
-                    
-                    const loadedNumLayers = profileData.numLayers || DEFAULT_LAYERS;
-                    const clampedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedNumLayers));
-                    setNumLayers(clampedNumLayers);
-
-                    // Re-initialize keymap based on loadedNumLayers (or clamped)
-                    const newKeymap = Array(clampedNumLayers).fill().map((_, i) => {
-                        if (profileData.keymap && profileData.keymap[i]) {
-                            // Deep copy to ensure independence
-                            return { ...profileData.keymap[i], 
-                                keys: [...profileData.keymap[i].keys], 
-                                labels: [...profileData.keymap[i].labels] 
-                            };
-                        } else {
-                            return createEmptyLayer(i);
-                        }
-                    });
-                    setKeymap(newKeymap);
-
-                    setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 34, function: 'volume', customAction: '' });
+                    if (profileData.keymap && Array.isArray(profileData.keymap) && profileData.keymap.length === initialMultiLayerGrid.length) {
+                        setKeymap(profileData.keymap);
+                    } else {
+                        setKeymap(initialMultiLayerGrid);
+                        console.warn("Loaded keymap structure mismatch, resetting to initial multi-layer grid.");
+                    }
+                    // potentiometerConfig removed
                     setMacros(profileData.macros || []);
-
-                    // Adjust currentLayer if it's out of bounds after loading
-                    setCurrentLayer(prevCurrentLayer => {
-                        if (prevCurrentLayer >= clampedNumLayers) {
-                            return clampedNumLayers > 0 ? clampedNumLayers - 1 : 0;
-                        }
-                        return prevCurrentLayer;
-                    });
-
                     setModalContent({
                         title: "Profile Loaded",
                         message: "Profile loaded successfully."
                     });
-                    addLog("Profile loaded from browser storage.", "info");
                 } else {
                     setModalContent({
                         title: "No Profile Found",
-                        message: "No saved profile found. Initializing with default layers."
+                        message: "No saved profile found."
                     });
-                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
-                    setNumLayers(DEFAULT_LAYERS);
-                    addLog("No saved profile found in browser storage. Initialized with default layers.", "info");
                 }
                 setShowModal(true);
             };
 
-            // Export and Upload
+            // Export function updated to generate layers.json format and shorten labels
             const exportKeymap = () => {
-                // Transform the internal multi-layer keymap state to the Pico-friendly layers.json format
                 const layersForExport = []; // Array of layer objects
 
-                // Use the current numLayers for export
-                keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
-                    // Ensure layerData has 'name', 'labels', 'keys'
-                    const layerName = layerData.name || `Layer ${lIdx}`;
-                    const keys = layerData.keys.map(key => key || ""); // Replace null with empty string
-                    const labels = layerData.labels.map(label => label || ""); // Replace null with empty string
+                keymap.forEach((layerData, lIdx) => {
+                    const layerName = `Layer ${lIdx}`; // Default name
+                    // Flatten the 3x3 grid into a 1D array of 9 keys
+                    const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
+                    // Use the new getShortLabel function for labels
+                    const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
 
                     layersForExport.push({
                         name: layerName,
@@ -1490,13 +913,19 @@
 
                 const fullExportData = layersForExport; // The root is now the array of layers
 
-                // Macros are typically added to the first layer in Pico's layers.json
+                // Macros are separate in Pico's layers.json
                 if (macros.length > 0) {
+                    // Add macros to the first layer, or create a separate entry if needed.
+                    // For simplicity, let's add them to the first layer's object if it exists.
+                    // A more robust solution might have a dedicated "macros" file or a more complex JSON structure.
+                    // Based on the provided doc, macros are part of the layer object.
+                    // If the doc implies global macros, this needs adjustment.
+                    // For now, I'll put them in the first layer's object for the export.
                     if (fullExportData.length > 0) {
-                         // Ensure macros are stored as {name: "Macro X", sequence: "..."}
                          fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
                     }
                 }
+
 
                 const blob = new Blob([JSON.stringify(fullExportData, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
@@ -1509,268 +938,94 @@
                     message: "Configuration exported as layers.json. Drag this file onto your CIRCUITPY drive."
                 });
                 setShowModal(true);
-                addLog("Configuration exported as layers.json.", "info");
             };
 
-            const uploadToDevice = async () => {
-                try {
-                    if (!webSerialSupported) {
-                        setModalContent({
-                            title: "Web Serial API Not Supported",
-                            message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
-                        });
-                        setShowModal(true);
-                        addLog("Web Serial API not supported.", "error");
-                        return;
-                    }
+            // uploadToDevice removed (Pico uses drag-and-drop file transfer)
+            // const uploadToDevice = async () => { /* ... */ };
 
-                    if (!isConnected) {
-                        setModalContent({
-                            title: "Not Connected",
-                            message: "Please connect to your Pico device first."
-                        });
-                        setShowModal(true);
-                        addLog("Not connected to Pico for upload.", "warn");
-                        return;
-                    }
-
-                    // Transform the internal multi-layer keymap state to the Pico-friendly layers.json format
-                    const layersForUpload = [];
-                    // Use the current numLayers for upload
-                    keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
-                        const layerName = layerData.name || `Layer ${lIdx}`;
-                        const keys = layerData.keys.map(key => key || "");
-                        const labels = layerData.labels.map(label => label || "");
-
-                        layersForUpload.push({
-                            name: layerName,
-                            labels: labels,
-                            keys: keys
-                        });
-                    });
-
-                    const fullUploadData = layersForUpload;
-
-                    // Add macros to the first layer for upload
-                    if (macros.length > 0 && fullUploadData.length > 0) {
-                        fullUploadData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
-                    }
-
-                    const json = JSON.stringify(fullUploadData);
-                    const blob = new Blob([json], { type: "application/json" });
-                    
-                    // Create a File object from the Blob
-                    const fileToUpload = new File([blob], "layers.json", { type: "application/json" });
-
-                    setModalContent({
-                        title: "Uploading...",
-                        message: "Uploading layers.json to Pico. Please wait."
-                    });
-                    setShowModal(true);
-                    addLog("Starting layers.json upload to Pico...", "info");
-
-                    await putFile(fileToUpload); // Pass the File object
-                    
-                    setModalContent({
-                        title: "Upload Successful",
-                        message: "Configuration uploaded successfully!"
-                    });
-                    addLog("Configuration uploaded successfully!", "success");
-                } catch (err) {
-                    setModalContent({
-                        title: "Upload Failed",
-                        message: "Failed to upload: " + err.message
-                    });
-                    addLog(`Upload failed: ${err.message}`, "error");
-                } finally {
-                    setShowModal(true);
-                }
-            };
-
-            const handleConnectPico = async () => {
-                await connectPico();
-            };
-
-            const handleGetFile = async (filename) => {
-                try {
-                    if (!isConnected) {
-                        setModalContent({ title: "Not Connected", message: "Please connect to your Pico device first." });
-                        setShowModal(true);
-                        addLog("Not connected to Pico for file check.", "warn");
-                        return;
-                    }
-                    setModalContent({ title: "Checking...", message: `Checking ${filename} on Pico. Please wait.` });
-                    setShowModal(true);
-                    addLog(`Starting check of ${filename} on Pico...`, "info");
-                    const blob = await getFile(filename); // getFile now just returns blob
-                    const text = await blob.text();
-                    setJsonInput(text); // Populate the settings textarea with the retrieved content
-                    setActiveTab('settings'); // Switch to settings tab to show the content
-                    setModalContent({ title: "Check Successful", message: `${filename} content loaded into settings tab.` });
-                    addLog(`${filename} content loaded into settings tab.`, "success");
-                } catch (err) { // Corrected syntax: removed '=>'
-                    setModalContent({ title: "Check Failed", message: `Failed to check ${filename}: ${err.message}` });
-                    addLog(`Check of ${filename} failed: ${err.message}`, "error");
-                } finally {
-                    setShowModal(true);
-                }
-            };
-
-            const handleDeleteFile = async (filename) => {
-                try {
-                    if (!isConnected) {
-                        setModalContent({ title: "Not Connected", message: "Please connect to your Pico device first." });
-                        setShowModal(true);
-                        addLog("Not connected to Pico for file deletion.", "warn");
-                        return;
-                    }
-                    setModalContent({
-                        title: "Confirm Delete",
-                        message: `Are you sure you want to delete ${filename} from Pico?`,
-                        onConfirm: async () => {
-                            setShowModal(false); // Close confirmation modal
-                            setModalContent({ title: "Deleting...", message: `Deleting ${filename} from Pico. Please wait.` });
-                            setShowModal(true);
-                            addLog(`Confirming deletion of ${filename}...`, "info");
-                            await deleteFile(filename); // deleteFile now handles its own response logging
-                            setModalContent({ title: "Delete Successful", message: `${filename} deleted.` });
-                            addLog(`${filename} deleted successfully.`, "success");
-                            setShowModal(true);
-                        },
-                        onCancel: () => {
-                            setShowModal(false);
-                            addLog(`Deletion of ${filename} cancelled.`, "info");
-                        }
-                    });
-                    setShowModal(true);
-                } catch (err) {
-                    setModalContent({ title: "Delete Failed", message: `Failed to delete ${filename}: ${err.message}` });
-                    addLog(`Deletion of ${filename} failed: ${err.message}`, "error");
-                    setShowModal(true);
-                }
-            };
-
-
-            // JSON Import
+            // JSON Import updated to parse layers.json format
             const loadJsonFromTextArea = () => {
                 try {
                     const parsedJson = JSON.parse(jsonInput);
 
-                    // Expecting an array of layer objects for layers.json
-                    if (Array.isArray(parsedJson)) {
-                        const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, parsedJson.length));
-                        setNumLayers(loadedNumLayers); // Update the numLayers state
-
-                        const newKeymap = Array(loadedNumLayers).fill().map((_, layerIdx) => {
-                            if (parsedJson[layerIdx]) {
-                                return {
-                                    name: parsedJson[layerIdx].name || `Layer ${layerIdx}`,
-                                    labels: Array.isArray(parsedJson[layerIdx].labels) && parsedJson[layerIdx].labels.length === 9
-                                        ? [...parsedJson[layerIdx].labels]
-                                        : Array(9).fill(''),
-                                    keys: Array.isArray(parsedJson[layerIdx].keys) && parsedJson[layerIdx].keys.length === 9
-                                        ? [...parsedJson[layerIdx].keys]
-                                        : Array(9).fill(null),
-                                    macros: parsedJson[layerIdx].macros || []
-                                };
-                            } else {
-                                return createEmptyLayer(layerIdx);
-                            }
-                        });
-
+                    if (Array.isArray(parsedJson)) { // Expecting an array of layer objects
+                        const newKeymap = Array(NUM_LAYERS_PICO).fill().map(() =>
+                            Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }))
+                        );
                         let loadedMacros = [];
-                        let maxMacroId = 0;
 
-                        // Consolidate macros from all loaded layers (though Pico expects them on layer 0)
-                        parsedJson.forEach(layerData => {
-                            if (layerData.macros && Array.isArray(layerData.macros)) {
-                                const newMacrosForLayer = layerData.macros.map((m) => {
-                                    const id = nextMacroId + loadedMacros.length; // Assign a temporary ID
-                                    maxMacroId = Math.max(maxMacroId, id);
-                                    return { id: id, name: m.name, sequence: m.sequence };
-                                });
-                                loadedMacros = [...loadedMacros, ...newMacrosForLayer];
+                        parsedJson.forEach((layerData, lIdx) => {
+                            if (lIdx < NUM_LAYERS_PICO) { // Only load up to NUM_LAYERS_PICO
+                                if (layerData.keys && Array.isArray(layerData.keys) && layerData.keys.length === 9) {
+                                    layerData.keys.forEach((combo, keyIndex) => {
+                                        const rIdx = Math.floor(keyIndex / 3);
+                                        const cIdx = keyIndex % 3;
+                                        const description = layerData.labels && layerData.labels[keyIndex] ? layerData.labels[keyIndex] : combo;
+
+                                        newKeymap[lIdx][rIdx][cIdx] = {
+                                            tap: combo ? { combo: combo, description: description } : null,
+                                            hold: null // Pico doc doesn't mention hold, so keep null
+                                        };
+                                    });
+                                }
+                                // Load macros if present in this layer (Pico doc suggests macros per layer)
+                                if (layerData.macros && Array.isArray(layerData.macros)) {
+                                    loadedMacros = [...loadedMacros, ...layerData.macros.map((m, idx) => ({ id: nextMacroId + loadedMacros.length + idx, name: m.name, sequence: m.sequence }))];
+                                }
                             }
                         });
-                        
                         setKeymap(newKeymap);
                         setMacros(loadedMacros);
-                        setNextMacroId(maxMacroId + 1); // Update nextMacroId based on loaded macros
+                        setNextMacroId(loadedMacros.length + 1);
 
-                        // Potentiometer config is not part of Pico's layers.json, so reset or keep default
-                        setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
-
-                        setCurrentLayer(prevCurrentLayer => {
-                            if (prevCurrentLayer >= loadedNumLayers) {
-                                return loadedNumLayers > 0 ? loadedNumLayers - 1 : 0;
-                            }
-                            return prevCurrentLayer;
-                        });
+                        // Potentiometer config is not part of Pico's layers.json
+                        // setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
 
 
                         setModalContent({
                             title: "JSON Loaded",
-                            message: "Configuration loaded from text area successfully (layers.json format)."
+                            message: "Configuration loaded from text area successfully (Pico layers.json format)."
                         });
-                        addLog("Configuration loaded from text area successfully.", "success");
                     } else {
                         setModalContent({
                             title: "Invalid JSON",
                             message: "The pasted JSON does not contain a valid layers.json array structure."
                         });
-                        addLog("Invalid JSON structure for layers.json.", "error");
                     }
                 } catch (error) {
                     setModalContent({
                         title: "JSON Parsing Error",
                         message: "Failed to parse JSON: " + error.message
                     });
-                    addLog(`JSON parsing error: ${error.message}`, "error");
                 } finally {
                     setShowModal(true);
                 }
             };
 
-            // Macro functions
+            // Macro functions (unchanged)
             const addMacro = () => {
-                const name = prompt("Enter macro name (e.g., Macro 1):");
-                if (!name) {
-                    addLog("Macro creation cancelled (no name provided).", "info");
-                    return;
-                }
+                const name = prompt("Enter macro name:");
+                if (!name) return;
                 const sequence = prompt("Enter macro sequence (e.g., 'Hello World!'):");
                 if (sequence) {
                     setMacros(prev => [...prev, { id: nextMacroId, name, sequence }]);
                     setNextMacroId(prev => prev + 1);
-                    addLog(`Macro "${name}" added.`, "info");
-                } else {
-                    addLog("Macro creation cancelled (no sequence provided).", "info");
                 }
             };
 
             const editMacro = (id) => {
                 const macroToEdit = macros.find(m => m.id === id);
-                if (!macroToEdit) {
-                    addLog(`Attempted to edit non-existent macro with ID: ${id}.`, "warn");
-                    return;
-                }
+                if (!macroToEdit) return;
 
                 const newName = prompt(`Edit name for "${macroToEdit.name}":`, macroToEdit.name);
-                if (newName === null) {
-                    addLog(`Edit for macro "${macroToEdit.name}" cancelled (name).`, "info");
-                    return;
-                }
+                if (newName === null) return;
 
                 const newSequence = prompt(`Edit sequence for "${macroToEdit.name}":`, macroToEdit.sequence);
-                if (newSequence === null) {
-                    addLog(`Edit for macro "${macroToEdit.name}" cancelled (sequence).`, "info");
-                    return;
-                }
+                if (newSequence === null) return;
 
                 setMacros(prev => prev.map(m =>
                     m.id === id ? { ...m, name: newName, sequence: newSequence } : m
                 ));
-                addLog(`Macro "${macroToEdit.name}" (ID: ${id}) updated.`, "info");
             };
 
             const deleteMacro = (id) => {
@@ -1780,12 +1035,8 @@
                     onConfirm: () => {
                         setMacros(prev => prev.filter(m => m.id !== id));
                         setShowModal(false);
-                        addLog(`Macro with ID: ${id} deleted.`, "info");
                     },
-                    onCancel: () => {
-                        setShowModal(false);
-                        addLog(`Deletion of macro with ID: ${id} cancelled.`, "info");
-                    }
+                    onCancel: () => setShowModal(false)
                 });
                 setShowModal(true);
             };
@@ -1796,18 +1047,12 @@
                     <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
                     {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col p-4 overflow-auto"> {/* Adjusted padding for overall content */}
-                         {/* Web Serial Status Indicator */}
-                        <div className="flex justify-end mb-4">
-                            <span className={`text-sm px-3 py-1 rounded-full ${webSerialSupported ? 'bg-green-600' : 'bg-red-600'} text-white`}>
-                                Web Serial: {webSerialSupported ? 'Supported' : 'Not Supported'}
-                            </span>
-                        </div>
+                    <div className="flex-1 flex flex-col p-8 overflow-auto">
+                         {/* Removed Web Serial Status Indicator */}
 
                         {activeTab === 'keymap' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for keymap tab content */}
+                            <>
                                 <h1 className="text-4xl font-extrabold text-red-400 mb-4">KEYMAP CONFIGURATION</h1>
-                                {/* Visual Layer Indicator */}
                                 <h2 className="text-2xl font-bold text-zinc-300 mb-8">Currently Viewing: Layer {currentLayer}</h2>
                                 <KeymapGrid
                                     keymap={keymap}
@@ -1815,12 +1060,10 @@
                                     handleKeymapDragStart={handleKeymapDragStart}
                                     handleDragEnd={handleDragEnd}
                                     clearKeymapCell={clearKeymapCell}
-                                    currentLayer={currentLayer} // Pass currentLayer
-                                    setCurrentLayer={setCurrentLayer} // Pass setter for layer buttons
-                                    selectedKeymapCell={selectedKeymapCell} /* New prop */
-                                    handleKeymapCellClick={handleKeymapCellClick} /* New prop */
-                                    clearCurrentLayer={clearCurrentLayer} /* New prop */
-                                    numLayers={numLayers} /* Pass numLayers to KeymapGrid */
+                                    currentLayer={currentLayer}
+                                    setCurrentLayer={setCurrentLayer}
+                                    selectedKeymapCell={selectedKeymapCell}
+                                    handleKeymapCellClick={handleKeymapCellClick}
                                 />
                                 <h2 className="text-3xl font-bold text-red-400 mb-6">SHORTCUTS</h2>
                                 <ShortcutPool
@@ -1828,67 +1071,44 @@
                                     draggedShortcut={draggedShortcut}
                                     handleShortcutDragStart={handleShortcutDragStart}
                                     handleDragEnd={handleDragEnd}
-                                    selectedKeymapCell={selectedKeymapCell} /* New prop */
-                                    handleShortcutClick={handleShortcutClick} /* New prop */
+                                    selectedKeymapCell={selectedKeymapCell}
+                                    handleShortcutClick={handleShortcutClick}
                                 />
-                            </div>
+                            </>
                         )}
 
                         {activeTab === 'macros' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for macros tab content */}
-                                <MacroManagement
-                                    macros={macros}
-                                    addMacro={addMacro}
-                                    editMacro={editMacro}
-                                    deleteMacro={deleteMacro}
-                                />
-                            </div>
+                            <MacroManagement
+                                macros={macros}
+                                addMacro={addMacro}
+                                editMacro={editMacro}
+                                deleteMacro={deleteMacro}
+                            />
                         )}
 
                         {activeTab === 'controls' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for controls tab content */}
-                                <PeripheralControls
-                                    potentiometerConfig={potentiometerConfig}
-                                    setPotentiometerConfig={setPotentiometerConfig}
-                                />
-                            </div>
+                            <PeripheralControls />
                         )}
 
                         {activeTab === 'save-load' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for save-load tab content */}
-                                <SaveLoad
-                                    saveProfile={saveProfile}
-                                    loadProfile={loadProfile}
-                                    exportKeymap={exportKeymap}
-                                    uploadToDevice={uploadToDevice}
-                                    isConnected={isConnected} /* New prop */
-                                    handleConnectPico={handleConnectPico} /* New prop */
-                                    handleGetFile={handleGetFile} /* Modified prop */
-                                    handleDeleteFile={handleDeleteFile} /* New prop */
-                                    logs={logs} /* New prop */
-                                    clearLogs={clearLogs} /* New prop */
-                                    showLogDropdown={showLogDropdown} /* New prop */
-                                    toggleLogDropdown={toggleLogDropdown} /* New prop */
-                                />
-                            </div>
+                            <SaveLoad
+                                saveProfile={saveProfile}
+                                loadProfile={loadProfile}
+                                exportKeymap={exportKeymap}
+                                // uploadToDevice removed
+                            />
                         )}
 
                         {activeTab === 'settings' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for settings tab content */}
-                                <Settings
-                                    jsonInput={jsonInput}
-                                    setJsonInput={setJsonInput}
-                                    loadJsonFromTextArea={loadJsonFromTextArea}
-                                    numLayers={numLayers} /* Pass numLayers */
-                                    setNumLayers={setNumLayers} /* Pass setNumLayers */
-                                />
-                            </div>
+                            <Settings
+                                jsonInput={jsonInput}
+                                setJsonInput={setJsonInput}
+                                loadJsonFromTextArea={loadJsonFromTextArea}
+                            />
                         )}
 
                         {activeTab === 'keytester' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for keytester tab content */}
-                                <KeyTester activeTab={activeTab} />
-                            </div>
+                            <KeyTester activeTab={activeTab} />
                         )}
                     </div>
 
@@ -1904,7 +1124,7 @@
                         title={modalContent.title}
                         message={modalContent.message}
                         onConfirm={modalContent.onConfirm}
-                        onCancel={modalContent.onCancel}
+                        onCancel={() => setShowModal(false)}
                     />
                 </div>
             );
