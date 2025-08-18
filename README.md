@@ -162,7 +162,7 @@ MIT License – free to use, modify, and distribute.
 
 ## ⌨️ Coming Soon
 
-**Trkey Keyboard Support** 🚀
+**Trkey Keyboard** 🚀
 
 **Hall affect switches**🥳
 
