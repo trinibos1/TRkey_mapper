@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trkey Configurator (Old Version)</title>
+    <title>Trkey Configurator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -565,7 +565,7 @@
                             </li>
                             <li>
                                 <a href="#" onClick={() => setActiveTab('save-load')} className={`flex items-center ${activeTab === 'save-load' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 1 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
                                     SAVE + LOAD
                                 </a>
                             </li>
@@ -593,7 +593,7 @@
             return (
                 <div className="flex flex-col items-center">
                     <div className="flex space-x-2 mb-4">
-                        {[...Array(NUM_LAYERS)].map((_, index) => ( // Use NUM_LAYERS for general purpose
+                        {[...Array(NUM_LAYERS)].map((_, index) => (
                             <button
                                 key={`layer-btn-${index}`}
                                 onClick={() => setCurrentLayer(index)}
@@ -841,46 +841,239 @@
             );
         };
 
-        // SaveLoad component
-        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice }) => {
-            const { useState, useEffect } = React;
+        // SaveLoad component - Integrated with USB File Server client logic
+        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, getFullConfig }) => {
+            const { useState, useEffect, useRef } = React;
+
+            const [webSerialStatus, setWebSerialStatus] = useState('Disconnected'); // 'Disconnected', 'Connecting', 'Connected', 'Error'
+            const [serialPort, setSerialPort] = useState(null);
+            const serialWriter = useRef(null);
+            const serialReader = useRef(null);
+            const serialOutputRef = useRef(null); // Ref for the textarea output
+
+            // Function to append text to the serial output textarea
+            const appendOutput = (text) => {
+                if (serialOutputRef.current) {
+                    serialOutputRef.current.value += text;
+                    serialOutputRef.current.scrollTop = serialOutputRef.current.scrollHeight;
+                }
+            };
+
+            // Read loop for incoming serial data
+            const readLoop = async () => {
+                if (!serialReader.current || !serialPort) return;
+                try {
+                    while (serialPort.readable) {
+                        const { value, done } = await serialReader.current.read();
+                        if (done) break;
+                        if (value) appendOutput(new TextDecoder().decode(value));
+                    }
+                } catch (error) {
+                    console.error("Serial read error:", error);
+                    appendOutput(`\nError reading from serial: ${error.message}\n`);
+                    setWebSerialStatus('Error');
+                } finally {
+                    if (serialReader.current) {
+                        serialReader.current.releaseLock();
+                        serialReader.current = null;
+                    }
+                }
+            };
+
+            // Connect Web Serial
+            const connectWebSerial = async () => {
+                if (!('serial' in navigator)) {
+                    alert("Web Serial API not supported in your browser. Please use Chrome, Edge, or Opera.");
+                    setWebSerialStatus('Error');
+                    return;
+                }
+
+                setWebSerialStatus('Connecting');
+                appendOutput("Connecting...\n");
+                try {
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+
+                    serialWriter.current = port.writable.getWriter();
+                    serialReader.current = port.readable.getReader();
+
+                    setSerialPort(port); // Set the port in state once successfully opened
+                    setWebSerialStatus('Connected');
+                    appendOutput("Connected!\n");
+                    readLoop(); // Start reading data
+                } catch (err) {
+                    setWebSerialStatus('Error');
+                    appendOutput(`Failed to connect: ${err.message}\n`);
+                    console.error("Web Serial Connect Error:", err);
+                }
+            };
+
+            // Disconnect Web Serial
+            const disconnectWebSerial = async () => {
+                if (serialWriter.current) {
+                    await serialWriter.current.releaseLock();
+                    serialWriter.current = null;
+                }
+                if (serialReader.current) {
+                    // This might cause the readLoop to break, which is intended for disconnect
+                    await serialReader.current.cancel();
+                    serialReader.current = null;
+                }
+                if (serialPort) {
+                    try {
+                        await serialPort.close();
+                    } catch (err) {
+                        console.error("Error closing serial port:", err);
+                        appendOutput(`Error closing port: ${err.message}\n`);
+                    } finally {
+                        setSerialPort(null);
+                    }
+                }
+                setWebSerialStatus('Disconnected');
+                appendOutput("Disconnected.\n");
+            };
+
+            // Send command over serial
+            const sendCommand = async (cmd) => {
+                if (!serialWriter.current) {
+                    appendOutput("Not connected to a serial port.\n");
+                    return;
+                }
+                try {
+                    await serialWriter.current.write(new TextEncoder().encode(cmd + "\n"));
+                } catch (error) {
+                    console.error("Error sending command:", error);
+                    appendOutput(`Error sending command: ${error.message}\n`);
+                    setWebSerialStatus('Error');
+                }
+            };
+
+            // Upload configuration file using PUT command
+            const uploadToDevice = async () => {
+                if (webSerialStatus !== 'Connected') {
+                    alert("Please connect to a serial port first!");
+                    return;
+                }
+
+                appendOutput("\nInitiating file upload...\n");
+                const configData = getFullConfig(); // Get the full config from App component
+                const jsonContent = JSON.stringify(configData, null, 2);
+                const filename = "config.json"; // Hardcode filename for Trkey config
+
+                try {
+                    await sendCommand("PUT " + filename);
+
+                    // Wait for READY signal from the device
+                    // In a real scenario, you'd parse incoming data for "READY"
+                    // For now, a short delay to allow device to process PUT command
+                    await new Promise(r => setTimeout(r, 500)); // Increased timeout
+
+                    const encoder = new TextEncoder();
+                    const bytes = encoder.encode(jsonContent);
+
+                    // Send the file content in chunks if necessary, or all at once
+                    await serialWriter.current.write(bytes);
+                    appendOutput(`Sent ${bytes.length} bytes for ${filename}\n`);
+
+                    await serialWriter.current.write(encoder.encode("<EOF>\n")); // Send EOF marker
+                    appendOutput("File transfer complete. Sent <EOF>.\n");
+                    appendOutput("Device should now process the file. You may need to reset your device.\n");
+
+                } catch (err) {
+                    appendOutput(`Error during file upload: ${err.message}\n`);
+                    console.error("File upload error:", err);
+                    setWebSerialStatus('Error');
+                }
+            };
+
+            // Clean up serial connection on unmount
+            useEffect(() => {
+                return () => {
+                    disconnectWebSerial();
+                };
+            }, []); // Empty dependency array means this runs once on mount and once on unmount
+
             return (
                 <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">SAVE & LOAD PROFILE</h1>
-                    <div className="flex flex-col space-y-4 w-full max-w-md">
-                        <button
-                            onClick={saveProfile}
-                            className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                        >
-                            Save Profile to Browser
-                        </button>
-                        <button
-                            onClick={loadProfile}
-                            className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                        >
-                            Load Profile from Browser
-                        </button>
-                        <button
-                            onClick={exportKeymap}
-                            className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                        >
-                            Export Configuration as layers.json
-                        </button>
-                        <button
-                            onClick={uploadToDevice}
-                            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
-                        >
-                            Upload to Device (Web Serial)
-                        </button>
-                        <div className="bg-zinc-700 rounded-xl p-4 text-zinc-300 text-center text-sm border border-zinc-600">
-                            For **Web Serial Upload**: This feature attempts to send the configuration directly over USB serial.
-                            On most modern CircuitPython devices, you may need to manually save the incoming data from the REPL to a file (e.g., `layers.json`) on your `CIRCUITPY` drive,
-                            or use a different method like dragging the exported `.json` file to the `CIRCUITPY` drive directly when it appears as a USB drive.
+                    <div className="w-full max-w-md bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mb-8">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Local Profile Management</h2>
+                        <div className="flex flex-col space-y-4">
+                            <button
+                                onClick={saveProfile}
+                                className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+                            >
+                                Save Profile to Browser
+                            </button>
+                            <button
+                                onClick={loadProfile}
+                                className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+                            >
+                                Load Profile from Browser
+                            </button>
                         </div>
+                    </div>
+
+                    <div className="w-full max-w-md bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mb-8">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Device Interaction (Web Serial)</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center">
+                                <span className={`h-3 w-3 rounded-full mr-2 ${webSerialStatus === 'Connected' ? 'bg-green-500' : webSerialStatus === 'Connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                <span className="text-sm font-semibold text-zinc-300">Status: {webSerialStatus}</span>
+                            </div>
+                            <div className="flex space-x-2">
+                                {webSerialStatus === 'Disconnected' && (
+                                    <button
+                                        onClick={connectWebSerial}
+                                        className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200 text-sm font-semibold"
+                                    >
+                                        Connect
+                                    </button>
+                                )}
+                                {webSerialStatus === 'Connected' && (
+                                    <button
+                                        onClick={disconnectWebSerial}
+                                        className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200 text-sm font-semibold"
+                                    >
+                                        Disconnect
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex flex-col space-y-4">
+                            <button
+                                onClick={exportKeymap}
+                                className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+                            >
+                                Export Configuration as config.json
+                            </button>
+                            <button
+                                onClick={uploadToDevice}
+                                className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold
+                                            ${webSerialStatus === 'Connected' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-zinc-600 cursor-not-allowed'}`}
+                                disabled={webSerialStatus !== 'Connected'}
+                            >
+                                Upload to Device (Web Serial)
+                            </button>
+                            <p className="text-zinc-400 text-sm mt-2">
+                                For **Web Serial Upload**: Your device must be running a compatible USB File Server firmware. The `config.json` file will be sent via serial.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Serial Output</h2>
+                        <textarea
+                            ref={serialOutputRef}
+                            className="w-full h-48 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y custom-scrollbar"
+                            readOnly
+                            placeholder="Serial communication log will appear here..."
+                        ></textarea>
                     </div>
                 </div>
             );
         };
+
 
         // Settings component
         const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea }) => {
@@ -891,8 +1084,8 @@
                     <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
                         <h2 className="text-2xl font-bold text-red-300 mb-4">Import JSON Configuration</h2>
                         <textarea
-                            className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y"
-                            placeholder="Paste your layers.json configuration here..."
+                            className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y custom-scrollbar"
+                            placeholder="Paste your config.json here..."
                             value={jsonInput}
                             onChange={(e) => setJsonInput(e.target.value)}
                         ></textarea>
@@ -993,66 +1186,11 @@
                 customAction: '' // For custom function, e.g., a keycode or macro name
             });
 
-            const [webSerialStatus, setWebSerialStatus] = useState('Disconnected'); // 'Disconnected', 'Connecting', 'Connected', 'Error'
-            const [serialPort, setSerialPort] = useState(null);
-            const [serialWriter, setSerialWriter] = useState(null);
 
             // Load profile on component mount
             useEffect(() => {
                 loadProfile();
             }, []);
-
-            // Web Serial Connection/Disconnection
-            const connectWebSerial = async () => {
-                if (!('serial' in navigator)) {
-                    setModalContent({
-                        title: "Web Serial API Not Supported",
-                        message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge)."
-                    });
-                    setShowModal(true);
-                    setWebSerialStatus('Error');
-                    return;
-                }
-
-                setWebSerialStatus('Connecting');
-                try {
-                    const port = await navigator.serial.requestPort();
-                    await port.open({ baudRate: 115200 }); // Standard baud rate for CircuitPython
-                    setSerialPort(port);
-                    setSerialWriter(port.writable.getWriter());
-                    setWebSerialStatus('Connected');
-                    setModalContent({
-                        title: "Web Serial Connected",
-                        message: "Successfully connected to a serial port."
-                    });
-                    setShowModal(true);
-                } catch (err) {
-                    setWebSerialStatus('Error');
-                    setModalContent({
-                        title: "Web Serial Connection Failed",
-                        message: `Failed to connect: ${err.message}. Ensure your device is connected and drivers are installed.`
-                    });
-                    setShowModal(true);
-                    console.error("Web Serial Connect Error:", err);
-                }
-            };
-
-            const disconnectWebSerial = async () => {
-                if (serialWriter) {
-                    await serialWriter.releaseLock();
-                    setSerialWriter(null);
-                }
-                if (serialPort) {
-                    await serialPort.close();
-                    setSerialPort(null);
-                }
-                setWebSerialStatus('Disconnected');
-                setModalContent({
-                    title: "Web Serial Disconnected",
-                    message: "Disconnected from the serial port."
-                });
-                setShowModal(true);
-            };
 
             // Handlers for drag and drop
             const handleDrop = (e, row, col) => {
@@ -1188,8 +1326,8 @@
                 setShowModal(true);
             };
 
-            // Export function updated for general layers.json format
-            const exportKeymap = () => {
+            // Get the full configuration object for export/upload
+            const getFullConfig = () => {
                 const layersForExport = [];
 
                 keymap.forEach((layerData, lIdx) => {
@@ -1204,14 +1342,17 @@
                     });
                 });
 
-                // Add macros and potentiometer config to the first layer for simplicity or as global config
                 const fullExportData = {
                     layers: layersForExport,
                     macros: macros.map(m => ({ name: m.name, sequence: m.sequence })),
-                    potentiometer: potentiometerConfig // Include potentiometer config
+                    potentiometer: potentiometerConfig
                 };
+                return fullExportData;
+            };
 
-
+            // Export function updated for general config.json format
+            const exportKeymap = () => {
+                const fullExportData = getFullConfig();
                 const blob = new Blob([JSON.stringify(fullExportData, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
@@ -1223,65 +1364,6 @@
                     message: "Configuration exported as config.json."
                 });
                 setShowModal(true);
-            };
-
-            // UPLOAD TO DEVICE (WEB SERIAL)
-            const uploadToDevice = async () => {
-                if (webSerialStatus !== 'Connected') {
-                    setModalContent({
-                        title: "Device Not Connected",
-                        message: "Please connect to a serial port first using the 'Connect Web Serial' button."
-                    });
-                    setShowModal(true);
-                    return;
-                }
-
-                setModalContent({
-                    title: "Uploading...",
-                    message: "Sending configuration data over serial. Please check your device's REPL to save the data."
-                });
-                setShowModal(true);
-
-                try {
-                    const encoder = new TextEncoder();
-
-                    const layersForExport = [];
-                    keymap.forEach((layerData, lIdx) => {
-                        const layerName = `Layer ${lIdx}`;
-                        const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
-                        const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
-                        layersForExport.push({
-                            name: layerName,
-                            labels: labels,
-                            keys: keys
-                        });
-                    });
-
-                    const fullExportData = {
-                        layers: layersForExport,
-                        macros: macros.map(m => ({ name: m.name, sequence: m.sequence })),
-                        potentiometer: potentiometerConfig
-                    };
-
-                    const jsonContent = JSON.stringify(fullExportData, null, 2);
-
-                    await serialWriter.write(encoder.encode(jsonContent));
-                    await serialWriter.write(encoder.encode("\r\n")); // Add CRLF for REPL
-
-                    setModalContent({
-                        title: "Upload Sent",
-                        message: "Configuration sent to device. You will need to capture and save this data on your microcontroller's REPL (e.g., in `main.py` or a dedicated config file)."
-                    });
-
-                } catch (err) {
-                    setModalContent({
-                        title: "Upload Failed",
-                        message: `Failed to upload: ${err.message}. Ensure your device is ready to receive data.`
-                    });
-                    console.error("Web Serial Upload Error:", err);
-                } finally {
-                    setShowModal(true);
-                }
             };
 
 
@@ -1396,27 +1478,6 @@
 
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col p-8 overflow-auto">
-                        {/* Web Serial Status Indicator */}
-                        <div className="fixed top-4 right-4 z-50 flex items-center bg-zinc-700 text-white py-2 px-4 rounded-full shadow-lg border border-zinc-600">
-                            <span className={`h-3 w-3 rounded-full mr-2 ${webSerialStatus === 'Connected' ? 'bg-green-500' : webSerialStatus === 'Connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
-                            <span className="text-sm font-semibold">{webSerialStatus}</span>
-                            {webSerialStatus === 'Disconnected' && (
-                                <button
-                                    onClick={connectWebSerial}
-                                    className="ml-3 text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-full transition-colors"
-                                >
-                                    Connect
-                                </button>
-                            )}
-                            {webSerialStatus === 'Connected' && (
-                                <button
-                                    onClick={disconnectWebSerial}
-                                    className="ml-3 text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded-full transition-colors"
-                                >
-                                    Disconnect
-                                </button>
-                            )}
-                        </div>
 
                         {activeTab === 'keymap' && (
                             <>
@@ -1466,7 +1527,7 @@
                                 saveProfile={saveProfile}
                                 loadProfile={loadProfile}
                                 exportKeymap={exportKeymap}
-                                uploadToDevice={uploadToDevice}
+                                getFullConfig={getFullConfig} // Pass the getter function
                             />
                         )}
 
