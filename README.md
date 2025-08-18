@@ -19,11 +19,9 @@ A modern web-based tool to configure your 3x3 Pico-powered micropad keyboard. Cu
 
 ---
 
-## 🔗 Related Projects
+🔗 Related Projects
 
-* **[Trkey Macro](https://github.com/trinibos1/Trkey_macro)** – Companion firmware and tool for advanced macros, recording, and playback, fully compatible with the Micropad Remapper.
-
----
+Trkey Macropad – The official Pico-powered macropad hardware and firmware. This project provides the physical device and underlying firmware that works seamlessly with the Micropad Remapper, supporting key assignments, layers, macros, and peripheral controls.
 
 ## 🚀 How to Use
 
