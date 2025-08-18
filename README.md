@@ -10,7 +10,7 @@ Customize key bindings, layers, macros, and peripherals with an intuitive interf
 
 - **Full Key Remapping** – Assign single keys or complex shortcuts to any of the 9 keys. Drag-and-drop or click-to-assign.  
 - **Multi-Layer Support** – Configure up to 10 layers for dynamic switching between keysets.  
-- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with [Trkey Macro](#-related-projects).  
+- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with [Trkey Macro](https://github.com/trinibos1/Trkey_macro).  
 - **Peripheral Controls** – Control volume, scrolling, or custom QMK keycodes via potentiometers or peripherals.  
 - **Persistent Profiles** – Save and load configurations in browser local storage.  
 - **Configuration Export** – Export `layers.json` for Pico firmware.  
