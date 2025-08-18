@@ -38,6 +38,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Ensure ReactDOM is available in the current scope from the UMD bundle
+        var ReactDOM = window.ReactDOM;
+
         // Helper function to shorten labels for the OLED display
         const getShortLabel = (description) => {
             const mappings = {
@@ -392,7 +395,7 @@
                             </li>
                             <li>
                                 <a href="#" onClick={() => setActiveTab('save-load')} className={`flex items-center ${activeTab === 'save-load' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 1 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
                                     SAVE + LOAD
                                 </a>
                             </li>
@@ -609,7 +612,7 @@
                 <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">PERIPHERAL CONTROLS</h1>
                     <p className="text-zinc-400 text-lg">No peripheral controls configurable for Raspberry Pi Pico in this version.</p>
-                    <p className="text-zinc-400 text-md mt-2">The provided documentation does not include potentiometer support for the Pico.</p>
+                    <p className="text-400 text-md mt-2">The provided documentation does not include potentiometer support for the Pico.</p>
                 </div>
             );
         };
@@ -645,7 +648,6 @@
                         >
                             Upload to Device (Web Serial)
                         </button>
-                        {/* Removed the descriptive text about manual upload */}
                     </div>
                 </div>
             );
@@ -756,9 +758,6 @@
             ]);
             const [nextMacroId, setNextMacroId] = useState(3);
 
-            // Potentiometer config removed as it's not in Pico documentation
-            // const [potentiometerConfig, setPotentiometerConfig] = useState({ /* ... */ });
-
             // Load profile on component mount
             useEffect(() => {
                 loadProfile();
@@ -861,10 +860,9 @@
             const saveProfile = () => {
                 const profileData = {
                     keymap: keymap,
-                    // potentiometerConfig removed
                     macros: macros
                 };
-                localStorage.setItem("trkey_profile_pico", JSON.stringify(profileData)); // Changed key for Pico profile
+                localStorage.setItem("trkey_profile_pico", JSON.stringify(profileData));
                 setModalContent({
                     title: "Profile Saved",
                     message: "Profile saved to browser storage."
@@ -873,7 +871,7 @@
             };
 
             const loadProfile = () => {
-                const saved = localStorage.getItem("trkey_profile_pico"); // Changed key for Pico profile
+                const saved = localStorage.getItem("trkey_profile_pico");
                 if (saved) {
                     const profileData = JSON.parse(saved);
                     if (profileData.keymap && Array.isArray(profileData.keymap) && profileData.keymap.length === initialMultiLayerGrid.length) {
@@ -882,7 +880,6 @@
                         setKeymap(initialMultiLayerGrid);
                         console.warn("Loaded keymap structure mismatch, resetting to initial multi-layer grid.");
                     }
-                    // potentiometerConfig removed
                     setMacros(profileData.macros || []);
                     setModalContent({
                         title: "Profile Loaded",
@@ -899,13 +896,11 @@
 
             // Export function updated to generate layers.json format and shorten labels
             const exportKeymap = () => {
-                const layersForExport = []; // Array of layer objects
+                const layersForExport = [];
 
                 keymap.forEach((layerData, lIdx) => {
-                    const layerName = `Layer ${lIdx}`; // Default name
-                    // Flatten the 3x3 grid into a 1D array of 9 keys
+                    const layerName = `Layer ${lIdx}`;
                     const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
-                    // Use the new getShortLabel function for labels
                     const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
 
                     layersForExport.push({
@@ -915,16 +910,9 @@
                     });
                 });
 
-                const fullExportData = layersForExport; // The root is now the array of layers
+                const fullExportData = layersForExport;
 
-                // Macros are separate in Pico's layers.json
                 if (macros.length > 0) {
-                    // Add macros to the first layer, or create a separate entry if needed.
-                    // For simplicity, let's add them to the first layer's object if it exists.
-                    // A more robust solution might have a dedicated "macros" file or a more complex JSON structure.
-                    // Based on the provided doc, macros are part of the layer object.
-                    // If the doc implies global macros, this needs adjustment.
-                    // For now, I'll put them in the first layer's object for the export.
                     if (fullExportData.length > 0) {
                          fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
                     }
@@ -935,7 +923,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "layers.json"; // Changed filename to layers.json
+                a.download = "layers.json";
                 a.click();
                 setModalContent({
                     title: "Export Successful",
@@ -944,66 +932,108 @@
                 setShowModal(true);
             };
 
-            // uploadToDevice re-added to support Web Serial for Pico
+            // uploadToDevice uses the new USBFileServer commands
             const uploadToDevice = async () => {
+                let port;
                 try {
-                    if ('serial' in navigator) {
-                        const port = await navigator.serial.requestPort();
-                        await port.open({ baudRate: 115200 }); // Standard baud rate for CircuitPython
-                        
-                        const writer = port.writable.getWriter();
-                        const reader = port.readable.getReader(); // Also get a reader to check for prompt
-
-                        const layersForExport = [];
-                        keymap.forEach((layerData, lIdx) => {
-                            const layerName = `Layer ${lIdx}`;
-                            const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
-                            const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
-                            layersForExport.push({
-                                name: layerName,
-                                labels: labels,
-                                keys: keys
-                            });
-                        });
-
-                        const fullExportData = layersForExport;
-                        if (macros.length > 0 && fullExportData.length > 0) {
-                             fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
-                        }
-
-                        const json = JSON.stringify(fullExportData, null, 2);
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(json);
-
-                        setModalContent({
-                            title: "Uploading...",
-                            message: "Connecting to device and sending configuration. Please ensure your Pico is in REPL mode or ready to receive serial data."
-                        });
-                        setShowModal(true);
-
-                        // Give a moment for the device to be ready to receive
-                        await new Promise(resolve => setTimeout(500));
-
-                        await writer.write(data);
-                        writer.releaseLock();
-                        
-                        setModalContent({
-                            title: "Upload Successful",
-                            message: "Configuration sent to device. The Pico should reboot to apply changes."
-                        });
-                    } else {
+                    if (!('serial' in navigator)) {
                         setModalContent({
                             title: "Web Serial API Not Supported",
                             message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
                         });
+                        setShowModal(true);
+                        return;
                     }
+
+                    port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+
+                    const writer = port.writable.getWriter();
+                    const reader = port.readable.getReader();
+                    const encoder = new TextEncoder();
+                    const decoder = new TextDecoder();
+
+                    const writeLine = async (line) => {
+                        await writer.write(encoder.encode(line + '\n'));
+                    };
+
+                    const readResponse = async () => {
+                        let response = '';
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            response += decoder.decode(value);
+                            if (response.endsWith('\n') || done) {
+                                return response.trim();
+                            }
+                        }
+                    };
+
+                    setModalContent({
+                        title: "Uploading...",
+                        message: "Connecting to device and initiating file transfer. Please ensure 'usb_file_server.py' is running on your Pico."
+                    });
+                    setShowModal(true);
+
+                    // 1. Send PUT command
+                    await writeLine('PUT layers.json');
+                    const putResponse = await readResponse();
+
+                    if (putResponse !== 'READY') {
+                        throw new Error(`Device not ready to receive file. Response: ${putResponse}`);
+                    }
+
+                    // 2. Prepare JSON data
+                    const layersForExport = [];
+                    keymap.forEach((layerData, lIdx) => {
+                        const layerName = `Layer ${lIdx}`;
+                        const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
+                        const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
+                        layersForExport.push({
+                            name: layerName,
+                            labels: labels,
+                            keys: keys
+                        });
+                    });
+
+                    const fullExportData = layersForExport;
+                    if (macros.length > 0 && fullExportData.length > 0) {
+                         fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
+                    }
+                    const jsonContent = JSON.stringify(fullExportData, null, 2);
+                    const data = encoder.encode(jsonContent);
+
+                    // 3. Send file data
+                    const chunkSize = 64; // Small chunks to avoid overflowing serial buffer
+                    for (let i = 0; i < data.length; i += chunkSize) {
+                        const chunk = data.slice(i, i + chunkSize);
+                        await writer.write(chunk);
+                        await new Promise(resolve => setTimeout(10)); // Small delay to allow Pico to process
+                    }
+
+                    // 4. Send EOF marker
+                    await writer.write(encoder.encode('<EOF>\n'));
+                    const eofResponse = await readResponse();
+
+                    if (eofResponse !== 'FILE RECEIVED') {
+                        throw new Error(`File transfer confirmation failed. Response: ${eofResponse}`);
+                    }
+
+                    setModalContent({
+                        title: "Upload Successful",
+                        message: "Configuration (layers.json) sent to device. Reboot your Pico to apply changes if it doesn't automatically."
+                    });
+
                 } catch (err) {
                     setModalContent({
                         title: "Upload Failed",
-                        message: "Failed to upload: " + err.message + ". Ensure the Pico is in REPL mode and try again."
+                        message: `Failed to upload: ${err.message}. Ensure 'usb_file_server.py' is present and running, and your Pico is connected.`
                     });
+                    console.error("Web Serial Upload Error:", err);
                 } finally {
                     setShowModal(true);
+                    if (writer) writer.releaseLock();
+                    if (reader) reader.releaseLock();
+                    if (port) await port.close();
                 }
             };
 
@@ -1042,9 +1072,6 @@
                         setKeymap(newKeymap);
                         setMacros(loadedMacros);
                         setNextMacroId(loadedMacros.length + 1);
-
-                        // Potentiometer config is not part of Pico's layers.json
-                        // setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
 
 
                         setModalContent({
@@ -1113,8 +1140,6 @@
 
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col p-8 overflow-auto">
-                         {/* Removed Web Serial Status Indicator */}
-
                         {activeTab === 'keymap' && (
                             <>
                                 <h1 className="text-4xl font-extrabold text-red-400 mb-4">KEYMAP CONFIGURATION</h1>
@@ -1160,7 +1185,7 @@
                                 saveProfile={saveProfile}
                                 loadProfile={loadProfile}
                                 exportKeymap={exportKeymap}
-                                uploadToDevice={uploadToDevice} // Passed uploadToDevice
+                                uploadToDevice={uploadToDevice}
                             />
                         )}
 
