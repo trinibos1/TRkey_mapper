@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trkey Configurator</title>
+    <title>Trkey Configurator (Old Version)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -38,288 +38,458 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // All React component code consolidated here
+
         // Ensure ReactDOM is available in the current scope from the UMD bundle
         var ReactDOM = window.ReactDOM;
 
-        // Helper function to shorten labels for the OLED display
-        const getShortLabel = (description) => {
-            const mappings = {
-                "Volume Up": "Vol+",
-                "Volume Down": "Vol-",
-                "Play/Pause": "Play",
-                "Previous Track": "Prev",
-                "Next Track": "Next",
-                "Left Control": "LCtrl",
-                "Right Control": "RCtrl",
-                "Left Shift": "LShft",
-                "Right Shift": "RShft",
-                "Left Alt": "LAlt",
-                "Right Alt": "RAlt",
-                "Left GUI (Win/Cmd)": "LGui",
-                "Right GUI (Win/Cmd)": "RGui",
-                "Backspace": "Bksp",
-                "Delete Key": "Del",
-                "Escape Key": "Esc",
-                "Spacebar": "Space",
-                "Insert Key": "Ins",
-                "Page Up": "PgUp",
-                "Page Down": "PgDn",
-                "Print Screen": "PrtSc",
-                "Scroll Lock": "ScLk",
-                "Num Lock": "NumLk",
-                "Keypad Slash": "KP_Sl",
-                "Keypad Asterisk": "KP_As",
-                "Keypad Minus": "KP_Mn",
-                "Keypad Plus": "KP_Pl",
-                "Keypad Enter": "KP_En",
-                "Keypad One": "KP_1",
-                "Keypad Two": "KP_2",
-                "Keypad Three": "KP_3",
-                "Keypad Four": "KP_4",
-                "Keypad Five": "KP_5",
-                "Keypad Six": "KP_6",
-                "Keypad Seven": "KP_7",
-                "Keypad Eight": "KP_8",
-                "Keypad Nine": "KP_9",
-                "Keypad Zero": "KP_0",
-                "Keypad Period": "KP_.",
-                "Non-US Slash": "NonSl",
-                "Application Key": "App",
-                "Comma": "Comm",
-                "Period": "Perd",
-                "Grave Accent": "Grave",
-                "Minus": "Minus",
-                "Equals": "Equls",
-                "Left Bracket": "LBrkt",
-                "Right Bracket": "RBrkt",
-                "Backslash": "BkSl",
-                "Semicolon": "SemiC",
-                "Quote": "Quote",
-                "Slash": "Slash",
-                "Ctrl+C (Copy)": "Copy",
-                "Ctrl+V (Paste)": "Paste",
-                "Ctrl+X (Cut)": "Cut",
-                "Ctrl+Z (Undo)": "Undo",
-                "Ctrl+Y (Redo)": "Redo",
-                "Ctrl+S (Save)": "Save",
-                "Ctrl+A (Select All)": "SelAll",
-                "Ctrl+F (Find)": "Find",
-                "Ctrl+P (Print)": "Print",
-                "Alt+Tab (App Switch)": "AltTab",
-                "Win+D (Show Desktop)": "Win+D",
-                "Ctrl+Shift+Esc (Task Manager)": "TskMgr",
-                "Alt+Enter (Toggle Fullscreen)": "FullSc",
-                "Ctrl+Alt+Del (System Options)": "CtrlAD",
-                "Ctrl+W (Close Tab/Window)": "Close",
-                "Ctrl+N (New File/Window)": "New",
-                "Ctrl+O (Open File)": "Open",
-                "Ctrl+Q (Quit Application)": "Quit",
-                "Left Click": "LClick",
-                "Right Click": "RClick",
-                "Middle Click": "MClick",
-                "Scroll Up": "ScrlUp",
-                "Scroll Down": "ScrlDn",
-                "Alt + Drag (Custom)": "AltDrg",
-                "Shift + Drag (Custom)": "ShfDrg",
-                "Ctrl + Click (Custom)": "C+Clk",
-                "Double Click (Custom)": "DClick",
-                "Macro Slot 1": "Macr1",
-                "Macro Slot 2": "Macr2",
-                "Macro Slot 3": "Macr3",
-                "Toggle Layer 1 (on/off)": "Tg L1",
-                "Momentary Layer 1 (hold)": "Mo L1",
-                "Jump to Layer 0": "To L0",
-                "System Power": "Power",
-                "System Sleep": "Sleep",
-                "System Wake": "Wake",
-            };
-
-            if (mappings[description]) {
-                return mappings[description];
-            }
-
-            // Fallback: truncate to 6 characters if longer, otherwise use as is.
-            // Ensure at least 4 chars by padding if necessary.
-            let label = description;
-            if (label.length > 6) {
-                label = label.substring(0, 6);
-            }
-            if (label.length < 4 && description.length >=4) {
-                 // If the short label is less than 4, and original was at least 4, use original up to 4 chars
-                 label = description.substring(0,4);
-            }
-            // If original was genuinely short, just use it.
-            return label;
-        };
-
-
-        // Define all categories first
-        const STANDARD_KEYS = [
-            { combo: "A", description: "A" }, { combo: "B", description: "B" }, { combo: "C", description: "C" },
-            { combo: "D", description: "D" }, { combo: "E", description: "E" }, { combo: "F", description: "F" },
-            { combo: "G", description: "G" }, { combo: "H", description: "H" }, { combo: "I", description: "I" },
-            { combo: "J", description: "J" }, { combo: "K", description: "K" }, { combo: "L", description: "L" },
-            { combo: "M", description: "M" }, { combo: "N", description: "N" }, { combo: "O", description: "O" },
-            { combo: "P", description: "P" }, { combo: "Q", description: "Q" }, { combo: "R", description: "R" },
-            { combo: "S", description: "S" }, { combo: "T", description: "T" }, { combo: "U", description: "U" },
-            { combo: "V", description: "V" }, { combo: "W", description: "W" }, { combo: "X", description: "X" },
-            { combo: "Y", description: "Y" }, { combo: "Z", description: "Z" },
-            { combo: "ONE", description: "1" }, { combo: "TWO", description: "2" }, { combo: "THREE", description: "3" },
-            { combo: "FOUR", description: "4" }, { combo: "FIVE", description: "5" }, { combo: "SIX", description: "6" },
-            { combo: "SEVEN", description: "7" }, { combo: "EIGHT", description: "8" }, { combo: "NINE", description: "9" },
-            { combo: "ZERO", description: "0" },
-            { combo: "ENTER", description: "Enter Key" },
-            { combo: "ESCAPE", description: "Escape Key" },
-            { combo: "TAB", description: "Tab Key" },
-            { combo: "SPACEBAR", description: "Spacebar" },
-            { combo: "BACKSPACE", description: "Backspace" },
-            { combo: "DELETE", description: "Delete Key" },
-            { combo: "CAPS_LOCK", description: "Caps Lock" },
-            { combo: "F1", description: "F1 Key" }, { combo: "F2", description: "F2 Key" }, { combo: "F3", description: "F3 Key" },
-            { combo: "F4", description: "F4 Key" }, { combo: "F5", description: "F5 Key" }, { combo: "F6", description: "F6 Key" },
-            { combo: "F7", description: "F7 Key" }, { combo: "F8", description: "F8 Key" }, { combo: "F9", description: "F9 Key" },
-            { combo: "F10", description: "F10 Key" }, { combo: "F11", description: "F11 Key" }, { combo: "F12", description: "F12 Key" },
-            { combo: "PRINT_SCREEN", description: "Print Screen" },
-            { combo: "SCROLL_LOCK", description: "Scroll Lock" },
-            { combo: "PAUSE", description: "Pause Break" },
-            { combo: "INSERT", description: "Insert Key" },
-            { combo: "HOME", description: "Home Key" },
-            { combo: "PAGE_UP", description: "Page Up" },
-            { combo: "PAGE_DOWN", description: "Page Down" },
-            { combo: "END", description: "End Key" },
-            { combo: "RIGHT_ARROW", description: "Right Arrow" },
-            { combo: "LEFT_ARROW", description: "Left Arrow" },
-            { combo: "DOWN_ARROW", description: "Down Arrow" },
-            { combo: "UP_ARROW", description: "Up Arrow" },
-            { combo: "KEYPAD_NUMLOCK", description: "Num Lock" },
-            { combo: "KEYPAD_SLASH", description: "Keypad Slash" },
-            { combo: "KEYPAD_ASTERISK", description: "Keypad Asterisk" },
-            { combo: "KEYPAD_MINUS", description: "Keypad Minus" },
-            { combo: "KEYPAD_PLUS", description: "Keypad Plus" },
-            { combo: "KEYPAD_ENTER", description: "Keypad Enter" },
-            { combo: "KEYPAD_ONE", description: "Keypad 1" }, { combo: "KEYPAD_TWO", description: "Keypad 2" }, { combo: "KEYPAD_THREE", description: "Keypad 3" },
-            { combo: "KEYPAD_FOUR", description: "Keypad 4" }, { combo: "KEYPAD_FIVE", description: "Keypad 5" }, { combo: "KEYPAD_SIX", description: "Keypad 6" },
-            { combo: "KEYPAD_SEVEN", description: "Keypad 7" }, { combo: "KEYPAD_EIGHT", description: "Keypad 8" }, { combo: "KEYPAD_NINE", description: "Keypad 9" },
-            { combo: "KEYPAD_ZERO", description: "Keypad 0" },
-            { combo: "KEYPAD_PERIOD", description: "Keypad Period" },
-            { combo: "NON_US_SLASH", description: "Non-US Slash" },
-            { combo: "APPLICATION", description: "Application Key" },
-            { combo: "COMMA", description: "Comma" },
-            { combo: "PERIOD", description: "Period" },
-            { combo: "GRAVE_ACCENT", description: "Grave Accent" },
-            { combo: "MINUS", description: "Minus" },
-            { combo: "EQUAL", description: "Equals" },
-            { combo: "LEFT_BRACKET", description: "Left Bracket" },
-            { combo: "RIGHT_BRACKET", description: "Right Bracket" },
-            { combo: "BACKSLASH", description: "Backslash" },
-            { combo: "SEMICOLON", description: "Semicolon" },
-            { combo: "QUOTE", description: "Quote" },
-            { combo: "SLASH", description: "Slash" },
-        ];
-
-        const MODIFIER_KEYS = [
-            { combo: "LEFT_CONTROL", description: "Left Control" },
-            { combo: "LEFT_SHIFT", description: "Left Shift" },
-            { combo: "LEFT_ALT", description: "Left Alt" },
-            { combo: "LEFT_GUI", description: "Left GUI (Win/Cmd)" },
-            { combo: "RIGHT_CONTROL", description: "Right Control" },
-            { combo: "RIGHT_SHIFT", description: "Right Shift" },
-            { combo: "RIGHT_ALT", description: "Right Alt" },
-            { combo: "RIGHT_GUI", description: "Right GUI (Win/Cmd)" },
-        ];
-
-        const COMMON_COMBINATIONS = [
-            { combo: "CONTROL_C", description: "Ctrl+C (Copy)" },
-            { combo: "CONTROL_V", description: "Ctrl+V (Paste)" },
-            { combo: "CONTROL_X", description: "Ctrl+X (Cut)" },
-            { combo: "CONTROL_Z", description: "Ctrl+Z (Undo)" },
-            { combo: "CONTROL_Y", description: "Ctrl+Y (Redo)" },
-            { combo: "CONTROL_S", description: "Ctrl+S (Save)" },
-            { combo: "CONTROL_A", description: "Ctrl+A (Select All)" },
-            { combo: "CONTROL_F", description: "Ctrl+F (Find)" },
-            { combo: "CONTROL_P", description: "Ctrl+P (Print)" },
-            { combo: "ALT_TAB", description: "Alt+Tab (App Switch)" },
-            { combo: "GUI_D", description: "Win+D (Show Desktop)" },
-            { combo: "CONTROL_SHIFT_ESCAPE", description: "Ctrl+Shift+Esc (Task Manager)" },
-            { combo: "ALT_ENTER", description: "Alt+Enter (Toggle Fullscreen)" },
-            { combo: "CONTROL_ALT_DELETE", description: "Ctrl+Alt+Del (System Options)" },
-            { combo: "CONTROL_W", description: "Ctrl+W (Close Tab/Window)" },
-            { combo: "CONTROL_N", description: "Ctrl+N (New File/Window)" },
-            { combo: "CONTROL_O", description: "Ctrl+O (Open File)" },
-            { combo: "CONTROL_Q", description: "Ctrl+Q (Quit Application)" },
-        ];
-
-        const MEDIA_CONTROLS = [
-            { combo: "VOLUME_INCREMENT", description: "Volume Up" },
-            { combo: "VOLUME_DECREMENT", description: "Volume Down" },
-            { combo: "MUTE", description: "Mute/Unmute" },
-            { combo: "PLAY_PAUSE", description: "Play/Pause" },
-            { combo: "SCAN_PREVIOUS_TRACK", description: "Previous Track" },
-            { combo: "SCAN_NEXT_TRACK", description: "Next Track" },
-        ];
-
-        const MOUSE_ACTIONS = [
-            { combo: "MOUSE_BUTTON_1", description: "Left Click" },
-            { combo: "MOUSE_BUTTON_2", description: "Right Click" },
-            { combo: "MOUSE_BUTTON_3", description: "Middle Click" },
-            { combo: "MOUSE_WHEEL_UP", description: "Scroll Up" },
-            { combo: "MOUSE_WHEEL_DOWN", description: "Scroll Down" },
-            // These would require custom CircuitPython mouse control logic if they are not simple button presses
-            { combo: "ALT_DRAG", description: "Alt + Drag (Custom)" },
-            { combo: "SHIFT_DRAG", description: "Shift + Drag (Custom)" },
-            { combo: "CONTROL_CLICK", description: "Ctrl + Click (Custom)" },
-            { combo: "DOUBLE_CLICK", description: "Double Click (Custom)" },
-        ];
-
-        const MACROS = [
-            { combo: "MACRO_1", description: "Macro Slot 1" },
-            { combo: "MACRO_2", description: "Macro Slot 2" },
-            { combo: "MACRO_3", description: "Macro Slot 3" },
-        ];
-
-        const LAYER_CONTROLS = [
-            { combo: "TG_1", description: "Toggle Layer 1 (on/off)" },
-            { combo: "MO_1", description: "Momentary Layer 1 (hold)" },
-            { combo: "TO_0", description: "Jump to Layer 0" },
-        ];
-
-        const SYSTEM_CONTROLS = [
-            { combo: "POWER", description: "System Power" },
-            { combo: "SLEEP", description: "System Sleep" },
-            { combo: "WAKE", description: "System Wake" },
-        ];
-
-        // Combine all shortcuts into a single array for the "ALL SHORTCUTS" category
-        const ALL_SHORTCUTS = [
-            ...STANDARD_KEYS,
-            ...MODIFIER_KEYS,
-            ...COMMON_COMBINATIONS,
-            ...MEDIA_CONTROLS,
-            ...MOUSE_ACTIONS,
-            ...MACROS,
-            ...LAYER_CONTROLS,
-            ...SYSTEM_CONTROLS
-        ];
-
-
-        // The main presets object used by the app
+        // Constants with ALL shortcuts from the PDF, adapted for CircuitPython Keycode names
         const presets = {
-            "ALL SHORTCUTS": ALL_SHORTCUTS,
-            "STANDARD KEYS": STANDARD_KEYS,
-            "MODIFIER KEYS": MODIFIER_KEYS,
-            "COMMON COMBINATIONS": COMMON_COMBINATIONS,
-            "MEDIA CONTROLS": MEDIA_CONTROLS,
-            "MOUSE ACTIONS": MOUSE_ACTIONS,
-            "MACROS": MACROS,
-            "LAYER CONTROLS": LAYER_CONTROLS,
-            "SYSTEM CONTROLS": SYSTEM_CONTROLS,
+            "BASIC": [
+                { combo: "M", description: "Move" },
+                { combo: "V", description: "View/Via" },
+                { combo: "R", description: "Rotate/Reload" },
+                { combo: "DELETE", description: "Delete/Zoom Out/Respawn" },
+                { combo: "CONTROL_Z", description: "Undo" },
+                { combo: "CONTROL_Y", description: "Redo" },
+                { combo: "F1", description: "Help/Camera" },
+                { combo: "F2", description: "Rename/Toggle Cockpit" },
+                { combo: "F3", description: "Search/Chase Camera/Record" },
+                { combo: "L", description: "Line/Headlights" },
+                { combo: "E", description: "Extrude/Move Up/Switch Soldier" },
+                { combo: "P", description: "Project/Place Component/Print" },
+                { combo: "C", description: "Circle/Free Camera/Commander Cam/Crouch" },
+                { combo: "Q", description: "Press/Pull/Drop Item/Roll Left/Move Down/Switch Soldier" },
+                { combo: "X", description: "Cut/Look Left/Machine Gun/Lean Left" },
+                { combo: "S", description: "Sketch/Throttle Down/Move Backward" },
+                { combo: "T", description: "Text/Rotate/Target/Pick Weapon/Add Text" },
+                { combo: "CONTROL_C", description: "Copy" },
+                { combo: "CONTROL_V", description: "Paste" },
+                { combo: "CONTROL_X", description: "Cut" },
+                { combo: "CONTROL_S", description: "Save" },
+                { combo: "CONTROL_D", description: "Duplicate" },
+                { combo: "CONTROL_G", description: "Group" },
+                { combo: "CONTROL_U", description: "Ungroup" },
+                { combo: "CONTROL_P", description: "Publish/Command Palette/Print" },
+                { combo: "CONTROL_F", description: "Find" },
+                { combo: "CONTROL_H", description: "Replace/Highlight Net" },
+                { combo: "CONTROL_L", description: "Lock/Align Left" },
+                { combo: "CONTROL_R", description: "Align Right" },
+                { combo: "CONTROL_B", description: "Rebuild Ratsnest/Break Joints/Bold" },
+                { combo: "CONTROL_J", description: "Join Surfaces/Joint" },
+                { combo: "CONTROL_M", description: "Material" },
+                { combo: "CONTROL_K", description: "Link" },
+                { combo: "CONTROL_E", description: "Align Center" },
+                { combo: "ALT_DRAG", description: "Duplicate/Orbit" },
+                { combo: "SHIFT_RIGHT_ARROW", description: "Nudge Right" },
+                { combo: "SHIFT_SPACEBAR", description: "Cycle Units/Fire Rocket" },
+                { combo: "SHIFT_DRAG", description: "Constrain" },
+                { combo: "SCROLL_UP", description: "Scroll Up" },
+                { combo: "SCROLL_DOWN", description: "Scroll Down" },
+                { combo: "MOUSE_BUTTON_2", description: "Zoom (Mouse 2)" },
+                { combo: "MOUSE_BUTTON_1", description: "Fire Guns/Click (Mouse 1)" },
+                { combo: "MOUSE_BUTTON_3", description: "Track Enemy/Ping (Mouse 3)" },
+                { combo: "TAB", description: "Player List/Scoreboard/Switch Input" },
+                { combo: "ESCAPE", description: "Menu" },
+                { combo: "ENTER", description: "Chat" },
+                { combo: "BACKSPACE", description: "Leave Vehicle/Suicide" },
+                { combo: "HOME", description: "Reset View" },
+                { combo: "INSERT", description: "Zoom In" },
+                { combo: "ALT_ENTER", description: "Fullscreen" },
+                { combo: "ALT", description: "Free Look" },
+                { combo: "MIDDLE_CLICK", description: "Pick Block" },
+                { combo: "MOUSE_WHEEL_UP", description: "Scroll Hotbar Up" },
+                { combo: "MOUSE_WHEEL_DOWN", description: "Scroll Hotbar Down" },
+                { combo: "RIGHT_CLICK", description: "Aim" },
+            ],
+            "MEDIA": [
+                { combo: "SCAN_PREVIOUS_TRACK", description: "Prev Track" },
+                { combo: "SCAN_NEXT_TRACK", description: "Next Track" },
+                { combo: "PLAY_PAUSE", description: "Play/Pause" },
+                { combo: "MUTE", description: "Mute" },
+                { combo: "VOLUME_INCREMENT", description: "Volume Up" },
+                { combo: "VOLUME_DECREMENT", description: "Volume Down" },
+            ],
+            "MACRO": [
+                { combo: "MACRO_1", description: "Macro 1" },
+                { combo: "MACRO_2", description: "Macro 2" },
+                { combo: "MACRO_3", description: "Macro 3" },
+            ],
+            "LAYERS": [
+                { combo: "TG_1", description: "Toggle Layer 1" },
+                { combo: "MO_1", description: "Momentary Layer 1" },
+                { combo: "TO_0", description: "To Layer 0" },
+            ],
+            "SPECIAL": [
+                { combo: "POWER", description: "Power" },
+                { combo: "SLEEP", description: "Sleep" },
+                { combo: "WAKE", description: "Wake" },
+            ],
+            "QMK LIGHTING": [
+                { combo: "RGB_TOG", description: "RGB Toggle" },
+                { combo: "RGB_MOD", description: "RGB Mode" },
+                { combo: "RGB_HUI", description: "Hue Inc" },
+                { combo: "RGB_HUD", description: "Hue Dec" },
+                { combo: "RGB_SAI", description: "Sat Inc" },
+                { combo: "RGB_SAD", description: "Sat Dec" },
+                { combo: "RGB_VAI", description: "Val Inc" },
+                { combo: "RGB_VAD", description: "Val Dec" },
+            ],
+            "MINECRAFT": [
+                { combo: "W", description: "Move Forward" },
+                { combo: "A", description: "Move Left" },
+                { combo: "S", description: "Move Backward" },
+                { combo: "D", description: "Move Right" },
+                { combo: "SPACEBAR", description: "Jump" },
+                { combo: "LEFT_SHIFT", description: "Sneak" },
+                { combo: "LEFT_CONTROL", description: "Sprint" },
+                { combo: "E", description: "Open Inventory" },
+                { combo: "Q", description: "Drop Selected Item" },
+                { combo: "T", description: "Open Chat" },
+                { combo: "F3_D", description: "Clear Chat" },
+                { combo: "F5", description: "Change Camera" },
+                { combo: "F8", description: "Smooth Camera" },
+                { combo: "DOUBLE_SPACE", description: "Fly Toggle (Creative)" },
+                { combo: "CONTROL_MIDDLE_CLICK", description: "Copy Block with NBT" },
+                { combo: "SHIFT_LEFT_CLICK", description: "Destroy Instantly (Creative)" },
+                { combo: "SHIFT_CLICK", description: "Move Stack (Inventory)/Craft All" },
+                { combo: "CONTROL_Q", description: "Drop Stack" },
+                { combo: "CONTROL_CLICK", description: "Select Same Items" },
+                { combo: "DOUBLE_CLICK", description: "Grab All of That Item" },
+                { combo: "NUMBER_HOVER", description: "Move Item to Hotbar" },
+                { combo: "F3_N", description: "Switch Gamemode" },
+                { combo: "ALT_F4", description: "Rage Quit" },
+                { combo: "F3_C", description: "Force Crash" },
+                { combo: "F3_A", description: "Reload Chunks" },
+            ],
+            "WAR THUNDER": [
+                { combo: "W_S", description: "Throttle Up/Down" },
+                { combo: "A_D", description: "Rudder Left/Right" },
+                { combo: "Q_E", description: "Roll Left/Right" },
+                { combo: "LEFT_SHIFT", description: "Afterburner/Speed Boost" },
+                { combo: "LEFT_CONTROL", description: "Air Brake" },
+                { combo: "G", description: "Landing Gear/Grenade" },
+                { combo: "F", description: "Flaps/Interact/Plant/Diffuse" },
+                { combo: "V", description: "View Mode/Binocular View/Melee" },
+                { combo: "C", description: "Free Camera/Commander Cam/Lean Right" },
+                { combo: "X", description: "Look Left/Machine Gun/Lean Left" },
+                { combo: "Z", description: "Look Right" },
+                { combo: "Y", description: "Look Back/Orders" },
+                { combo: "B", description: "Bomb View/Fire Mode" },
+                { combo: "N", description: "Navigation Lights/Night Vision" },
+                { combo: "J", description: "Bail Out" },
+                { combo: "M", description: "Map" },
+                { combo: "T", description: "Target/Mark Enemy" },
+                { combo: "R", description: "Radar/Rangefinder/Reload" },
+                { combo: "H", description: "Head Tracking/Help" },
+                { combo: "SPACEBAR", description: "Fire Main Guns" },
+                { combo: "LEFT_ALT", description: "Fire Secondary" },
+                { combo: "CONTROL_SPACEBAR", description: "Drop Bomb" },
+                { combo: "F10", description: "Save Replay" },
+                { combo: "ALT_PRINT_SCREEN", description: "Screenshot" },
+                { combo: "CONTROL_Y", description: "Chat Channel" },
+                { combo: "CONTROL_G", description: "Gunner View" },
+                { combo: "O", description: "Toggle Optics" },
+                { combo: "K", description: "Thermal/IR/Kill Feed" },
+                { combo: "L", description: "Headlights/Flashlight" },
+                { combo: "ONE", description: "Weapon 1" },
+                { combo: "TWO", description: "Weapon 2" },
+                { combo: "THREE", description: "Weapon 3" },
+                { combo: "U", description: "Repair/Medkit" },
+            ],
+            "ROBLOX STUDIO": [
+                { combo: "CONTROL_S", description: "Save" },
+                { combo: "CONTROL_SHIFT_S", description: "Save As" },
+                { combo: "CONTROL_N", description: "New Place" },
+                { combo: "CONTROL_O", description: "Open Place" },
+                { combo: "CONTROL_Z", description: "Undo" },
+                { combo: "CONTROL_Y", description: "Redo" },
+                { combo: "CONTROL_C", description: "Copy" },
+                { combo: "CONTROL_V", description: "Paste" },
+                { combo: "CONTROL_X", description: "Cut" },
+                { combo: "CONTROL_D", description: "Duplicate" },
+                { combo: "CONTROL_G", description: "Group" },
+                { combo: "CONTROL_U", description: "Ungroup" },
+                { combo: "CONTROL_P", description: "Publish" },
+                { combo: "F", description: "Focus Selection" },
+                { combo: "SHIFT_F", description: "Follow Camera" },
+                { combo: "ALT_CLICK", description: "Select Parent" },
+                { combo: "CONTROL_CLICK", description: "Multi-select" },
+                { combo: "CONTROL_SHIFT_H", description: "View Explorer" },
+                { combo: "CONTROL_SHIFT_X", description: "Properties" },
+                { combo: "CONTROL_SHIFT_C", description: "Output" },
+                { combo: "CONTROL_SHIFT_D", description: "Asset Manager" },
+                { combo: "CONTROL_SHIFT_E", description: "Toolbox/Export" },
+                { combo: "W", description: "Camera Move Forward" },
+                { combo: "A", description: "Camera Move Left" },
+                { combo: "S", description: "Camera Move Backward" },
+                { combo: "D", description: "Camera Move Right" },
+                { combo: "E", description: "Move Up" },
+                { combo: "Q", description: "Move Down" },
+                { combo: "T", description: "Rotate" },
+                { combo: "R", description: "Resize" },
+                { combo: "G", description: "Move" },
+                { combo: "CONTROL_T", description: "Anchor" },
+                { combo: "CONTROL_L", description: "Lock" },
+                { combo: "CONTROL_B", description: "Break Joints" },
+                { combo: "CONTROL_J", description: "Join Surfaces" },
+                { combo: "CONTROL_M", description: "Material" },
+                { combo: "CONTROL_SHIFT_M", description: "Model" },
+                { combo: "SHIFT_DRAG", description: "Constrain" },
+                { combo: "ARROW_KEYS", description: "Nudge" },
+                { combo: "CONTROL_P", description: "Quick Publish" },
+                { combo: "ALT_SHIFT_E", description: "Export" },
+                { combo: "CONTROL_ALT_T", description: "Terrain Editor" },
+                { combo: "CONTROL_ONE", description: "Tool 1" },
+                { combo: "CONTROL_TWO", description: "Tool 2" },
+                { combo: "CONTROL_THREE", description: "Tool 3" },
+                { combo: "CONTROL_FOUR", description: "Tool 4" },
+                { combo: "CONTROL_SHIFT_R", description: "Run" },
+                { combo: "CONTROL_SHIFT_T", description: "Test" },
+                { combo: "F7", description: "Play Solo" },
+                { combo: "F5", description: "Play" },
+                { combo: "F6", description: "Server" },
+                { combo: "F8", description: "Player" },
+                { combo: "CONTROL_Q", description: "Quit" },
+                { combo: "CONTROL_SHIFT_F", description: "Search All" },
+            ],
+            "ENLISTED": [
+                { combo: "W", description: "Move Forward" },
+                { combo: "A", description: "Move Left" },
+                { combo: "S", description: "Move Backward" },
+                { combo: "D", description: "Move Right" },
+                { combo: "SPACEBAR", description: "Jump" },
+                { combo: "LEFT_SHIFT", description: "Sprint" },
+                { combo: "LEFT_CONTROL", description: "Crouch" },
+                { combo: "Z", description: "Prone" },
+                { combo: "X", description: "Lean Left" },
+                { combo: "C", description: "Lean Right" },
+                { combo: "F", description: "Interact" },
+                { combo: "R", description: "Reload" },
+                { combo: "G", description: "Grenade" },
+                { combo: "T", description: "Pick Weapon" },
+                { combo: "V", description: "Melee" },
+                { combo: "B", description: "Fire Mode" },
+                { combo: "Q_E", description: "Switch Soldier" },
+                { combo: "TAB", description: "Scoreboard" },
+                { combo: "M", description: "Map" },
+                { combo: "N", description: "Night Vision" },
+                { combo: "Y", description: "Orders" },
+                { combo: "L", description: "Flashlight" },
+                { combo: "ESCAPE", description: "Menu" },
+                { combo: "CLICK", description: "Fire" },
+                { combo: "RIGHT_CLICK", description: "Aim" },
+                { combo: "SCROLL", description: "Change Weapon" },
+                { combo: "ONE", description: "Weapon 1" },
+                { combo: "TWO", description: "Weapon 2" },
+                { combo: "THREE", description: "Weapon 3" },
+                { combo: "H", description: "Help" },
+                { combo: "LEFT_ALT", description: "Free Look" },
+                { combo: "CONTROL_SHIFT", description: "Walk" },
+                { combo: "F1", description: "Camera" },
+                { combo: "ALT_M", description: "Minimap" },
+                { combo: "CONTROL_R", description: "Reload Prone" },
+                { combo: "CONTROL_F1", description: "Switch Class" },
+                { combo: "ALT_V", description: "Change View" },
+                { combo: "MIDDLE_CLICK", description: "Ping" },
+                { combo: "HOLD_T", description: "Mark Enemy" },
+                { combo: "HOLD_SHIFT", description: "Sprint Long" },
+                { combo: "HOLD_F", description: "Plant/Diffuse" },
+                { combo: "CONTROL_ONE", description: "Squad Command 1" },
+                { combo: "CONTROL_TWO", description: "Squad Command 2" },
+                { combo: "CONTROL_THREE", description: "Squad Command 3" },
+                { combo: "CONTROL_FOUR", description: "Squad Command 4" },
+                { combo: "SHIFT_ONE", description: "Formation 1" },
+                { combo: "SHIFT_TWO", description: "Formation 2" },
+                { combo: "SHIFT_THREE", description: "Formation 3" },
+                { combo: "SHIFT_FOUR", description: "Formation 4" },
+                { combo: "K", description: "Kill Feed" },
+                { combo: "U", description: "Medkit" },
+                { combo: "ONE", description: "Inventory" },
+                { combo: "BACKSPACE", description: "Suicide" },
+                { combo: "DELETE", description: "Respawn" },
+                { combo: "F3", description: "Record" },
+                { combo: "F12", description: "Screenshot" },
+                { combo: "GRAVE_ACCENT", description: "Console" },
+                { combo: "CONTROL_ALT_DELETE", description: "Force Quit" },
+            ],
+            "LINUX": [
+                { combo: "CONTROL_ALT_T", description: "Open Terminal" },
+                { combo: "LS", description: "List Directory Contents" },
+                { combo: "CD", description: "Change Directory" },
+                { combo: "PWD", description: "Print Working Directory" },
+                { combo: "MKDIR", description: "Make Directory" },
+                { combo: "RM", description: "Remove File/Directory" },
+                { combo: "CP", description: "Copy File" },
+                { combo: "MV", description: "Move File" },
+                { combo: "SUDO", description: "Run Command as Superuser" },
+                { combo: "MAN", description: "Manual Pages" },
+                { combo: "TOP", description: "Show Running Processes" },
+                { combo: "PS", description: "List Processes" },
+                { combo: "KILL", description: "Terminate Process" },
+                { combo: "GREP", description: "Search Text" },
+                { combo: "CHMOD", description: "Change Permissions" },
+                { combo: "CHOWN", description: "Change Ownership" },
+                { combo: "NANO", description: "Text Editor" },
+                { combo: "VIM", description: "Vi Improved Editor" },
+                { combo: "DF", description: "Disk Usage" },
+                { combo: "DU", description: "Directory Usage" },
+                { combo: "TAR", description: "Archive Files" },
+                { combo: "ZIP_UNZIP", description: "Compress/Extract" },
+                { combo: "SSH", description: "Remote Access" },
+                { combo: "SCP", description: "Secure Copy" },
+                { combo: "WGET", description: "Download Files" },
+                { combo: "CURL", description: "Transfer Data" },
+                { combo: "ALIAS", description: "Create Shortcut Command" },
+                { combo: "HISTORY", description: "Show Command History" },
+                { combo: "CLEAR", description: "Clear Terminal" },
+                { combo: "REBOOT", description: "Restart System" },
+                { combo: "SHUTDOWN", description: "Shutdown System" },
+                { combo: "UPTIME", description: "Show System Uptime" },
+            ],
+            "CODING IDE (VSCode Style)": [
+                { combo: "CONTROL_P", description: "Quick Open File" },
+                { combo: "CONTROL_SHIFT_P", description: "Command Palette" },
+                { combo: "CONTROL_GRAVE_ACCENT", description: "Terminal Toggle" },
+                { combo: "CONTROL_B", description: "Sidebar Toggle" },
+                { combo: "CONTROL_J", description: "Panel Toggle" },
+                { combo: "CONTROL_SHIFT_E", description: "Explorer" },
+                { combo: "CONTROL_SHIFT_F", description: "Search in Files" },
+                { combo: "CONTROL_SHIFT_G", description: "Git" },
+                { combo: "CONTROL_SHIFT_D", description: "Debug" },
+                { combo: "CONTROL_SHIFT_X", description: "Extensions" },
+                { combo: "CONTROL_SPACEBAR", description: "Trigger Suggestion" },
+                { combo: "CONTROL_FORWARD_SLASH", description: "Comment Line" },
+                { combo: "ALT_UP_ARROW", description: "Move Line Up" },
+                { combo: "ALT_DOWN_ARROW", description: "Move Line Down" },
+                { combo: "SHIFT_ALT_DOWN_ARROW", description: "Copy Line Down" },
+                { combo: "CONTROL_SHIFT_K", description: "Delete Line" },
+                { combo: "CONTROL_D", description: "Select Next Occurrence" },
+                { combo: "CONTROL_L", description: "Select Line" },
+                { combo: "CONTROL_ENTER", description: "Insert Line Below" },
+                { combo: "CONTROL_SHIFT_ENTER", description: "Insert Line Above" },
+                { combo: "CONTROL_SHIFT_RIGHT_BRACKET", description: "Jump to Bracket" },
+                { combo: "CONTROL_TAB", description: "Next Editor" },
+                { combo: "CONTROL_SHIFT_TAB", description: "Previous Editor" },
+                { combo: "CONTROL_W", description: "Close Editor" },
+            ],
+            "KICAD": [
+                { combo: "CONTROL_N", description: "New Project" },
+                { combo: "CONTROL_O", description: "Open Project" },
+                { combo: "CONTROL_S", description: "Save" },
+                { combo: "CONTROL_Z", description: "Undo" },
+                { combo: "CONTROL_Y", description: "Redo" },
+                { combo: "CONTROL_C", description: "Copy" },
+                { combo: "CONTROL_V", description: "Paste" },
+                { combo: "CONTROL_X", description: "Cut" },
+                { combo: "DELETE", description: "Delete" },
+                { combo: "R", description: "Rotate" },
+                { combo: "M", description: "Move" },
+                { combo: "E", description: "Edit Properties" },
+                { combo: "W", description: "Wire" },
+                { combo: "P", description: "Place Component" },
+                { combo: "SHIFT_SPACEBAR", description: "Cycle Units" },
+                { combo: "PAGE_UP", description: "Zoom In" },
+                { combo: "PAGE_DOWN", description: "Zoom Out" },
+                { combo: "CONTROL_SCROLL", description: "Zoom" },
+                { combo: "F1", description: "Pan Direction 1" },
+                { combo: "F2", description: "Pan Direction 2" },
+                { combo: "F3", description: "Pan Direction 3" },
+                { combo: "F4", description: "Pan Direction 4" },
+                { combo: "SPACEBAR", description: "Reset Origin" },
+                { combo: "ALT_ONE", description: "Layer View 1" },
+                { combo: "ALT_TWO", description: "Layer View 2" },
+                { combo: "ALT_THREE", description: "Layer View 3" },
+                { combo: "ALT_FOUR", description: "Layer View 4" },
+                { combo: "ALT_FIVE", description: "Layer View 5" },
+                { combo: "CONTROL_B", description: "Rebuild Ratsnest" },
+                { combo: "CONTROL_H", description: "Highlight Net" },
+            ],
+            "FUSION 360": [
+                { combo: "S", description: "Toolbox" },
+                { combo: "L", description: "Line" },
+                { combo: "R", description: "Rectangle" },
+                { combo: "C", description: "Circle" },
+                { combo: "D", description: "Dimension" },
+                { combo: "T", description: "Text" },
+                { combo: "M", description: "Move" },
+                { combo: "Q", description: "Press/Pull" },
+                { combo: "E", description: "Extrude" },
+                { combo: "F", description: "Fillet" },
+                { combo: "SHIFT_S", description: "Sketch Shortcuts" },
+                { combo: "CONTROL_Z", description: "Undo" },
+                { combo: "CONTROL_Y", description: "Redo" },
+                { combo: "CONTROL_C", description: "Copy" },
+                { combo: "CONTROL_V", description: "Paste" },
+                { combo: "DELETE", description: "Remove" },
+                { combo: "B", description: "Emboss" },
+                { combo: "J", description: "Joint" },
+                { combo: "H", description: "Hole" },
+                { combo: "G", description: "Grid Settings" },
+                { combo: "TAB", description: "Switch Input" },
+                { combo: "ALT_DRAG", description: "Orbit" },
+                { combo: "SHIFT_SCROLL", description: "Pan" },
+                { combo: "SCROLL", description: "Zoom" },
+                { combo: "HOME", description: "View Cube" },
+                { combo: "F6", description: "Home View" },
+                { combo: "F7", description: "Slice" },
+                { combo: "CONTROL_ONE", description: "Orthographic View 1" },
+                { combo: "CONTROL_TWO", description: "Orthographic View 2" },
+                { combo: "CONTROL_THREE", description: "Orthographic View 3" },
+                { combo: "CONTROL_SHIFT_E", description: "Export" },
+                { combo: "CONTROL_S", description: "Save" },
+            ],
+            "CANVA": [
+                { combo: "CONTROL_C", description: "Copy" },
+                { combo: "CONTROL_V", description: "Paste" },
+                { combo: "CONTROL_X", description: "Cut" },
+                { combo: "CONTROL_Z", description: "Undo" },
+                { combo: "CONTROL_Y", description: "Redo" },
+                { combo: "CONTROL_A", description: "Select All" },
+                { combo: "DELETE", description: "Remove" },
+                { combo: "CONTROL_G", description: "Group" },
+                { combo: "CONTROL_U", description: "Ungroup" },
+                { combo: "CONTROL_D", description: "Duplicate" },
+                { combo: "SHIFT_ARROW", description: "Nudge" },
+                { combo: "ALT_DRAG", description: "Duplicate while Dragging" },
+                { combo: "T", description: "Add Text" },
+                { combo: "R", description: "Add Rectangle" },
+                { combo: "L", description: "Add Line" },
+                { combo: "C", description: "Add Circle" },
+                { combo: "B", description: "Bold" },
+                { combo: "I", description: "Italic" },
+                { combo: "U", description: "Underline" },
+                { combo: "CONTROL_K", description: "Link" },
+                { combo: "CONTROL_SHIFT_K", description: "Unlink" },
+                { combo: "CONTROL_E", description: "Align Center" },
+                { combo: "CONTROL_L", description: "Align Left" },
+                { combo: "CONTROL_R", description: "Align Right" },
+                { combo: "CONTROL_SHIFT_M", description: "Comment" },
+                { combo: "ALT_LEFT_BRACKET", description: "Layer Back" },
+                { combo: "ALT_RIGHT_BRACKET", description: "Layer Front" },
+                { combo: "CONTROL_P", description: "Print" },
+                { combo: "CONTROL_S", description: "Save" },
+                { combo: "CONTROL_SHIFT_S", description: "Save As" },
+                { combo: "CONTROL_SHIFT_D", description: "Download" },
+            ],
         };
 
-        const NUM_LAYERS_PICO = 2; // Matches the NUM_LAYERS in the Pico code
-        const initialMultiLayerGrid = Array(NUM_LAYERS_PICO).fill().map(() => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null })));
+        const NUM_LAYERS = 4; // Increased to 4 layers for general configurator
+        const initialMultiLayerGrid = Array(NUM_LAYERS).fill().map(() => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null })));
+
+        // Helper function to get a short label from a description
+        const getShortLabel = (description) => {
+            if (!description) return "";
+            const parts = description.split('/');
+            if (parts[0]) {
+                const firstWord = parts[0].trim().split(' ')[0];
+                return firstWord.length > 0 ? firstWord : description;
+            }
+            return description;
+        };
 
 
-        // Modal component (unchanged)
+        // Modal component
         const Modal = ({ show, title, message, onClose }) => {
             if (!show) return null;
             return (
@@ -340,7 +510,7 @@
             );
         };
 
-        // Confirmation Modal (unchanged)
+        // Confirmation Modal
         const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
             if (!show) return null;
             return (
@@ -367,7 +537,7 @@
             );
         };
 
-        // Sidebar component (unchanged)
+        // Sidebar component
         const Sidebar = ({ activeTab, setActiveTab }) => {
             const { useState, useEffect } = React;
             return (
@@ -417,13 +587,13 @@
             );
         };
 
-        // KeymapGrid component (updated for Pico NUM_LAYERS)
+        // KeymapGrid component
         const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center">
                     <div className="flex space-x-2 mb-4">
-                        {[...Array(NUM_LAYERS_PICO)].map((_, index) => ( // Use NUM_LAYERS_PICO
+                        {[...Array(NUM_LAYERS)].map((_, index) => ( // Use NUM_LAYERS for general purpose
                             <button
                                 key={`layer-btn-${index}`}
                                 onClick={() => setCurrentLayer(index)}
@@ -435,7 +605,7 @@
                         ))}
                     </div>
                     <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
-                        {keymap[currentLayer].map((row, rIdx) => ( // Access keymap for currentLayer
+                        {keymap[currentLayer].map((row, rIdx) => (
                             row.map((cell, cIdx) => (
                                 <div
                                     key={`${rIdx}-${cIdx}`}
@@ -476,7 +646,7 @@
             );
         };
 
-        // ShortcutPool component (unchanged, but presets are updated)
+        // ShortcutPool component
         const ShortcutPool = ({ shortcutPool, draggedShortcut, handleShortcutDragStart, handleDragEnd, selectedKeymapCell, handleShortcutClick }) => {
             const { useState, useEffect, useMemo } = React;
             const [searchTerm, setSearchTerm] = useState('');
@@ -557,7 +727,7 @@
             );
         };
 
-        // MacroManagement component (unchanged)
+        // MacroManagement component
         const MacroManagement = ({ macros, addMacro, editMacro, deleteMacro }) => {
             const { useState, useEffect } = React;
             return (
@@ -605,20 +775,74 @@
             );
         };
 
-        // PeripheralControls component (removed potentiometer, as Pico doc doesn't mention it)
-        const PeripheralControls = () => {
-            const { useState, useEffect } = React;
+        // PeripheralControls component
+        const PeripheralControls = ({ potentiometerConfig, setPotentiometerConfig }) => {
             return (
                 <div className="flex flex-col items-center w-full">
                     <h1 className="text-4xl font-extrabold text-red-400 mb-8">PERIPHERAL CONTROLS</h1>
-                    <p className="text-zinc-400 text-lg">No peripheral controls configurable for Raspberry Pi Pico in this version.</p>
-                    <p className="text-400 text-md mt-2">The provided documentation does not include potentiometer support for the Pico.</p>
+
+                    <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mb-8">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Potentiometer Settings</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center">
+                                <label htmlFor="pot-enable" className="text-zinc-300 mr-3">Enable Potentiometer:</label>
+                                <input
+                                    type="checkbox"
+                                    id="pot-enable"
+                                    className="form-checkbox h-5 w-5 text-red-600 rounded-md focus:ring-red-500 bg-zinc-600 border-zinc-500"
+                                    checked={potentiometerConfig.enabled}
+                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, enabled: e.target.checked }))}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="pot-pin" className="block text-zinc-300 text-sm font-semibold mb-2">Analog Pin:</label>
+                                <input
+                                    type="number"
+                                    id="pot-pin"
+                                    className="w-full p-2 rounded-md bg-zinc-800 text-white border border-zinc-600 focus:border-red-500"
+                                    value={potentiometerConfig.pin}
+                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, pin: parseInt(e.target.value) || 0 }))}
+                                    disabled={!potentiometerConfig.enabled}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="pot-function" className="block text-zinc-300 text-sm font-semibold mb-2">Function:</label>
+                                <select
+                                    id="pot-function"
+                                    className="w-full p-2 rounded-md bg-zinc-800 text-white border border-zinc-600 focus:border-red-500"
+                                    value={potentiometerConfig.function}
+                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, function: e.target.value }))}
+                                    disabled={!potentiometerConfig.enabled}
+                                >
+                                    <option value="volume">Volume Control</option>
+                                    <option value="brightness">Brightness Control</option>
+                                    <option value="scroll">Scroll</option>
+                                    <option value="custom">Custom Action (Macro/Keycode)</option>
+                                </select>
+                            </div>
+                            {potentiometerConfig.function === 'custom' && (
+                                <div>
+                                    <label htmlFor="pot-custom-action" className="block text-zinc-300 text-sm font-semibold mb-2">Custom Action (Keycode/Macro Name):</label>
+                                    <input
+                                        type="text"
+                                        id="pot-custom-action"
+                                        className="w-full p-2 rounded-md bg-zinc-800 text-white border border-zinc-600 focus:border-red-500"
+                                        value={potentiometerConfig.customAction}
+                                        onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, customAction: e.target.value }))}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-zinc-400 text-sm mt-4">
+                            Note: Potentiometer functionality requires specific firmware support on your microcontroller. This configuration only sets preferences.
+                        </p>
+                    </div>
                 </div>
             );
         };
 
-        // SaveLoad component (updated for Pico file transfer method)
-        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice }) => { // uploadToDevice re-added
+        // SaveLoad component
+        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full">
@@ -648,12 +872,17 @@
                         >
                             Upload to Device (Web Serial)
                         </button>
+                        <div className="bg-zinc-700 rounded-xl p-4 text-zinc-300 text-center text-sm border border-zinc-600">
+                            For **Web Serial Upload**: This feature attempts to send the configuration directly over USB serial.
+                            On most modern CircuitPython devices, you may need to manually save the incoming data from the REPL to a file (e.g., `layers.json`) on your `CIRCUITPY` drive,
+                            or use a different method like dragging the exported `.json` file to the `CIRCUITPY` drive directly when it appears as a USB drive.
+                        </div>
                     </div>
                 </div>
             );
         };
 
-        // Settings component (unchanged)
+        // Settings component
         const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea }) => {
             const { useState, useEffect } = React;
             return (
@@ -678,7 +907,7 @@
             );
         };
 
-        // KeyTester component (unchanged)
+        // KeyTester component
         const KeyTester = ({ activeTab }) => {
             const { useState, useEffect } = React;
             const [pressedKeys, setPressedKeys] = useState([]);
@@ -742,7 +971,6 @@
             const { useState, useEffect, useCallback } = React;
 
             const [keymap, setKeymap] = useState(initialMultiLayerGrid);
-            // Initialize shortcut pool to use all defined presets
             const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
             const [showModal, setShowModal] = useState(false);
             const [modalContent, setModalContent] = useState({ title: "", message: "" });
@@ -758,10 +986,73 @@
             ]);
             const [nextMacroId, setNextMacroId] = useState(3);
 
+            const [potentiometerConfig, setPotentiometerConfig] = useState({
+                enabled: false,
+                pin: 26, // Default analog pin for RP2040 (GP26 is ADC0)
+                function: 'volume', // 'volume', 'brightness', 'scroll', 'custom'
+                customAction: '' // For custom function, e.g., a keycode or macro name
+            });
+
+            const [webSerialStatus, setWebSerialStatus] = useState('Disconnected'); // 'Disconnected', 'Connecting', 'Connected', 'Error'
+            const [serialPort, setSerialPort] = useState(null);
+            const [serialWriter, setSerialWriter] = useState(null);
+
             // Load profile on component mount
             useEffect(() => {
                 loadProfile();
             }, []);
+
+            // Web Serial Connection/Disconnection
+            const connectWebSerial = async () => {
+                if (!('serial' in navigator)) {
+                    setModalContent({
+                        title: "Web Serial API Not Supported",
+                        message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge)."
+                    });
+                    setShowModal(true);
+                    setWebSerialStatus('Error');
+                    return;
+                }
+
+                setWebSerialStatus('Connecting');
+                try {
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 }); // Standard baud rate for CircuitPython
+                    setSerialPort(port);
+                    setSerialWriter(port.writable.getWriter());
+                    setWebSerialStatus('Connected');
+                    setModalContent({
+                        title: "Web Serial Connected",
+                        message: "Successfully connected to a serial port."
+                    });
+                    setShowModal(true);
+                } catch (err) {
+                    setWebSerialStatus('Error');
+                    setModalContent({
+                        title: "Web Serial Connection Failed",
+                        message: `Failed to connect: ${err.message}. Ensure your device is connected and drivers are installed.`
+                    });
+                    setShowModal(true);
+                    console.error("Web Serial Connect Error:", err);
+                }
+            };
+
+            const disconnectWebSerial = async () => {
+                if (serialWriter) {
+                    await serialWriter.releaseLock();
+                    setSerialWriter(null);
+                }
+                if (serialPort) {
+                    await serialPort.close();
+                    setSerialPort(null);
+                }
+                setWebSerialStatus('Disconnected');
+                setModalContent({
+                    title: "Web Serial Disconnected",
+                    message: "Disconnected from the serial port."
+                });
+                setShowModal(true);
+            };
 
             // Handlers for drag and drop
             const handleDrop = (e, row, col) => {
@@ -860,9 +1151,10 @@
             const saveProfile = () => {
                 const profileData = {
                     keymap: keymap,
+                    potentiometerConfig: potentiometerConfig,
                     macros: macros
                 };
-                localStorage.setItem("trkey_profile_pico", JSON.stringify(profileData));
+                localStorage.setItem("trkey_profile", JSON.stringify(profileData)); // Generic key
                 setModalContent({
                     title: "Profile Saved",
                     message: "Profile saved to browser storage."
@@ -871,15 +1163,17 @@
             };
 
             const loadProfile = () => {
-                const saved = localStorage.getItem("trkey_profile_pico");
+                const saved = localStorage.getItem("trkey_profile"); // Generic key
                 if (saved) {
                     const profileData = JSON.parse(saved);
+                    // Check for keymap structure compatibility, default if mismatch
                     if (profileData.keymap && Array.isArray(profileData.keymap) && profileData.keymap.length === initialMultiLayerGrid.length) {
                         setKeymap(profileData.keymap);
                     } else {
                         setKeymap(initialMultiLayerGrid);
                         console.warn("Loaded keymap structure mismatch, resetting to initial multi-layer grid.");
                     }
+                    setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 26, function: 'volume', customAction: '' });
                     setMacros(profileData.macros || []);
                     setModalContent({
                         title: "Profile Loaded",
@@ -894,7 +1188,7 @@
                 setShowModal(true);
             };
 
-            // Export function updated to generate layers.json format and shorten labels
+            // Export function updated for general layers.json format
             const exportKeymap = () => {
                 const layersForExport = [];
 
@@ -910,79 +1204,47 @@
                     });
                 });
 
-                const fullExportData = layersForExport;
-
-                if (macros.length > 0) {
-                    if (fullExportData.length > 0) {
-                         fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
-                    }
-                }
+                // Add macros and potentiometer config to the first layer for simplicity or as global config
+                const fullExportData = {
+                    layers: layersForExport,
+                    macros: macros.map(m => ({ name: m.name, sequence: m.sequence })),
+                    potentiometer: potentiometerConfig // Include potentiometer config
+                };
 
 
                 const blob = new Blob([JSON.stringify(fullExportData, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "layers.json";
+                a.download = "config.json"; // Changed filename to a more general config.json
                 a.click();
                 setModalContent({
                     title: "Export Successful",
-                    message: "Configuration exported as layers.json."
+                    message: "Configuration exported as config.json."
                 });
                 setShowModal(true);
             };
 
-            // uploadToDevice uses the new USBFileServer commands
+            // UPLOAD TO DEVICE (WEB SERIAL)
             const uploadToDevice = async () => {
-                let port;
-                try {
-                    if (!('serial' in navigator)) {
-                        setModalContent({
-                            title: "Web Serial API Not Supported",
-                            message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
-                        });
-                        setShowModal(true);
-                        return;
-                    }
-
-                    port = await navigator.serial.requestPort();
-                    await port.open({ baudRate: 115200 });
-
-                    const writer = port.writable.getWriter();
-                    const reader = port.readable.getReader();
-                    const encoder = new TextEncoder();
-                    const decoder = new TextDecoder();
-
-                    const writeLine = async (line) => {
-                        await writer.write(encoder.encode(line + '\n'));
-                    };
-
-                    const readResponse = async () => {
-                        let response = '';
-                        while (true) {
-                            const { value, done } = await reader.read();
-                            response += decoder.decode(value);
-                            if (response.endsWith('\n') || done) {
-                                return response.trim();
-                            }
-                        }
-                    };
-
+                if (webSerialStatus !== 'Connected') {
                     setModalContent({
-                        title: "Uploading...",
-                        message: "Connecting to device and initiating file transfer. Please ensure 'usb_file_server.py' is running on your Pico."
+                        title: "Device Not Connected",
+                        message: "Please connect to a serial port first using the 'Connect Web Serial' button."
                     });
                     setShowModal(true);
+                    return;
+                }
 
-                    // 1. Send PUT command
-                    await writeLine('PUT layers.json');
-                    const putResponse = await readResponse();
+                setModalContent({
+                    title: "Uploading...",
+                    message: "Sending configuration data over serial. Please check your device's REPL to save the data."
+                });
+                setShowModal(true);
 
-                    if (putResponse !== 'READY') {
-                        throw new Error(`Device not ready to receive file. Response: ${putResponse}`);
-                    }
+                try {
+                    const encoder = new TextEncoder();
 
-                    // 2. Prepare JSON data
                     const layersForExport = [];
                     keymap.forEach((layerData, lIdx) => {
                         const layerName = `Layer ${lIdx}`;
@@ -995,93 +1257,87 @@
                         });
                     });
 
-                    const fullExportData = layersForExport;
-                    if (macros.length > 0 && fullExportData.length > 0) {
-                         fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
-                    }
+                    const fullExportData = {
+                        layers: layersForExport,
+                        macros: macros.map(m => ({ name: m.name, sequence: m.sequence })),
+                        potentiometer: potentiometerConfig
+                    };
+
                     const jsonContent = JSON.stringify(fullExportData, null, 2);
-                    const data = encoder.encode(jsonContent);
 
-                    // 3. Send file data
-                    const chunkSize = 64; // Small chunks to avoid overflowing serial buffer
-                    for (let i = 0; i < data.length; i += chunkSize) {
-                        const chunk = data.slice(i, i + chunkSize);
-                        await writer.write(chunk);
-                        await new Promise(resolve => setTimeout(10)); // Small delay to allow Pico to process
-                    }
-
-                    // 4. Send EOF marker
-                    await writer.write(encoder.encode('<EOF>\n'));
-                    const eofResponse = await readResponse();
-
-                    if (eofResponse !== 'FILE RECEIVED') {
-                        throw new Error(`File transfer confirmation failed. Response: ${eofResponse}`);
-                    }
+                    await serialWriter.write(encoder.encode(jsonContent));
+                    await serialWriter.write(encoder.encode("\r\n")); // Add CRLF for REPL
 
                     setModalContent({
-                        title: "Upload Successful",
-                        message: "Configuration (layers.json) sent to device. Reboot your Pico to apply changes if it doesn't automatically."
+                        title: "Upload Sent",
+                        message: "Configuration sent to device. You will need to capture and save this data on your microcontroller's REPL (e.g., in `main.py` or a dedicated config file)."
                     });
 
                 } catch (err) {
                     setModalContent({
                         title: "Upload Failed",
-                        message: `Failed to upload: ${err.message}. Ensure 'usb_file_server.py' is present and running, and your Pico is connected.`
+                        message: `Failed to upload: ${err.message}. Ensure your device is ready to receive data.`
                     });
                     console.error("Web Serial Upload Error:", err);
                 } finally {
                     setShowModal(true);
-                    if (writer) writer.releaseLock();
-                    if (reader) reader.releaseLock();
-                    if (port) await port.close();
                 }
             };
 
 
-            // JSON Import updated to parse layers.json format
+            // JSON Import updated to parse general config.json format
             const loadJsonFromTextArea = () => {
                 try {
                     const parsedJson = JSON.parse(jsonInput);
 
-                    if (Array.isArray(parsedJson)) { // Expecting an array of layer objects
-                        const newKeymap = Array(NUM_LAYERS_PICO).fill().map(() =>
+                    if (parsedJson.layers && Array.isArray(parsedJson.layers)) {
+                        const newKeymap = Array(NUM_LAYERS).fill().map(() =>
                             Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }))
                         );
                         let loadedMacros = [];
 
-                        parsedJson.forEach((layerData, lIdx) => {
-                            if (lIdx < NUM_LAYERS_PICO) { // Only load up to NUM_LAYERS_PICO
+                        parsedJson.layers.forEach((layerData, lIdx) => {
+                            if (lIdx < NUM_LAYERS) {
                                 if (layerData.keys && Array.isArray(layerData.keys) && layerData.keys.length === 9) {
                                     layerData.keys.forEach((combo, keyIndex) => {
                                         const rIdx = Math.floor(keyIndex / 3);
                                         const cIdx = keyIndex % 3;
+                                        // Use label from JSON if available, otherwise just the combo
                                         const description = layerData.labels && layerData.labels[keyIndex] ? layerData.labels[keyIndex] : combo;
 
                                         newKeymap[lIdx][rIdx][cIdx] = {
                                             tap: combo ? { combo: combo, description: description } : null,
-                                            hold: null // Pico doc doesn't mention hold, so keep null
+                                            hold: null
                                         };
                                     });
                                 }
-                                // Load macros if present in this layer (Pico doc suggests macros per layer)
-                                if (layerData.macros && Array.isArray(layerData.macros)) {
-                                    loadedMacros = [...loadedMacros, ...layerData.macros.map((m, idx) => ({ id: nextMacroId + loadedMacros.length + idx, name: m.name, sequence: m.sequence }))];
-                                }
                             }
                         });
+
+                        // Load global macros if present
+                        if (parsedJson.macros && Array.isArray(parsedJson.macros)) {
+                            loadedMacros = parsedJson.macros.map((m, idx) => ({ id: nextMacroId + idx, name: m.name, sequence: m.sequence }));
+                        }
                         setKeymap(newKeymap);
                         setMacros(loadedMacros);
-                        setNextMacroId(loadedMacros.length + 1);
+                        setNextMacroId(nextMacroId + loadedMacros.length);
 
+                        // Load potentiometer config if present
+                        if (parsedJson.potentiometer) {
+                            setPotentiometerConfig(parsedJson.potentiometer);
+                        } else {
+                            // Reset to default if not found
+                            setPotentiometerConfig({ enabled: false, pin: 26, function: 'volume', customAction: '' });
+                        }
 
                         setModalContent({
                             title: "JSON Loaded",
-                            message: "Configuration loaded from text area successfully (Pico layers.json format)."
+                            message: "Configuration loaded from text area successfully."
                         });
                     } else {
                         setModalContent({
                             title: "Invalid JSON",
-                            message: "The pasted JSON does not contain a valid layers.json array structure."
+                            message: "The pasted JSON does not contain a valid configuration structure (expected 'layers' array)."
                         });
                     }
                 } catch (error) {
@@ -1094,7 +1350,7 @@
                 }
             };
 
-            // Macro functions (unchanged)
+            // Macro functions
             const addMacro = () => {
                 const name = prompt("Enter macro name:");
                 if (!name) return;
@@ -1140,6 +1396,28 @@
 
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col p-8 overflow-auto">
+                        {/* Web Serial Status Indicator */}
+                        <div className="fixed top-4 right-4 z-50 flex items-center bg-zinc-700 text-white py-2 px-4 rounded-full shadow-lg border border-zinc-600">
+                            <span className={`h-3 w-3 rounded-full mr-2 ${webSerialStatus === 'Connected' ? 'bg-green-500' : webSerialStatus === 'Connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
+                            <span className="text-sm font-semibold">{webSerialStatus}</span>
+                            {webSerialStatus === 'Disconnected' && (
+                                <button
+                                    onClick={connectWebSerial}
+                                    className="ml-3 text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-full transition-colors"
+                                >
+                                    Connect
+                                </button>
+                            )}
+                            {webSerialStatus === 'Connected' && (
+                                <button
+                                    onClick={disconnectWebSerial}
+                                    className="ml-3 text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded-full transition-colors"
+                                >
+                                    Disconnect
+                                </button>
+                            )}
+                        </div>
+
                         {activeTab === 'keymap' && (
                             <>
                                 <h1 className="text-4xl font-extrabold text-red-400 mb-4">KEYMAP CONFIGURATION</h1>
@@ -1177,7 +1455,10 @@
                         )}
 
                         {activeTab === 'controls' && (
-                            <PeripheralControls />
+                            <PeripheralControls
+                                potentiometerConfig={potentiometerConfig}
+                                setPotentiometerConfig={setPotentiometerConfig}
+                            />
                         )}
 
                         {activeTab === 'save-load' && (
