@@ -615,7 +615,7 @@
         };
 
         // SaveLoad component (updated for Pico file transfer method)
-        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap }) => { // Removed uploadToDevice
+        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice }) => { // uploadToDevice re-added
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full">
@@ -639,9 +639,13 @@
                         >
                             Export Configuration as layers.json
                         </button>
-                        <div className="bg-zinc-700 rounded-xl p-4 text-zinc-300 text-center text-sm border border-zinc-600">
-                            To upload to Pico: Save the exported `layers.json` file, then drag and drop it onto your `CIRCUITPY` drive.
-                        </div>
+                        <button
+                            onClick={uploadToDevice}
+                            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+                        >
+                            Upload to Device (Web Serial)
+                        </button>
+                        {/* Removed the descriptive text about manual upload */}
                     </div>
                 </div>
             );
@@ -935,13 +939,74 @@
                 a.click();
                 setModalContent({
                     title: "Export Successful",
-                    message: "Configuration exported as layers.json. Drag this file onto your CIRCUITPY drive."
+                    message: "Configuration exported as layers.json."
                 });
                 setShowModal(true);
             };
 
-            // uploadToDevice removed (Pico uses drag-and-drop file transfer)
-            // const uploadToDevice = async () => { /* ... */ };
+            // uploadToDevice re-added to support Web Serial for Pico
+            const uploadToDevice = async () => {
+                try {
+                    if ('serial' in navigator) {
+                        const port = await navigator.serial.requestPort();
+                        await port.open({ baudRate: 115200 }); // Standard baud rate for CircuitPython
+                        
+                        const writer = port.writable.getWriter();
+                        const reader = port.readable.getReader(); // Also get a reader to check for prompt
+
+                        const layersForExport = [];
+                        keymap.forEach((layerData, lIdx) => {
+                            const layerName = `Layer ${lIdx}`;
+                            const keys = layerData.flat().map(cell => cell.tap ? cell.tap.combo : "");
+                            const labels = layerData.flat().map(cell => cell.tap ? getShortLabel(cell.tap.description) : "");
+                            layersForExport.push({
+                                name: layerName,
+                                labels: labels,
+                                keys: keys
+                            });
+                        });
+
+                        const fullExportData = layersForExport;
+                        if (macros.length > 0 && fullExportData.length > 0) {
+                             fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
+                        }
+
+                        const json = JSON.stringify(fullExportData, null, 2);
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(json);
+
+                        setModalContent({
+                            title: "Uploading...",
+                            message: "Connecting to device and sending configuration. Please ensure your Pico is in REPL mode or ready to receive serial data."
+                        });
+                        setShowModal(true);
+
+                        // Give a moment for the device to be ready to receive
+                        await new Promise(resolve => setTimeout(500));
+
+                        await writer.write(data);
+                        writer.releaseLock();
+                        
+                        setModalContent({
+                            title: "Upload Successful",
+                            message: "Configuration sent to device. The Pico should reboot to apply changes."
+                        });
+                    } else {
+                        setModalContent({
+                            title: "Web Serial API Not Supported",
+                            message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
+                        });
+                    }
+                } catch (err) {
+                    setModalContent({
+                        title: "Upload Failed",
+                        message: "Failed to upload: " + err.message + ". Ensure the Pico is in REPL mode and try again."
+                    });
+                } finally {
+                    setShowModal(true);
+                }
+            };
+
 
             // JSON Import updated to parse layers.json format
             const loadJsonFromTextArea = () => {
@@ -1095,7 +1160,7 @@
                                 saveProfile={saveProfile}
                                 loadProfile={loadProfile}
                                 exportKeymap={exportKeymap}
-                                // uploadToDevice removed
+                                uploadToDevice={uploadToDevice} // Passed uploadToDevice
                             />
                         )}
 
