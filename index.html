@@ -417,6 +417,11 @@
         // KeymapGrid component (formerly from src/components/KeymapGrid.js)
         const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers, physicalLayout }) => {
             const { useState, useEffect } = React;
+            // DEBUG: Log the physicalLayout prop received by KeymapGrid
+            useEffect(() => {
+                console.log("KeymapGrid received physicalLayout:", physicalLayout);
+            }, [physicalLayout]);
+
             // The keymap prop is now an array of layer objects, each with 'keys' and 'labels'
             const currentLayerData = keymap[currentLayer] || { keys: Array(9).fill(null), labels: Array(9).fill('') };
 
@@ -484,6 +489,7 @@
                     {/* Render keys based on physicalLayout */}
                     <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
                         {physicalLayout.map((layoutItem, gridIndex) => {
+                            // If layoutItem is null or doesn't have a valid index, render an empty slot
                             if (layoutItem === null || typeof layoutItem.index === 'undefined' || layoutItem.index === null) {
                                 return (
                                     <div
@@ -855,7 +861,7 @@
 
             return (
                 <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mt-8">
-                    <h2 className="text-2xl font-bold text-red-300 mb-4">Current Physical Layout</h2>
+                    <h2 className="text-2xl font-bold text-red-300 mb-4">Current Physical Layout (from Application State)</h2>
                     <p className="text-zinc-400 mb-2 text-sm">This shows the layout currently applied to the UI. To change it, paste a new configuration above that includes a "physical_layout" array.</p>
                     <textarea
                         readOnly
@@ -1179,6 +1185,10 @@
 
             // State for the physical layout of the keys (e.g., 3x3 grid, or custom layout with nulls)
             const [physicalLayout, setPhysicalLayout] = useState(() => createDefaultPhysicalLayout());
+            // DEBUG: Log when physicalLayout state changes in App
+            useEffect(() => {
+                console.log("App state - physicalLayout updated:", physicalLayout);
+            }, [physicalLayout]);
 
             // New state for number of layers
             const [numLayers, setNumLayers] = useState(DEFAULT_LAYERS);
@@ -1251,7 +1261,7 @@
                     droppedItem = JSON.parse(data);
                 } catch (error) {
                     console.error("Failed to parse dropped data:", error);
-                    addLog(`Failed to parse dropped data: ${error.message}`, "error");
+                    addLog("Failed to parse dropped data: " + error.message, "error");
                     setDraggedShortcut(null);
                     return;
                 }
@@ -1659,6 +1669,7 @@
             const loadJsonFromTextArea = () => {
                 try {
                     const parsedJson = JSON.parse(jsonInput);
+                    console.log("Parsed JSON from text area:", parsedJson); // DEBUG: Log full parsed JSON
 
                     // Expecting a root object with 'physical_layout' and 'layers' keys
                     if (typeof parsedJson === 'object' && parsedJson !== null && Array.isArray(parsedJson.layers)) {
@@ -1684,6 +1695,7 @@
                             }
                         });
                         setKeymap(newKeymap);
+                        console.log("App state - keymap after loading:", newKeymap); // DEBUG: Log keymap state
 
                         // Load physical_layout
                         if (Array.isArray(parsedJson.physical_layout)) {
@@ -1695,9 +1707,12 @@
                                 return null; // Invalid items become null
                             });
                             setPhysicalLayout(validatedPhysicalLayout);
+                            console.log("App state - physicalLayout after loading:", validatedPhysicalLayout); // DEBUG: Log physicalLayout state
                             addLog(`Physical layout loaded from JSON. Detected ${validatedPhysicalLayout.filter(i => i !== null).length} active key positions.`, "info");
                         } else {
-                            setPhysicalLayout(createDefaultPhysicalLayout()); // Reset to default if not found or invalid
+                            const defaultLayout = createDefaultPhysicalLayout();
+                            setPhysicalLayout(defaultLayout); // Reset to default if not found or invalid
+                            console.log("App state - physicalLayout defaulted:", defaultLayout); // DEBUG: Log default layout
                             addLog("No valid 'physical_layout' found in JSON, defaulting to 3x3 layout.", "warn");
                         }
 
@@ -1911,7 +1926,7 @@
                         )}
 
                         {activeTab === 'keytester' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for keytester tab content */}
+                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for keytester tab content */}\
                                 <KeyTester activeTab={activeTab} />
                             </div>
                         )}
