@@ -30,7 +30,6 @@
         html, body, #root {
             min-height: 100%; /* Ensure they take at least full height, but can grow */
             margin: 0;
-            /* Removed overflow: hidden; as it can hide content when modals are shown */
         }
     </style>
 </head>
@@ -43,6 +42,11 @@
         // Explicitly get React and ReactDOM from the window object
         const React = window.React;
         const ReactDOM = window.ReactDOM;
+
+        // NEW: Define minimum and maximum grid sizes
+        const MIN_GRID_SIZE = 2;
+        const MAX_GRID_SIZE = 5;
+        const DEFAULT_GRID_SIZE = 3; // Default 3x3 grid
 
         // Constants with ALL shortcuts from the PDF, adapted for CircuitPython Keycode names
         const presets = {
@@ -299,18 +303,20 @@
         const DEFAULT_LAYERS = 2; // Default number of layers for initial load if no profile exists
 
         // Helper function to create an empty layer object
-        const createEmptyLayer = (index) => ({
+        // Now accepts gridSize to correctly size the arrays
+        const createEmptyLayer = (index, currentGridSize) => ({
             name: `Layer ${index}`,
-            labels: Array(9).fill(''), // Always 9 elements for the 3x3 grid internally
-            keys: Array(9).fill(null), // Always 9 elements for the 3x3 grid internally
+            labels: Array(currentGridSize * currentGridSize).fill(''),
+            keys: Array(currentGridSize * currentGridSize).fill(null),
             macros: [] // Macros are technically global to the app but stored on Layer 0 in JSON
         });
 
-        // Helper function to create a default 3x3 physical layout
-        const createDefaultPhysicalLayout = () => {
+        // Helper function to create a default physical layout based on currentGridSize
+        // Now accepts gridSize to correctly size the layout
+        const createDefaultPhysicalLayout = (currentGridSize) => {
             const layout = [];
-            for (let i = 0; i < 9; i++) {
-                layout.push({ index: i, row: Math.floor(i / 3), col: i % 3 });
+            for (let i = 0; i < currentGridSize * currentGridSize; i++) {
+                layout.push({ index: i, row: Math.floor(i / currentGridSize), col: i % currentGridSize });
             }
             return layout;
         };
@@ -379,15 +385,17 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" onClick={() => setActiveTab('macros')} className={`flex items-center ${activeTab === 'macros' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M12 6.293V4a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1v-2.293l1.707 1.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 0l-4 4a1 1 0 001.414 1.414L10 10.414V12a1 1 0 001 1h2a1 1 0 001-1V8.293l1.707 1.707a1 1 0 001.414-1.414l-4-4z"></path></svg>
-                                    MACROS
+                                <a href="#" onClick={() => setActiveTab('layout')} className={`flex items-center ${activeTab === 'layout' ? 'text-red-300' : 'text-zinc-400'} hover:text-red-500 font-semibold text-lg transition-colors duration-200`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.723A1 1 0 013 16.382V5.618a1 1 0 011.553-.894L9 7m0 13l6-3m-6 3V7m6 10l4.447 2.223A1 1 0 0021 18.382V7.618a1 1 0 00-1.553-.894L15 10m0 0V7m0 10.382l-.618.309L12 21l-2.382-1.191L9 20m0-13l2.382 1.191L12 3l2.382 1.191L15 7m0 0V3m0 0l-5.447 2.723A1 1 0 009 5.618V16.382a1 1 0 001.553.894L15 13m0 0V7"/>
+                                </svg>
+                                    LAYOUT
                                 </a>
                             </li>
                             <li>
-                                <a href="#" onClick={() => setActiveTab('controls')} className={`flex items-center ${activeTab === 'controls' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm6-1a1 1 0 100-2 1 1 0 000 2zm-3 8a1 1 0 100-2 1 1 0 000 2z"></path></svg>
-                                    CONTROLS
+                                <a href="#" onClick={() => setActiveTab('macros')} className={`flex items-center ${activeTab === 'macros' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                    <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M12 6.293V4a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1v-2.293l1.707 1.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 0l-4 4a1 1 0 001.414 1.414L10 10.414V12a1 1 0 001 1h2a1 1 0 001-1V8.293l1.707 1.707a1 1 0 001.414-1.414l-4-4z"></path></svg>
+                                    MACROS
                                 </a>
                             </li>
                             <li>
@@ -415,15 +423,11 @@
         };
 
         // KeymapGrid component (formerly from src/components/KeymapGrid.js)
-        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers, physicalLayout }) => {
+        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers, physicalLayout, gridSize }) => {
             const { useState, useEffect } = React;
-            // DEBUG: Log the physicalLayout prop received by KeymapGrid
-            useEffect(() => {
-                console.log("KeymapGrid received physicalLayout:", physicalLayout);
-            }, [physicalLayout]);
-
             // The keymap prop is now an array of layer objects, each with 'keys' and 'labels'
-            const currentLayerData = keymap[currentLayer] || { keys: Array(9).fill(null), labels: Array(9).fill('') };
+            const NUM_KEYS_IN_GRID = gridSize * gridSize; // Dynamically calculate
+            const currentLayerData = keymap[currentLayer] || { keys: Array(NUM_KEYS_IN_GRID).fill(null), labels: Array(NUM_KEYS_IN_GRID).fill('') };
 
             // Helper to get the key/label for a specific flat index
             const getCellContent = (flatIndex) => {
@@ -465,6 +469,8 @@
                 return null;
             };
 
+            const gridColsClass = `grid-cols-${gridSize}`; // Dynamically set grid columns using the prop
+
             return (
                 <div className="flex flex-col items-center">
                     <div className="flex flex-wrap justify-center gap-2 mb-4"> {/* Use flex-wrap for responsiveness */}
@@ -487,46 +493,49 @@
                         </button>
                     </div>
                     {/* Render keys based on physicalLayout */}
-                    <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
-                        {physicalLayout.map((layoutItem, gridIndex) => {
-                            // If layoutItem is null or doesn't have a valid index, render an empty slot
-                            if (layoutItem === null || typeof layoutItem.index === 'undefined' || layoutItem.index === null) {
-                                return (
-                                    <div
-                                        key={`empty-${gridIndex}`}
-                                        className="relative bg-zinc-900 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-800 shadow-inner text-zinc-600 italic"
-                                    >
-                                        Empty Slot
-                                    </div>
-                                );
-                            }
+                    <div className={`grid ${gridColsClass} gap-4 mb-12 w-full max-w-2xl mx-auto`}> {/* Use gridColsClass and increased max-width */}
+                        {/* Generate all possible grid cells first, then map physical layout onto them */}
+                        {Array.from({ length: gridSize * gridSize }).map((_, globalGridIndex) => {
+                            const row = Math.floor(globalGridIndex / gridSize);
+                            const col = globalGridIndex % gridSize;
+                            
+                            // Check if this global grid index corresponds to an active key in physicalLayout
+                            const layoutItem = physicalLayout.find(item => item && item.row === row && item.col === col);
+                            
+                            const flatIndex = layoutItem ? layoutItem.index : null; // Get the flat index if it's an active key
+                            const cellContent = flatIndex !== null ? getCellContent(flatIndex) : null;
 
-                            // Use the 'index' from physical_layout as the flat index for keymap data
-                            const flatIndex = layoutItem.index; 
-                            const cellContent = getCellContent(flatIndex);
+                            // Determine if this is an active key cell or a placeholder
+                            const isActiveKeyCell = flatIndex !== null;
 
                             return (
                                 <div
-                                    key={`cell-${flatIndex}`} /* Use flatIndex for key as it's the unique identifier for logical position */
-                                    className={`relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
-                                                hover:border-red-500 transition-all duration-200 cursor-pointer
-                                                ${selectedKeymapCell && selectedKeymapCell.index === flatIndex && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-900 bg-opacity-30' : ''}`}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => handleDrop(e, flatIndex)}
-                                    draggable
-                                    onDragStart={(e) => handleKeymapDragStart(e, cellContent, flatIndex)}
+                                    key={`grid-cell-${globalGridIndex}`} /* Unique key for each display cell */
+                                    className={`relative rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 shadow-md
+                                                ${isActiveKeyCell 
+                                                    ? `bg-zinc-700 hover:border-red-500 transition-all duration-200 cursor-pointer ${selectedKeymapCell && selectedKeymapCell.index === flatIndex && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-900 bg-opacity-30' : 'border-zinc-600'}`
+                                                    : 'bg-zinc-800 border-zinc-700'
+                                                }`}
+                                    onDragOver={(e) => { if (isActiveKeyCell) e.preventDefault(); }} /* Only allow drop on active keys */
+                                    onDrop={(e) => { if (isActiveKeyCell) handleDrop(e, flatIndex); }} /* Pass flatIndex for active keys */
+                                    draggable={isActiveKeyCell} /* Only draggable if it's an active key */
+                                    onDragStart={(e) => { if (isActiveKeyCell) handleKeymapDragStart(e, cellContent, flatIndex); }}
                                     onDragEnd={handleDragEnd}
-                                    onClick={() => handleKeymapCellClick(flatIndex, currentLayer)}
+                                    onClick={() => { if (isActiveKeyCell) handleKeymapCellClick(flatIndex, currentLayer); }}
                                 >
-                                    {cellContent ? (
-                                        <>
-                                            <span className="text-2xl font-bold text-red-300">{cellContent.combo}</span>
-                                            <span className="text-sm text-zinc-400 text-center mt-1">{cellContent.description}</span>
-                                        </>
+                                    {isActiveKeyCell ? (
+                                        cellContent ? (
+                                            <>
+                                                <span className="text-2xl font-bold text-red-300">{cellContent.combo}</span>
+                                                <span className="text-sm text-zinc-400 text-center mt-1">{cellContent.description}</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-zinc-500">Drag & Drop Here</span>
+                                        )
                                     ) : (
-                                        <span className="text-zinc-500">Drag & Drop Here</span>
+                                        <span className="text-zinc-600 text-sm">Empty Slot</span>
                                     )}
-                                    {cellContent && (
+                                    {isActiveKeyCell && cellContent && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); clearKeymapCell(flatIndex); }}
                                             className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
@@ -684,75 +693,6 @@
             );
         };
 
-        // PeripheralControls component (formerly from src/components/PeripheralControls.js)
-        const PeripheralControls = ({ potentiometerConfig, setPotentiometerConfig }) => {
-            const { useState, useEffect } = React;
-            return (
-                <div className="flex flex-col items-center w-full">
-                    <h1 className="text-4xl font-extrabold text-red-400 mb-8">PERIPHERAL CONTROLS</h1>
-
-                    <div className="w-full max-w-xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
-                        <h2 className="text-2xl font-bold text-red-300 mb-4">Potentiometer Configuration</h2>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <label htmlFor="potentiometer-enable" className="text-lg text-zinc-200">Enable Potentiometer:</label>
-                                <input
-                                    type="checkbox"
-                                    id="potentiometer-enable"
-                                    checked={potentiometerConfig.enabled}
-                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-                                    className="form-checkbox h-6 w-6 text-red-600 rounded focus:ring-red-500"
-                                />
-                            </div>
-
-                            {potentiometerConfig.enabled && (
-                                <>
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="potentiometer-pin" className="text-lg text-zinc-200">Analog Pin:</label>
-                                        <input
-                                            type="number"
-                                            id="potentiometer-pin"
-                                            value={potentiometerConfig.pin}
-                                            onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, pin: parseInt(e.target.value) || 0 }))}
-                                            className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="potentiometer-function" className="text-lg text-zinc-200">Function:</label>
-                                        <select
-                                            id="potentiometer-function"
-                                            value={potentiometerConfig.function}
-                                            onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, function: e.target.value }))}
-                                            className="bg-zinc-800 border border-zinc-600 rounded-md p-2 text-white"
-                                        >
-                                            <option value="volume">Volume Control</option>
-                                            <option value="scroll">Scroll</option>
-                                            <option value="custom">Custom QMK Keycode</option>
-                                        </select>
-                                    </div>
-
-                                    {potentiometerConfig.function === 'custom' && (
-                                        <div className="flex items-center justify-between">
-                                            <label htmlFor="custom-action" className="text-lg text-zinc-200">Custom QMK Keycode:</label>
-                                            <input
-                                                type="text"
-                                                id="custom-action"
-                                                value={potentiometerConfig.customAction}
-                                                onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, customAction: e.target.value }))}
-                                                placeholder="e.g., KC_MPLY"
-                                                className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-48 text-white"
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         // SaveLoad component (formerly from src/components/SaveLoad.js)
         const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown }) => {
             const { useState, useEffect } = React;
@@ -846,7 +786,7 @@
             );
         };
 
-        // New component to display the physical layout JSON
+        // NEW: Component to display the physical layout JSON
         const PhysicalLayoutViewer = ({ physicalLayout }) => {
             const { useState, useEffect } = React;
             const [layoutJson, setLayoutJson] = useState('');
@@ -862,7 +802,7 @@
             return (
                 <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mt-8">
                     <h2 className="text-2xl font-bold text-red-300 mb-4">Current Physical Layout (from Application State)</h2>
-                    <p className="text-zinc-400 mb-2 text-sm">This shows the layout currently applied to the UI. To change it, paste a new configuration above that includes a "physical_layout" array.</p>
+                    <p className="text-zinc-400 mb-2 text-sm">This shows the layout currently applied to the UI. To change it, modify the grid above or import a full JSON configuration in the Settings tab that includes a "physical_layout" array.</p>
                     <textarea
                         readOnly
                         className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y custom-scrollbar"
@@ -873,7 +813,7 @@
         };
 
         // Settings component (formerly from src/components/Settings.js)
-        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea, numLayers, setNumLayers, physicalLayout }) => {
+        const Settings = ({ jsonInput, setJsonInput, loadConfigFromJson, numLayers, setNumLayers }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
@@ -906,14 +846,12 @@
                             onChange={(e) => setJsonInput(e.target.value)}
                         ></textarea>
                         <button
-                            onClick={loadJsonFromTextArea}
+                            onClick={() => loadConfigFromJson(jsonInput)}
                             className="mt-4 bg-teal-600 hover:bg-teal-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full"
                         >
                             Load JSON
                         </button>
                     </div>
-                    {/* Add the PhysicalLayoutViewer component here */}
-                    <PhysicalLayoutViewer physicalLayout={physicalLayout} />
                 </div>
             );
         };
@@ -1027,6 +965,191 @@
             );
         };
 
+        {/* Renamed MappingPage to LayoutPage */}
+        const LayoutPage = ({ gridSize, setGridSize, physicalLayout, setPhysicalLayout, keymap, setKeymap, exportKeymap, uploadToDevice, isConnected, handleConnectPico, webSerialSupported }) => {
+            const { useState, useEffect } = React;
+
+            // Effect to update physicalLayout when gridSize changes
+            useEffect(() => {
+                // When gridSize changes, regenerate a default physical layout if the current layout doesn't match
+                const numExpectedKeys = gridSize * gridSize;
+                // Check if current physicalLayout needs to be adjusted based on new gridSize
+                // This is a robust check: filter out invalid items, then check if length matches expected,
+                // and if all items are within the new grid bounds.
+                const currentValidPhysicalLayout = physicalLayout.filter(item => 
+                    item && typeof item.index === 'number' && item.row < gridSize && item.col < gridSize
+                );
+
+                if (currentValidPhysicalLayout.length !== numExpectedKeys || currentValidPhysicalLayout.some(item => !item)) {
+                    // Only regenerate if the existing layout is not a perfect grid
+                    const newLayout = createDefaultPhysicalLayout(gridSize);
+                    setPhysicalLayout(newLayout);
+                    // Also ensure keymap layers are correctly sized
+                    setKeymap(prevKeymap => prevKeymap.map((layer, lIdx) => {
+                        const newKeys = Array(numExpectedKeys).fill(null);
+                        const newLabels = Array(numExpectedKeys).fill('');
+                        // Copy existing keys/labels up to the new size and ensure they align with the new default physical layout
+                        newLayout.forEach(layoutItem => {
+                            if (layoutItem && layoutItem.index < (layer.keys ? layer.keys.length : 0)) {
+                                newKeys[layoutItem.index] = layer.keys[layoutItem.index];
+                                newLabels[layoutItem.index] = layer.labels[layoutItem.index];
+                            }
+                        });
+                        return { ...layer, keys: newKeys, labels: newLabels };
+                    }));
+                } else {
+                    // If gridSize changed but the existing layout is still valid for the new gridSize,
+                    // just update keymap sizes to match the new gridSize.
+                    setKeymap(prevKeymap => prevKeymap.map((layer, lIdx) => {
+                        const newKeys = Array(numExpectedKeys).fill(null);
+                        const newLabels = Array(numExpectedKeys).fill('');
+                        // Copy existing keys/labels, ensuring they fit the new grid size
+                        physicalLayout.forEach(layoutItem => { // Use the (potentially original) physicalLayout
+                            if (layoutItem && layoutItem.index < (layer.keys ? layer.keys.length : 0) && layoutItem.index < numExpectedKeys) {
+                                newKeys[layoutItem.index] = layer.keys[layoutItem.index];
+                                newLabels[layoutItem.index] = layer.labels[layoutItem.index];
+                            }
+                        });
+                        return { ...layer, keys: newKeys, labels: newLabels };
+                    }));
+                }
+            }, [gridSize, physicalLayout]); // physicalLayout dependency is needed to correctly adapt keymap when layout is changed directly.
+
+
+            const toggleKeyActive = (row, col) => {
+                const newPhysicalLayout = [...physicalLayout];
+                const flatIndex = row * gridSize + col;
+
+                // Check if a key at this logical position (row, col) already exists in physicalLayout
+                // We need to check based on row/col because flatIndex might change if grid size changes,
+                // but row/col is the stable position in the visual grid.
+                const existingKeyIndexInArray = newPhysicalLayout.findIndex(item => item && item.row === row && item.col === col);
+
+                if (existingKeyIndexInArray !== -1) {
+                    // Key exists, so make it inactive (remove it from the array)
+                    newPhysicalLayout.splice(existingKeyIndexInArray, 1);
+                } else {
+                    // Key does not exist, so add it. Assign the current flatIndex as its index.
+                    newPhysicalLayout.push({ index: flatIndex, row: row, col: col });
+                }
+
+                // Re-sort the layout by index to maintain consistency for how it's consumed by KeymapGrid
+                newPhysicalLayout.sort((a, b) => a.index - b.index);
+                setPhysicalLayout(newPhysicalLayout);
+
+                // Also, clear the corresponding keymap entry for this specific flat index if the physical key is removed
+                if (existingKeyIndexInArray !== -1) {
+                    setKeymap(prevKeymap => prevKeymap.map(layer => {
+                        const newKeys = [...layer.keys];
+                        const newLabels = [...layer.labels];
+                        // Only clear if the flatIndex is valid for the current keymap size
+                        if (flatIndex < newKeys.length) { 
+                            newKeys[flatIndex] = null;
+                            newLabels[flatIndex] = '';
+                        }
+                        return { ...layer, keys: newKeys, labels: newLabels };
+                    }));
+                }
+            };
+
+            const gridColsClass = `grid-cols-${gridSize}`;
+
+            return (
+                <div className="flex flex-col items-center w-full p-8">
+                    <h1 className="text-4xl font-extrabold text-red-400 mb-8">KEYBOARD LAYOUT CONFIGURATION</h1>
+                    <p className="text-zinc-300 mb-6 text-lg text-center">Define the physical layout of your macropad. Click on cells to toggle them between active key positions and empty slots. Active keys (red background) will be included in your physical layout. Empty slots (darker background) will not be part of your Trkey's layout.</p>
+                    
+                    {/* Grid Size Configuration - Moved from Settings */}
+                    <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mb-8">
+                        <h2 className="text-2xl font-bold text-red-300 mb-4">Grid Dimensions</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <label htmlFor="grid-size" className="text-lg text-zinc-200 mr-4">Grid Size (2x2 to 5x5):</label>
+                            <input
+                                type="number"
+                                id="grid-size"
+                                value={gridSize}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    if (!isNaN(value)) {
+                                        setGridSize(Math.max(MIN_GRID_SIZE, Math.min(MAX_GRID_SIZE, value)));
+                                    }
+                                }}
+                                min={MIN_GRID_SIZE}
+                                max={MAX_GRID_SIZE}
+                                className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white text-center"
+                            />
+                        </div>
+                    </div>
+
+                    <div className={`grid ${gridColsClass} gap-4 w-full max-w-2xl mx-auto mb-8`}>
+                        {Array.from({ length: gridSize * gridSize }).map((_, i) => {
+                            const row = Math.floor(i / gridSize);
+                            const col = i % gridSize;
+                            // Check if this cell is part of the active physical layout
+                            const isActive = physicalLayout.some(item => item && item.row === row && item.col === col);
+
+                            return (
+                                <div
+                                    key={`layout-cell-${row}-${col}`}
+                                    className={`relative h-32 flex flex-col items-center justify-center rounded-xl p-4 shadow-md border-2
+                                                ${isActive ? 'bg-red-800 border-red-600 text-white cursor-pointer hover:bg-red-700' : 'bg-zinc-800 border-zinc-700 text-zinc-500 cursor-pointer hover:bg-zinc-700'}
+                                                transition-all duration-200`}
+                                    onClick={() => toggleKeyActive(row, col)}
+                                >
+                                    <span className="text-3xl font-bold">{i}</span> {/* Display flat index */}
+                                    <span className="text-sm">({row}, {col})</span> {/* Display row, col */}
+                                    {isActive ? (
+                                        <span className="absolute bottom-2 text-xs font-semibold text-red-200">ACTIVE KEY</span>
+                                    ) : (
+                                        <span className="absolute bottom-2 text-xs font-semibold text-zinc-400">EMPTY SLOT</span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="w-full max-w-2xl text-center text-zinc-400 text-sm mb-8">
+                        The numbers (0, 1, 2...) displayed in each cell represent its **logical index** within the grid. When a cell is an **ACTIVE KEY**, this index will correspond to its position in the `physical_layout` array and the `keys` and `labels` arrays of each layer in the generated JSON.
+                    </div>
+
+                    {/* New Buttons for Upload/Download */}
+                    <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-2xl">
+                        <button
+                            onClick={exportKeymap}
+                            className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full sm:w-1/2"
+                        >
+                            Download Layout JSON
+                        </button>
+                        {!isConnected ? (
+                             <button
+                                onClick={handleConnectPico}
+                                className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full sm:w-1/2"
+                                title={!webSerialSupported ? "Web Serial API not supported by your browser." : "Connect to your macropad via Web Serial."}
+                                disabled={!webSerialSupported}
+                            >
+                                {webSerialSupported ? 'Connect to Macropad' : 'Web Serial Not Supported'}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={uploadToDevice}
+                                className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full sm:w-1/2"
+                            >
+                                Upload Layout to Macropad
+                            </button>
+                        )}
+                    </div>
+                     {!webSerialSupported && (
+                        <p className="text-red-300 text-sm mt-4 text-center">
+                            *Web Serial API is required for direct device interaction and is best supported in Chromium-based browsers (e.g., Chrome, Edge).
+                        </p>
+                    )}
+
+                    {/* Add the PhysicalLayoutViewer component here */}
+                    <PhysicalLayoutViewer physicalLayout={physicalLayout} />
+                </div>
+            );
+        };
+
 
         // Main App component (formerly from src/App.js)
         function App() {
@@ -1043,6 +1166,8 @@
             // Log state
             const [logs, setLogs] = useState([]);
             const [showLogDropdown, setShowLogDropdown] = useState(false);
+            const [isLoadingDeviceConfig, setIsLoadingDeviceConfig] = useState(false); // New loading state
+
 
             const addLog = (message, type = 'info') => {
                 const timestamp = new Date().toLocaleTimeString();
@@ -1061,6 +1186,7 @@
             const connectPico = async () => {
                 try {
                     addLog("Attempting to connect to Pico...", "info");
+                    setIsLoadingDeviceConfig(true); // Start loading indicator
                     const selectedPort = await navigator.serial.requestPort();
                     await selectedPort.open({ baudRate: 115200 });
                     const newWriter = selectedPort.writable.getWriter();
@@ -1070,11 +1196,25 @@
                     setWriter(newWriter);
                     setReader(newReader);
                     setIsConnected(true);
+                    
                     setModalContent({
                         title: "Connection Successful",
-                        message: "Successfully connected to Pico!"
+                        message: "Successfully connected to Pico! Attempting to load existing configuration..."
                     });
+                    setShowModal(true);
                     addLog("Successfully connected to Pico!", "success");
+
+                    // *** AUTOMATICALLY LOAD CONFIG FROM DEVICE ***
+                    try {
+                        const fileContentBlob = await getFile("layers.json");
+                        const fileContentText = await fileContentBlob.text();
+                        loadConfigFromJson(fileContentText, "fromDevice"); // Use the refactored load function
+                        setModalContent(prev => ({ ...prev, message: "Connected and loaded configuration from device!" }));
+                        addLog("Configuration loaded automatically from device.", "success");
+                    } catch (fileError) {
+                        setModalContent(prev => ({ ...prev, message: `Connected to Pico, but failed to load layers.json: ${fileError.message}. Starting with default configuration.` }));
+                        addLog(`Failed to load layers.json from device: ${fileError.message}.`, "warn");
+                    }
 
                     // Listen for disconnect
                     selectedPort.addEventListener('disconnect', () => {
@@ -1098,7 +1238,8 @@
                     });
                     addLog(`Failed to connect to Pico: ${error.message}`, "error");
                 } finally {
-                    setShowModal(true);
+                    setIsLoadingDeviceConfig(false); // End loading indicator
+                    setShowModal(true); // Ensure modal is shown with final status
                 }
             };
 
@@ -1116,8 +1257,8 @@
             const readResponse = async (until = "<END>") => {
                 let out = "";
                 while (true) {
-                    const { value } = await reader.read();
-                    if (!value) break;
+                    const { value, done } = await reader.read(); // Destructure done as well
+                    if (done || !value) break; // Check for done
                     const text = decoder.decode(value);
                     out += text;
                     if (out.includes(until)) break;
@@ -1134,16 +1275,19 @@
                 }
                 addLog(`Initiating upload for ${file.name}...`, "info");
                 await sendCommand("PUT " + file.name);
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 100)); // Small delay for Pico to process command
 
                 const buf = new Uint8Array(await file.arrayBuffer());
                 const chunkSize = 256;
                 for (let i = 0; i < buf.length; i += chunkSize) {
                     await writer.write(buf.slice(i, i + chunkSize));
-                    await new Promise(r => setTimeout(r, 1));
+                    await new Promise(r => setTimeout(r, 1)); // Small delay between chunks
                 }
                 await writer.write(encoder.encode("<EOF>"));
                 addLog(`Uploaded ${file.name} chunks. Waiting for Pico confirmation.`, "info");
+                // Read the confirmation from Pico
+                const response = await readResponse("<END>"); // Expect <END> from Pico after successful PUT
+                addLog(`Pico PUT response: ${response}`, "info");
             };
 
             // Download file from Pico (modified to not trigger download, just return content)
@@ -1154,19 +1298,68 @@
                 }
                 addLog(`Initiating request for ${filename}...`, "info");
                 await sendCommand("GET " + filename);
-                const chunks = [];
+                
+                // Pico sends <START><size><content><EOF>
+                let header = "";
+                let contentBytes = new Uint8Array();
+                let startedReceiving = false;
+                let expectedSize = -1;
+                const buffer = []; // Use an array for chunks
+
                 while (true) {
-                    const { value } = await reader.read();
-                    if (!value) break;
-                    const view = new Uint8Array(value);
-                    const text = decoder.decode(view);
-                    if (text.includes("<EOF>")) {
-                        chunks.push(view.slice(0, text.indexOf("<EOF>")));
-                        break;
+                    const { value, done } = await reader.read();
+                    if (done || !value) break;
+
+                    buffer.push(value); // Store Uint8Array chunks
+
+                    // Try to decode and find start marker and size
+                    if (!startedReceiving) {
+                        const currentText = decoder.decode(new Uint8Array(buffer.flat())); // Decode accumulated parts
+                        const startIndex = currentText.indexOf("<START>");
+                        if (startIndex !== -1) {
+                            const sizeEndIndex = currentText.indexOf(">", startIndex + "<START>".length);
+                            if (sizeEndIndex !== -1) {
+                                header = currentText.substring(startIndex + "<START>".length, sizeEndIndex);
+                                expectedSize = parseInt(header, 10);
+                                if (!isNaN(expectedSize)) {
+                                    startedReceiving = true;
+                                    addLog(`GET response header: ${header}, expected size: ${expectedSize} bytes.`, "info");
+                                    // Remove the header part from the buffer for pure content
+                                    const headerLength = sizeEndIndex + 1; // Include the '>'
+                                    let bytesReadForHeader = 0;
+                                    for(let i = 0; i < buffer.length; i++) {
+                                        if (bytesReadForHeader + buffer[i].length >= headerLength) {
+                                            const remaining = headerLength - bytesReadForHeader;
+                                            buffer[i] = buffer[i].slice(remaining);
+                                            break;
+                                        }
+                                        bytesReadForHeader += buffer[i].length;
+                                        buffer[i] = new Uint8Array(); // Clear fully consumed chunks
+                                    }
+                                    buffer = buffer.filter(chunk => chunk.length > 0); // Remove empty chunks
+                                }
+                            }
+                        }
                     }
-                    chunks.push(view);
+
+                    if (startedReceiving) {
+                        // Check for <EOF> at the end of the content
+                        const combinedBuffer = new Uint8Array(buffer.flat());
+                        const eofIndex = decoder.decode(combinedBuffer).indexOf("<EOF>");
+                        if (eofIndex !== -1) {
+                            contentBytes = combinedBuffer.slice(0, eofIndex);
+                            addLog(`Received <EOF>. Total content bytes: ${contentBytes.length}.`, "info");
+                            break;
+                        }
+                    }
                 }
-                const blob = new Blob(chunks);
+                
+                if (expectedSize !== -1 && contentBytes.length !== expectedSize) {
+                    addLog(`Received size mismatch! Expected ${expectedSize} bytes, got ${contentBytes.length} bytes for ${filename}.`, "error");
+                    throw new Error(`File transfer error: Size mismatch for ${filename}.`);
+                }
+
+                const blob = new Blob([contentBytes]);
                 addLog(`Received content for ${filename}.`, "success");
                 return blob; // Return blob to allow further processing (e.g., loading into textarea)
             };
@@ -1179,31 +1372,47 @@
                 }
                 addLog(`Attempting to delete ${fname}...`, "info");
                 await sendCommand("DEL " + fname);
-                const response = await readResponse();
+                const response = await readResponse("<END>"); // Pico should send <END>
                 addLog(`Delete response for ${fname}: ${response}`, "info");
             };
 
-            // State for the physical layout of the keys (e.g., 3x3 grid, or custom layout with nulls)
-            const [physicalLayout, setPhysicalLayout] = useState(() => createDefaultPhysicalLayout());
-            // DEBUG: Log when physicalLayout state changes in App
-            useEffect(() => {
-                console.log("App state - physicalLayout updated:", physicalLayout);
-            }, [physicalLayout]);
+            // State for the current grid size (e.g., 3 for 3x3, 4 for 4x4)
+            const [gridSize, setGridSize] = useState(DEFAULT_GRID_SIZE);
 
-            // New state for number of layers
+            // State for the physical layout of the keys
+            const [physicalLayout, setPhysicalLayout] = useState(() => createDefaultPhysicalLayout(DEFAULT_GRID_SIZE));
+            
+            // State for number of layers
             const [numLayers, setNumLayers] = useState(DEFAULT_LAYERS);
 
-            // State for the keymap, initialized based on numLayers
-            const [keymap, setKeymap] = useState(() => Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
+            // State for the keymap, initialized based on numLayers and gridSize
+            const [keymap, setKeymap] = useState(() => Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE)));
             
-            // Effect to update keymap when numLayers changes
+            // Effect to update keymap when numLayers or gridSize changes
             useEffect(() => {
+                const numKeysInCurrentGrid = gridSize * gridSize;
                 setKeymap(prevKeymap => {
                     const newKeymap = Array(numLayers).fill().map((_, i) => {
                         if (prevKeymap[i]) {
-                            return prevKeymap[i]; // Keep existing layer data
+                            // Ensure the existing layer is expanded/shrunk to the new numKeysInCurrentGrid size
+                            const currentKeys = prevKeymap[i].keys || [];
+                            const currentLabels = prevKeymap[i].labels || [];
+
+                            const keys = Array(numKeysInCurrentGrid).fill(null);
+                            const labels = Array(numKeysInCurrentGrid).fill('');
+
+                            // Copy existing keys/labels up to the new size
+                            // Only copy if the physical layout supports this index
+                            physicalLayout.forEach(layoutItem => {
+                                if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < currentKeys.length) {
+                                    keys[layoutItem.index] = currentKeys[layoutItem.index];
+                                    labels[layoutItem.index] = currentLabels[layoutItem.index];
+                                }
+                            });
+
+                            return { ...prevKeymap[i], keys: keys, labels: labels };
                         } else {
-                            return createEmptyLayer(i); // Create new empty layer
+                            return createEmptyLayer(i, gridSize); // Create new empty layer with correct grid size
                         }
                     });
                     return newKeymap;
@@ -1216,9 +1425,8 @@
                     }
                     return prevCurrentLayer;
                 });
-                addLog(`Number of layers changed to ${numLayers}.`, "info");
-            }, [numLayers]);
-
+                addLog(`Number of layers changed to ${numLayers} or grid size changed to ${gridSize}.`, "info");
+            }, [numLayers, gridSize, physicalLayout]); // Depend on physicalLayout as well
 
             const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
             const [showModal, setShowModal] = useState(false);
@@ -1238,12 +1446,7 @@
             ]);
             const [nextMacroId, setNextMacroId] = useState(3);
 
-            const [potentiometerConfig, setPotentiometerConfig] = useState({
-                enabled: false,
-                pin: 34,
-                function: 'volume',
-                customAction: ''
-            });
+            // Removed potentiometerConfig state
 
             // Load profile on component mount and check Web Serial API support
             useEffect(() => {
@@ -1284,8 +1487,8 @@
                         newKeymap[currentLayer].labels[sourceFlatIndex] = tempLabel;
                     } else {
                         // Copy from another layer
-                        newKeymap[currentLayer].keys[flatIndex] = droppedItem.cell.combo;
-                        newKeymap[currentLayer].labels[flatIndex] = droppedItem.cell.description;
+                        newKeymap[currentLayer].keys[flatIndex] = droppedItem.combo;
+                        newKeymap[currentLayer].labels[flatIndex] = droppedItem.description;
                     }
                 } else {
                     // Assign new shortcut
@@ -1318,12 +1521,15 @@
             };
 
             const clearKeymapCell = (flatIndex) => { // Now takes flatIndex directly
+                const numKeysInCurrentGrid = gridSize * gridSize;
                 const updatedKeymap = keymap.map((layer, lIdx) => {
                     if (lIdx === currentLayer) {
                         const newKeys = [...layer.keys];
                         const newLabels = [...layer.labels];
-                        newKeys[flatIndex] = null; // Set key to null
-                        newLabels[flatIndex] = ''; // Clear label
+                        if (flatIndex < newKeys.length) { // Ensure index is within bounds
+                            newKeys[flatIndex] = null; // Set key to null
+                            newLabels[flatIndex] = ''; // Clear label
+                        }
                         return { ...layer, keys: newKeys, labels: newLabels };
                     }
                     return layer;
@@ -1351,8 +1557,18 @@
                 if (selectedKeymapCell) {
                     const { index, layer } = selectedKeymapCell; // Get index
                     const newKeymap = JSON.parse(JSON.stringify(keymap));
-                    newKeymap[layer].keys[index] = shortcut.combo;
-                    newKeymap[layer].labels[index] = shortcut.description; // Store description as label
+                    if (index < newKeymap[layer].keys.length) { // Ensure index is valid
+                        newKeymap[layer].keys[index] = shortcut.combo;
+                        newKeymap[layer].labels[index] = shortcut.description; // Store description as label
+                    } else {
+                        addLog(`Attempted to assign shortcut to out-of-bounds index ${index} on Layer ${layer}.`, "error");
+                        setModalContent({
+                            title: "Assignment Error",
+                            message: `The selected key position (index ${index}) is outside the current keymap grid. This might indicate an issue with your physical layout.`
+                        });
+                        setShowModal(true);
+                        return;
+                    }
                     setKeymap(newKeymap);
                     setSelectedKeymapCell(null); // Clear selection after assignment
                     addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Index ${index}.`, "info");
@@ -1369,13 +1585,14 @@
 
             // New handler to clear all cells on the current layer
             const clearCurrentLayer = () => {
+                const numKeysInCurrentGrid = gridSize * gridSize;
                 setModalContent({
                     title: "Confirm Clear Layer",
                     message: `Are you sure you want to clear all keys on Layer ${currentLayer}? This action cannot be undone.`,
                     onConfirm: () => {
                         const updatedKeymap = keymap.map((layer, lIdx) =>
                             lIdx === currentLayer
-                                ? { ...layer, keys: Array(9).fill(null), labels: Array(9).fill('') } // Clear keys and labels
+                                ? { ...layer, keys: Array(numKeysInCurrentGrid).fill(null), labels: Array(numKeysInCurrentGrid).fill('') }
                                 : layer
                         );
                         setKeymap(updatedKeymap);
@@ -1397,9 +1614,9 @@
                 const profileData = {
                     keymap: keymap, // Save the multi-layer keymap
                     physicalLayout: physicalLayout, // Save the current physical layout
-                    potentiometerConfig: potentiometerConfig,
                     macros: macros,
-                    numLayers: numLayers // Save the number of layers
+                    numLayers: numLayers, // Save the number of layers
+                    grid_size: gridSize // Save the current grid size
                 };
                 localStorage.setItem("trkey_profile", JSON.stringify(profileData));
                 setModalContent({
@@ -1415,32 +1632,56 @@
                 if (saved) {
                     const profileData = JSON.parse(saved);
                     
+                    const loadedGridSize = profileData.grid_size || DEFAULT_GRID_SIZE;
+                    const clampedGridSize = Math.max(MIN_GRID_SIZE, Math.min(MAX_GRID_SIZE, loadedGridSize));
+                    setGridSize(clampedGridSize); // Set the grid size
+
                     const loadedNumLayers = profileData.numLayers || DEFAULT_LAYERS;
                     const clampedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedNumLayers));
                     setNumLayers(clampedNumLayers);
 
-                    // Re-initialize keymap based on loadedNumLayers (or clamped)
+                    const numKeysInLoadedGrid = clampedGridSize * clampedGridSize;
+
+                    // Load physical layout first, or default if not found/invalid
+                    let loadedPhysicalLayout;
+                    if (profileData.physicalLayout && Array.isArray(profileData.physicalLayout)) {
+                        loadedPhysicalLayout = profileData.physicalLayout.filter(item => item && typeof item.index === 'number' && item.row < clampedGridSize && item.col < clampedGridSize); // Filter out invalid entries
+                        loadedPhysicalLayout.sort((a,b) => a.index - b.index); // Ensure it's sorted
+                    } else {
+                        loadedPhysicalLayout = createDefaultPhysicalLayout(clampedGridSize);
+                    }
+                    setPhysicalLayout(loadedPhysicalLayout);
+
+                    // Re-initialize keymap based on loadedNumLayers (or clamped) and clampedGridSize
                     const newKeymap = Array(clampedNumLayers).fill().map((_, i) => {
                         if (profileData.keymap && profileData.keymap[i]) {
-                            // Deep copy to ensure independence
+                            // Deep copy and ensure keys/labels are correct size and only for active physical keys
+                            const currentKeys = profileData.keymap[i].keys || [];
+                            const currentLabels = profileData.keymap[i].labels || [];
+
+                            const keys = Array(numKeysInLoadedGrid).fill(null);
+                            const labels = Array(numKeysInLoadedGrid).fill('');
+
+                            loadedPhysicalLayout.forEach(layoutItem => {
+                                if (layoutItem && layoutItem.index !== null && layoutItem.index < currentKeys.length) {
+                                    keys[layoutItem.index] = currentKeys[layoutItem.index];
+                                    labels[layoutItem.index] = currentLabels[layoutItem.index];
+                                }
+                            });
+
                             return { ...profileData.keymap[i], 
-                                keys: [...profileData.keymap[i].keys], 
-                                labels: [...profileData.keymap[i].labels] 
+                                keys: keys, 
+                                labels: labels 
                             };
                         } else {
-                            return createEmptyLayer(i);
+                            // Create new empty layer respecting the new grid size and physical layout
+                            const newEmptyLayerKeys = Array(numKeysInLoadedGrid).fill(null);
+                            const newEmptyLayerLabels = Array(numKeysInLoadedGrid).fill('');
+                            return { ...createEmptyLayer(i, clampedGridSize), keys: newEmptyLayerKeys, labels: newEmptyLayerLabels };
                         }
                     });
                     setKeymap(newKeymap);
 
-                    // Load physical layout, or default if not found/invalid
-                    if (profileData.physicalLayout && Array.isArray(profileData.physicalLayout)) {
-                        setPhysicalLayout(profileData.physicalLayout);
-                    } else {
-                        setPhysicalLayout(createDefaultPhysicalLayout());
-                    }
-
-                    setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 34, function: 'volume', customAction: '' });
                     setMacros(profileData.macros || []);
 
                     // Adjust currentLayer if it's out of bounds after loading
@@ -1461,9 +1702,10 @@
                         title: "No Profile Found",
                         message: "No saved profile found. Initializing with default layers and layout."
                     });
-                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
+                    setGridSize(DEFAULT_GRID_SIZE);
+                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE)));
                     setNumLayers(DEFAULT_LAYERS);
-                    setPhysicalLayout(createDefaultPhysicalLayout()); // Also set default physical layout
+                    setPhysicalLayout(createDefaultPhysicalLayout(DEFAULT_GRID_SIZE)); // Also set default physical layout
                     addLog("No saved profile found in browser storage. Initialized with default layers and layout.", "info");
                 }
                 setShowModal(true);
@@ -1478,17 +1720,27 @@
                 keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
                     // Ensure layerData has 'name', 'labels', 'keys'
                     const layerName = layerData.name || `Layer ${lIdx}`;
-                    const keys = layerData.keys.map(key => key || ""); // Replace null with empty string
-                    const labels = layerData.labels.map(label => label || ""); // Replace null with empty string
+                    
+                    // Filter keys and labels to only include those that are part of the physical layout
+                    const exportKeys = Array(gridSize * gridSize).fill(""); // Initialize with empty strings
+                    const exportLabels = Array(gridSize * gridSize).fill("");
+
+                    physicalLayout.forEach(layoutItem => {
+                        if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < layerData.keys.length) {
+                             exportKeys[layoutItem.index] = layerData.keys[layoutItem.index] || "NO_OP"; // Default to NO_OP if null
+                             exportLabels[layoutItem.index] = layerData.labels[layoutItem.index] || "";
+                        }
+                    });
 
                     layersForExport.push({
                         name: layerName,
-                        labels: labels,
-                        keys: keys
+                        labels: exportLabels,
+                        keys: exportKeys
                     });
                 });
 
                 const fullExportData = {
+                    grid_size: gridSize, // Include the current grid size
                     physical_layout: physicalLayout, // Include the physical layout
                     layers: layersForExport // Include the layers array
                 };
@@ -1542,17 +1794,27 @@
                     // Use the current numLayers for upload
                     keymap.slice(0, numLayers).forEach((layerData, lIdx) => {
                         const layerName = layerData.name || `Layer ${lIdx}`;
-                        const keys = layerData.keys.map(key => key || "");
-                        const labels = layerData.labels.map(label => label || "");
+                        
+                        // Filter keys and labels to only include those that are part of the physical layout
+                        const uploadKeys = Array(gridSize * gridSize).fill(""); // Initialize with empty strings
+                        const uploadLabels = Array(gridSize * gridSize).fill("");
+
+                        physicalLayout.forEach(layoutItem => {
+                            if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < layerData.keys.length) {
+                                uploadKeys[layoutItem.index] = layerData.keys[layoutItem.index] || "NO_OP"; // Default to NO_OP if null
+                                uploadLabels[layoutItem.index] = layerData.labels[layoutItem.index] || "";
+                            }
+                        });
 
                         layersForUpload.push({
                             name: layerName,
-                            labels: labels,
-                            keys: keys
+                            labels: uploadLabels,
+                            keys: uploadKeys
                         });
                     });
 
                     const fullUploadData = {
+                        grid_size: gridSize, // Include the current grid size
                         physical_layout: physicalLayout, // Include the physical layout
                         layers: layersForUpload, // Include the layers array
                     };
@@ -1665,14 +1927,20 @@
             };
 
 
-            // JSON Import
-            const loadJsonFromTextArea = () => {
+            // Refactored JSON Load function (from manual input or auto-load)
+            const loadConfigFromJson = (jsonString, source = "manual") => {
                 try {
-                    const parsedJson = JSON.parse(jsonInput);
-                    console.log("Parsed JSON from text area:", parsedJson); // DEBUG: Log full parsed JSON
+                    const parsedJson = JSON.parse(jsonString);
+                    addLog(`Loading configuration from ${source} source.`, "info");
 
                     // Expecting a root object with 'physical_layout' and 'layers' keys
                     if (typeof parsedJson === 'object' && parsedJson !== null && Array.isArray(parsedJson.layers)) {
+                        // Load grid size first
+                        const loadedGridSize = parsedJson.grid_size || DEFAULT_GRID_SIZE;
+                        const clampedGridSize = Math.max(MIN_GRID_SIZE, Math.min(MAX_GRID_SIZE, loadedGridSize));
+                        setGridSize(clampedGridSize);
+                        const numKeysInLoadedGrid = clampedGridSize * clampedGridSize;
+
                         // Load layers
                         const loadedLayers = parsedJson.layers;
                         const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedLayers.length));
@@ -1680,22 +1948,33 @@
 
                         const newKeymap = Array(loadedNumLayers).fill().map((_, layerIdx) => {
                             if (loadedLayers[layerIdx]) {
+                                // Ensure keys/labels are correct size and only for active physical keys
+                                const layerKeys = Array.isArray(loadedLayers[layerIdx].keys) ? loadedLayers[layerIdx].keys : [];
+                                const layerLabels = Array.isArray(loadedLayers[layerIdx].labels) ? loadedLayers[layerIdx].labels : [];
+
+                                const keys = Array(numKeysInLoadedGrid).fill(null);
+                                const labels = Array(numKeysInLoadedGrid).fill('');
+
+                                // Iterate through the loaded physical layout to fill the keymap
+                                const currentPhysicalLayout = Array.isArray(parsedJson.physical_layout) ? parsedJson.physical_layout : [];
+                                currentPhysicalLayout.forEach(layoutItem => {
+                                    if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < numKeysInLoadedGrid) {
+                                        keys[layoutItem.index] = layerKeys[layoutItem.index] || null;
+                                        labels[layoutItem.index] = layerLabels[layoutItem.index] || '';
+                                    }
+                                });
+
                                 return {
                                     name: loadedLayers[layerIdx].name || `Layer ${layerIdx}`,
-                                    labels: Array.isArray(loadedLayers[layerIdx].labels) && loadedLayers[layerIdx].labels.length === 9
-                                        ? [...loadedLayers[layerIdx].labels]
-                                        : Array(9).fill(''), // Ensure 9 elements
-                                    keys: Array.isArray(loadedLayers[layerIdx].keys) && loadedLayers[layerIdx].keys.length === 9
-                                        ? [...loadedLayers[layerIdx].keys]
-                                        : Array(9).fill(null), // Ensure 9 elements
+                                    labels: labels,
+                                    keys: keys,
                                     macros: loadedLayers[layerIdx].macros || []
                                 };
                             } else {
-                                return createEmptyLayer(layerIdx);
+                                return createEmptyLayer(layerIdx, clampedGridSize);
                             }
                         });
                         setKeymap(newKeymap);
-                        console.log("App state - keymap after loading:", newKeymap); // DEBUG: Log keymap state
 
                         // Load physical_layout
                         if (Array.isArray(parsedJson.physical_layout)) {
@@ -1705,15 +1984,14 @@
                                     return item;
                                 }
                                 return null; // Invalid items become null
-                            });
+                            }).filter(item => item !== null && item.row < clampedGridSize && item.col < clampedGridSize); // Filter out items outside new grid bounds
+                            validatedPhysicalLayout.sort((a,b) => a.index - b.index); // Sort by index
                             setPhysicalLayout(validatedPhysicalLayout);
-                            console.log("App state - physicalLayout after loading:", validatedPhysicalLayout); // DEBUG: Log physicalLayout state
-                            addLog(`Physical layout loaded from JSON. Detected ${validatedPhysicalLayout.filter(i => i !== null).length} active key positions.`, "info");
+                            addLog(`Physical layout loaded from JSON. Detected ${validatedPhysicalLayout.length} active key positions.`, "info");
                         } else {
-                            const defaultLayout = createDefaultPhysicalLayout();
+                            const defaultLayout = createDefaultPhysicalLayout(clampedGridSize);
                             setPhysicalLayout(defaultLayout); // Reset to default if not found or invalid
-                            console.log("App state - physicalLayout defaulted:", defaultLayout); // DEBUG: Log default layout
-                            addLog("No valid 'physical_layout' found in JSON, defaulting to 3x3 layout.", "warn");
+                            addLog("No valid 'physical_layout' found in JSON, defaulting to new grid size layout.", "warn");
                         }
 
                         let loadedMacros = [];
@@ -1735,9 +2013,6 @@
                         setMacros(loadedMacros);
                         setNextMacroId(maxMacroId + 1); // Update nextMacroId based on loaded macros
 
-                        // Potentiometer config is not part of Pico's layers.json, so reset or keep default
-                        setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
-
                         setCurrentLayer(prevCurrentLayer => {
                             if (prevCurrentLayer >= loadedNumLayers) {
                                 return loadedNumLayers > 0 ? loadedNumLayers - 1 : 0;
@@ -1745,29 +2020,25 @@
                             return prevCurrentLayer;
                         });
 
+                        setJsonInput(JSON.stringify(parsedJson, null, 2)); // Update the textarea with the loaded JSON for consistency
 
-                        setModalContent({
-                            title: "JSON Loaded",
-                            message: "Configuration loaded from text area successfully (layers.json format)."
-                        });
-                        addLog("Configuration loaded from text area successfully.", "success");
+                        addLog(`Configuration loaded from ${source} successfully.`, "success");
                     } else {
-                        setModalContent({
-                            title: "Invalid JSON",
-                            message: "The pasted JSON does not contain a valid configuration. Expected a root object with 'physical_layout' (optional) and a 'layers' array."
-                        });
-                        addLog("Invalid JSON structure for layers.json.", "error");
+                        throw new Error("The pasted JSON does not contain a valid configuration. Expected a root object with 'physical_layout' (optional) and a 'layers' array.");
                     }
                 } catch (error) {
-                    setModalContent({
-                        title: "JSON Parsing Error",
-                        message: "Failed to parse JSON: " + error.message
-                    });
-                    addLog(`JSON parsing error: ${error.message}`, "error");
-                } finally {
-                    setShowModal(true);
+                    addLog(`Failed to load configuration from ${source}: ${error.message}`, "error");
+                    if (source === "manual") { // Only show modal for manual load errors
+                        setModalContent({
+                            title: `Configuration Load Error (${source})`,
+                            message: `Failed to load configuration: ${error.message}. Please check the JSON format.`
+                        });
+                        setShowModal(true);
+                    }
+                    // For auto-load, we already set a modal message in connectPico
                 }
             };
+
 
             // Macro functions
             const addMacro = () => {
@@ -1841,6 +2112,14 @@
                                 Web Serial: {webSerialSupported ? 'Supported' : 'Not Supported'}
                             </span>
                         </div>
+                        {isLoadingDeviceConfig && (
+                            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                                <div className="bg-zinc-800 text-white p-6 rounded-lg shadow-xl border-2 border-red-500 flex items-center space-x-4">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
+                                    <p className="text-lg">Loading configuration from device...</p>
+                                </div>
+                            </div>
+                        )}
 
                         {activeTab === 'keymap' && (
                             <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for keymap tab content */}
@@ -1860,6 +2139,7 @@
                                     clearCurrentLayer={clearCurrentLayer} /* New prop */
                                     numLayers={numLayers} /* Pass numLayers to KeymapGrid */
                                     physicalLayout={physicalLayout} /* Pass physicalLayout to KeymapGrid */
+                                    gridSize={gridSize} /* Pass gridSize to KeymapGrid */
                                 />
                                 <h2 className="text-3xl font-bold text-red-400 mb-6">SHORTCUTS</h2>
                                 <ShortcutPool
@@ -1873,6 +2153,24 @@
                             </div>
                         )}
 
+                        {activeTab === 'layout' && (
+                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700">
+                                <LayoutPage /* Renamed component */
+                                    gridSize={gridSize}
+                                    setGridSize={setGridSize} /* Pass setGridSize */
+                                    physicalLayout={physicalLayout}
+                                    setPhysicalLayout={setPhysicalLayout}
+                                    keymap={keymap} /* Pass keymap */
+                                    setKeymap={setKeymap} /* Pass setKeymap to clear keys when mapping changes */
+                                    exportKeymap={exportKeymap} /* Pass exportKeymap */
+                                    uploadToDevice={uploadToDevice} /* Pass uploadToDevice */
+                                    isConnected={isConnected} /* Pass isConnected */
+                                    handleConnectPico={handleConnectPico} /* Pass handleConnectPico */
+                                    webSerialSupported={webSerialSupported} /* Pass webSerialSupported */
+                                />
+                            </div>
+                        )}
+
                         {activeTab === 'macros' && (
                             <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for macros tab content */}
                                 <MacroManagement
@@ -1880,15 +2178,6 @@
                                     addMacro={addMacro}
                                     editMacro={editMacro}
                                     deleteMacro={deleteMacro}
-                                />
-                            </div>
-                        )}
-
-                        {activeTab === 'controls' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for controls tab content */}
-                                <PeripheralControls
-                                    potentiometerConfig={potentiometerConfig}
-                                    setPotentiometerConfig={setPotentiometerConfig}
                                 />
                             </div>
                         )}
@@ -1917,10 +2206,9 @@
                                 <Settings
                                     jsonInput={jsonInput}
                                     setJsonInput={setJsonInput}
-                                    loadJsonFromTextArea={loadJsonFromTextArea}
+                                    loadConfigFromJson={loadConfigFromJson} /* Pass the refactored load function */
                                     numLayers={numLayers} /* Pass numLayers */
                                     setNumLayers={setNumLayers} /* Pass setNumLayers */
-                                    physicalLayout={physicalLayout} /* Pass physicalLayout to Settings */
                                 />
                             </div>
                         )}
