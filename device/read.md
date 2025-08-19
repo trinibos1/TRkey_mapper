@@ -11,7 +11,7 @@ It integrates seamlessly with **Trkey Mapper** via WebSerial for layer/keymap co
 * **`code.py`** → main firmware (handles keys, HID, layers).  
 * **`webserial_fs.py`** → USB CDC file server for Trkey Mapper.  
 * **`layers.json`** → keymap definition uploaded by the user.  
-
+* **`adafruit_hid`**
 > All three files must reside on the **CIRCUITPY** drive.
 
 ---
