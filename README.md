@@ -1,7 +1,7 @@
 
 # ⚙️ Trkey
 
-A modern **web-based tool** to configure your **3×3 Pico-powered micropad** — and soon, full keyboards.  
+A modern **web-based tool** to configure your **micropad** — and soon, full keyboards.  
 Customize key bindings, layers, macros, and peripherals with an intuitive interface, and communicate directly with your device via the **Web Serial API**.
 
 ---
