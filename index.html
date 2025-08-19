@@ -1289,6 +1289,28 @@
                 setShowLogDropdown(prev => !prev);
             };
 
+            // Helper to read from serial port with a timeout
+            const readWithTimeout = async (reader, timeoutMs = 5000) => {
+                return new Promise(async (resolve, reject) => {
+                    const timer = setTimeout(() => {
+                        reader.cancel(); // Attempt to cancel the ongoing read
+                        addLog(`Read operation timed out after ${timeoutMs}ms.`, "error");
+                        reject(new Error(`Read operation timed out after ${timeoutMs}ms.`));
+                    }, timeoutMs);
+
+                    try {
+                        const result = await reader.read();
+                        clearTimeout(timer);
+                        resolve(result);
+                    } catch (error) {
+                        clearTimeout(timer);
+                        addLog(`Error during read operation: ${error.message}`, "error");
+                        reject(error);
+                    }
+                });
+            };
+
+
             // Web Serial Utility Functions
             const connectPico = async () => {
                 try {
@@ -1307,8 +1329,8 @@
                     setReader(newReader);
                     setIsConnected(true);
                     
-                    // Add a small delay to ensure the port is fully ready for I/O
-                    await new Promise(r => setTimeout(r, 100)); 
+                    // Add a slightly longer delay to ensure the port is fully ready for I/O
+                    await new Promise(r => setTimeout(r, 200)); 
 
                     setModalContent({
                         title: "Connection Successful",
@@ -1385,8 +1407,10 @@
                 const END_MARKER = encoder.encode(until);
                 let accumulatedBytes = new Uint8Array();
 
+                const TIMEOUT_MS = 10000; // 10 seconds for reading response
+
                 while (true) {
-                    const { value, done } = await targetReader.read();
+                    const { value, done } = await readWithTimeout(targetReader, TIMEOUT_MS); // Use readWithTimeout
                     if (done || !value) {
                          addLog(`Reader stream closed unexpectedly while waiting for '${until}'.`, "warn");
                          break;
@@ -1456,9 +1480,10 @@
                 let expectedSize = -1;
                 const START_MARKER = encoder.encode("<START>");
                 const EOF_MARKER = encoder.encode("<EOF>");
-                
+                const TIMEOUT_MS = 10000; // 10 seconds for overall file transfer, individual reads have 5s
+
                 while (true) {
-                    const { value, done } = await targetReader.read();
+                    const { value, done } = await readWithTimeout(targetReader, TIMEOUT_MS); // Use readWithTimeout
                     if (done || !value) {
                         addLog("Reader stream closed prematurely or no value.", "warn");
                         break;
