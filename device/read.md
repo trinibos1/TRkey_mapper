@@ -141,7 +141,6 @@ Trkey Mapper communicates via **`webserial_fs.py`**:
 | `DEL <file>` | Delete file                                     |
 | `PUT <file>` | Upload file (terminated with `<EOF>`)           |
 | `GET <file>` | Download file                                   |
-| `RELOAD`     | Reload `layers.json` and refresh firmware state |
 
 > Used for updating layers or firmware directly from the browser.
 
