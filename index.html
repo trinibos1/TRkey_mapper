@@ -7,8 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 
     <style>
         /* Custom scrollbar styling for Tailwind's custom-scrollbar class */
@@ -263,10 +264,11 @@
                 { combo: "MACRO_2", description: "Macro 2" },
                 { combo: "MACRO_3", description: "Macro 3" },
             ],
-            "LAYER_CONTROLS": [
-                { combo: "TG_1", description: "Toggle L1" },
-                { combo: "MO_1", description: "Moment L1" },
-                { combo: "TO_0", description: "To L0" },
+            "LAYER_SWITCHING": [ // New category for layer switching keycodes
+                { combo: "TO", description: "Permanent to Layer X" },
+                { combo: "MO", description: "Momentary to Layer X" },
+                { combo: "TT", description: "Toggle Layer X" },
+                { combo: "DF", description: "Set Default Layer X" },
             ],
             "SYSTEM_CONTROLS": [
                 { combo: "POWER", description: "Power" },
@@ -370,6 +372,104 @@
             );
         };
 
+        // NEW: LayerAssignmentModal for TO(x), MO(x), TT(x), DF(x)
+        const LayerAssignmentModal = ({ show, type, maxLayer, onAssign, onCancel }) => {
+            const { useState, useEffect, useRef } = React;
+            const [layerNumberInput, setLayerNumberInput] = useState('');
+            const inputRef = useRef(null);
+
+            useEffect(() => {
+                if (show) {
+                    setLayerNumberInput(''); // Clear input on show
+                    // Focus the input field when the modal appears
+                    const timeoutId = setTimeout(() => {
+                        if (inputRef.current) {
+                            inputRef.current.focus();
+                        }
+                    }, 10); // Small delay to ensure modal is rendered
+                    return () => clearTimeout(timeoutId);
+                }
+            }, [show]);
+
+            const handleAssignClick = () => {
+                const num = parseInt(layerNumberInput, 10);
+                if (!isNaN(num) && num >= 0 && num <= maxLayer) {
+                    onAssign(type, num);
+                } else {
+                    alert(`Please enter a valid layer number between 0 and ${maxLayer}.`);
+                }
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    handleAssignClick();
+                } else if (e.key === 'Escape') {
+                    onCancel();
+                }
+            };
+
+            if (!show) return null;
+
+            let titleText = "";
+            let descriptionText = "";
+            switch (type) {
+                case "TO":
+                    titleText = "Assign Permanent Layer Switch (TO)";
+                    descriptionText = "Enter the layer number to switch to permanently.";
+                    break;
+                case "MO":
+                    titleText = "Assign Momentary Layer Switch (MO)";
+                    descriptionText = "Enter the layer number to switch to while held.";
+                    break;
+                case "TT":
+                    titleText = "Assign Toggle Layer (TT)";
+                    descriptionText = "Enter the layer number to toggle on/off.";
+                    break;
+                case "DF":
+                    titleText = "Assign Set Default Layer (DF)";
+                    descriptionText = "Enter the layer number to set as the new default.";
+                    break;
+                default:
+                    titleText = "Assign Layer Function";
+                    descriptionText = "Enter the target layer number.";
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+                    <div className="bg-zinc-800 text-white p-6 rounded-lg shadow-xl max-w-sm w-full border-2 border-red-500">
+                        <h3 className="text-xl font-bold mb-4 text-red-400">{titleText}</h3>
+                        <p className="mb-4 text-zinc-300">{descriptionText}</p>
+                        <input
+                            ref={inputRef}
+                            type="number"
+                            min="0"
+                            max={maxLayer}
+                            value={layerNumberInput}
+                            onChange={(e) => setLayerNumberInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="w-full p-3 mb-6 rounded-lg bg-zinc-700 text-white border border-zinc-600 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all duration-200"
+                            placeholder={`Layer (0-${maxLayer})`}
+                        />
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                onClick={onCancel}
+                                className="bg-zinc-600 hover:bg-zinc-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAssignClick}
+                                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+                            >
+                                Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
         // Sidebar component (formerly from src/components/Sidebar.js)
         const Sidebar = ({ activeTab, setActiveTab }) => {
             const { useState, useEffect } = React; // Ensure React hooks are imported within component scope
@@ -399,9 +499,9 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" onClick={() => setActiveTab('save-load')} className={`flex items-center ${activeTab === 'save-load' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                <a href="#" onClick={() => setActiveTab('connect-load')} className={`flex items-center ${activeTab === 'connect-load' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
                                     <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
-                                    SAVE + LOAD
+                                    CONNECT + LOAD
                                 </a>
                             </li>
                             <li>
@@ -440,28 +540,44 @@
                 const keyLabel = currentLayerData.labels[flatIndex];
                 
                 if (keyCombo) {
-                    // Find the description from presets if available
-                    let description = keyLabel; // Default to label
+                    // Try to parse special layer keycodes first
+                    const layerKeyMatch = keyCombo.match(/^(TO|MO|TT|DF)\((\d+)\)$/);
+                    if (layerKeyMatch) {
+                        const type = layerKeyMatch[1];
+                        const layerNum = layerKeyMatch[2];
+                        let descriptionText = "";
+                        switch (type) {
+                            case "TO": descriptionText = "Permanent to Layer"; break;
+                            case "MO": descriptionText = "Momentary to Layer"; break;
+                            case "TT": descriptionText = "Toggle Layer"; break;
+                            case "DF": descriptionText = "Set Default Layer"; break;
+                            default: descriptionText = "Layer Action";
+                        }
+                        return { combo: `${type}(${layerNum})`, description: `${descriptionText} ${layerNum}` };
+                    }
+
+                    // For macros, use the macro name as description
+                    if (keyCombo.startsWith("MACRO_")) {
+                        const macroNum = keyCombo.split('_')[1];
+                        // If you want to show the actual macro name, you'd need to pass the macros array here
+                        return { combo: keyCombo, description: `Macro ${macroNum}` };
+                    }
+                    // Special handling for NO_OP
+                    if (keyCombo === "NO_OP") {
+                        return { combo: "NO_OP", description: "No Operation" };
+                    }
+
+                    // For standard keys and combinations, find the description from presets
+                    let description = keyLabel; // Default to label if no specific preset description
                     for (const category in presets) {
+                        // Skip LAYER_SWITCHING category as it's handled above
+                        if (category === "LAYER_SWITCHING") continue;
+
                         const found = presets[category].find(p => p.combo === keyCombo);
                         if (found) {
                             description = found.description;
                             break;
                         }
-                    }
-                    // For macros, use the macro name as description
-                    if (keyCombo.startsWith("MACRO_")) {
-                        const macroNum = keyCombo.split('_')[1];
-                        // If you want to show the actual macro name, you'd need to pass the macros array here
-                        description = `Macro ${macroNum}`;
-                    }
-                    // Special handling for layer functions
-                    if (keyCombo.startsWith("TO(") || keyCombo.startsWith("MO(") || keyCombo.startsWith("TG(")) {
-                        description = keyCombo; // Show the function directly
-                    }
-                    // Special handling for NO_OP
-                    if (keyCombo === "NO_OP") {
-                        description = "No Operation";
                     }
 
                     return { combo: keyCombo, description: description };
@@ -497,7 +613,7 @@
                         {/* Generate all possible grid cells first, then map physical layout onto them */}
                         {Array.from({ length: gridSize * gridSize }).map((_, globalGridIndex) => {
                             const row = Math.floor(globalGridIndex / gridSize);
-                            const col = globalGridIndex % gridSize;
+                            const col = globalGridIndex % gridSize; /* FIX: Changed 'i' to 'globalGridIndex' */
                             
                             // Check if this global grid index corresponds to an active key in physicalLayout
                             const layoutItem = physicalLayout.find(item => item && item.row === row && item.col === col);
@@ -693,12 +809,12 @@
             );
         };
 
-        // SaveLoad component (formerly from src/components/SaveLoad.js)
-        const SaveLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown }) => {
+        // ConnectLoad component (formerly SaveLoad)
+        const ConnectLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown }) => {
             const { useState, useEffect } = React;
             return (
-                <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
-                    <h1 className="text-4xl font-extrabold text-red-400 mb-8">SAVE & LOAD PROFILE</h1>
+                <div className="flex flex-col items-center w-full p-8">
+                    <h1 className="text-4xl font-extrabold text-red-400 mb-8">CONNECT & LOAD</h1>
                     <div className="flex flex-col space-y-4 w-full max-w-md">
                         <button
                             onClick={saveProfile}
@@ -719,7 +835,7 @@
                             Export Configuration as layers.json
                         </button>
                         <div className="bg-zinc-700 rounded-xl p-4 text-zinc-300 text-center text-sm border border-zinc-600">
-                            To upload to Pico: Save the exported `layers.json` file, then drag and drop it onto your `CIRCUITPY` drive.
+                            To upload to Pico manually: Save the exported `layers.json` file, then drag and drop it onto your `CIRCUITPY` drive.
                         </div>
                         <h2 className="text-2xl font-bold text-red-300 mt-8 mb-4">Device Operations (Web Serial)</h2>
                         {!isConnected ? (
@@ -969,51 +1085,42 @@
         const LayoutPage = ({ gridSize, setGridSize, physicalLayout, setPhysicalLayout, keymap, setKeymap, exportKeymap, uploadToDevice, isConnected, handleConnectPico, webSerialSupported }) => {
             const { useState, useEffect } = React;
 
-            // Effect to update physicalLayout when gridSize changes
+            // Effect to update physicalLayout and keymap structure when gridSize changes
             useEffect(() => {
-                // When gridSize changes, regenerate a default physical layout if the current layout doesn't match
                 const numExpectedKeys = gridSize * gridSize;
-                // Check if current physicalLayout needs to be adjusted based on new gridSize
-                // This is a robust check: filter out invalid items, then check if length matches expected,
-                // and if all items are within the new grid bounds.
+
+                // Only regenerate the default physicalLayout if the existing one is not perfectly sized for the current grid
+                // This prevents `toggleKeyActive` from being undone by this effect.
                 const currentValidPhysicalLayout = physicalLayout.filter(item => 
                     item && typeof item.index === 'number' && item.row < gridSize && item.col < gridSize
                 );
 
                 if (currentValidPhysicalLayout.length !== numExpectedKeys || currentValidPhysicalLayout.some(item => !item)) {
-                    // Only regenerate if the existing layout is not a perfect grid
-                    const newLayout = createDefaultPhysicalLayout(gridSize);
-                    setPhysicalLayout(newLayout);
-                    // Also ensure keymap layers are correctly sized
-                    setKeymap(prevKeymap => prevKeymap.map((layer, lIdx) => {
-                        const newKeys = Array(numExpectedKeys).fill(null);
-                        const newLabels = Array(numExpectedKeys).fill('');
-                        // Copy existing keys/labels up to the new size and ensure they align with the new default physical layout
-                        newLayout.forEach(layoutItem => {
-                            if (layoutItem && layoutItem.index < (layer.keys ? layer.keys.length : 0)) {
-                                newKeys[layoutItem.index] = layer.keys[layoutItem.index];
-                                newLabels[layoutItem.index] = layer.labels[layoutItem.index];
-                            }
-                        });
-                        return { ...layer, keys: newKeys, labels: newLabels };
-                    }));
-                } else {
-                    // If gridSize changed but the existing layout is still valid for the new gridSize,
-                    // just update keymap sizes to match the new gridSize.
-                    setKeymap(prevKeymap => prevKeymap.map((layer, lIdx) => {
-                        const newKeys = Array(numExpectedKeys).fill(null);
-                        const newLabels = Array(numExpectedKeys).fill('');
-                        // Copy existing keys/labels, ensuring they fit the new grid size
-                        physicalLayout.forEach(layoutItem => { // Use the (potentially original) physicalLayout
-                            if (layoutItem && layoutItem.index < (layer.keys ? layer.keys.length : 0) && layoutItem.index < numExpectedKeys) {
-                                newKeys[layoutItem.index] = layer.keys[layoutItem.index];
-                                newLabels[layoutItem.index] = layer.labels[layoutItem.index];
-                            }
-                        });
-                        return { ...layer, keys: newKeys, labels: newLabels };
-                    }));
+                    setPhysicalLayout(createDefaultPhysicalLayout(gridSize));
                 }
-            }, [gridSize, physicalLayout]); // physicalLayout dependency is needed to correctly adapt keymap when layout is changed directly.
+
+                // Ensure keymap layers are correctly sized based on the current gridSize,
+                // preserving existing key assignments where possible.
+                setKeymap(prevKeymap => prevKeymap.map((layer, lIdx) => {
+                    const newKeys = Array(numExpectedKeys).fill(null);
+                    const newLabels = Array(numExpectedKeys).fill('');
+                    
+                    // Determine which physical layout to use for reference: 
+                    // a valid current one, or a newly generated default one.
+                    const referenceLayout = (currentValidPhysicalLayout.length === numExpectedKeys && !currentValidPhysicalLayout.some(item => !item)) 
+                                            ? currentValidPhysicalLayout 
+                                            : createDefaultPhysicalLayout(gridSize);
+
+                    referenceLayout.forEach(layoutItem => {
+                        if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < (layer.keys ? layer.keys.length : 0) && layoutItem.index < numExpectedKeys) {
+                            newKeys[layoutItem.index] = layer.keys[layoutItem.index];
+                            newLabels[layoutItem.index] = layer.labels[layoutItem.index];
+                        }
+                    });
+                    return { ...layer, keys: newKeys, labels: newLabels };
+                }));
+
+            }, [gridSize]); // Removed physicalLayout from dependencies here.
 
 
             const toggleKeyActive = (row, col) => {
@@ -1189,14 +1296,20 @@
                     setIsLoadingDeviceConfig(true); // Start loading indicator
                     const selectedPort = await navigator.serial.requestPort();
                     await selectedPort.open({ baudRate: 115200 });
+                    
+                    // IMPORTANT: Get writer and reader *after* opening the port
                     const newWriter = selectedPort.writable.getWriter();
                     const newReader = selectedPort.readable.getReader();
 
+                    // Update state with the new writer/reader
                     setPort(selectedPort);
                     setWriter(newWriter);
                     setReader(newReader);
                     setIsConnected(true);
                     
+                    // Add a small delay to ensure the port is fully ready for I/O
+                    await new Promise(r => setTimeout(r, 100)); 
+
                     setModalContent({
                         title: "Connection Successful",
                         message: "Successfully connected to Pico! Attempting to load existing configuration..."
@@ -1206,7 +1319,8 @@
 
                     // *** AUTOMATICALLY LOAD CONFIG FROM DEVICE ***
                     try {
-                        const fileContentBlob = await getFile("layers.json");
+                        // Pass the *newly created* writer/reader instances directly
+                        const fileContentBlob = await getFile("layers.json", newReader, newWriter); 
                         const fileContentText = await fileContentBlob.text();
                         loadConfigFromJson(fileContentText, "fromDevice"); // Use the refactored load function
                         setModalContent(prev => ({ ...prev, message: "Connected and loaded configuration from device!" }));
@@ -1214,6 +1328,12 @@
                     } catch (fileError) {
                         setModalContent(prev => ({ ...prev, message: `Connected to Pico, but failed to load layers.json: ${fileError.message}. Starting with default configuration.` }));
                         addLog(`Failed to load layers.json from device: ${fileError.message}.`, "warn");
+                        // If file load fails, ensure default configuration is applied
+                        loadConfigFromJson(JSON.stringify({
+                            grid_size: DEFAULT_GRID_SIZE,
+                            physical_layout: createDefaultPhysicalLayout(DEFAULT_GRID_SIZE),
+                            layers: Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE))
+                        }), "default");
                     }
 
                     // Listen for disconnect
@@ -1243,136 +1363,187 @@
                 }
             };
 
-            // Send a command (LIST, DEL filename, etc.)
-            const sendCommand = async (cmd) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot send command.", "error");
-                    throw new Error("Not connected to Pico.");
+            // Send a command (LIST, DEL filename, etc.) - now accepts specific writer
+            const sendCommand = async (cmd, currentWriter) => {
+                const targetWriter = currentWriter || writer; // Use passed writer or state writer
+                if (!targetWriter) {
+                    addLog("No active writer. Cannot send command.", "error");
+                    throw new Error("No active writer. Not connected to Pico.");
                 }
                 addLog(`Sending command: ${cmd}`, "info");
-                await writer.write(encoder.encode(cmd + "\n"));
+                await targetWriter.write(encoder.encode(cmd + "\n"));
             };
 
-            // Read response until <END> or <EOF>
-            const readResponse = async (until = "<END>") => {
+            // Read response until <END> or <EOF> - now accepts specific reader
+            const readResponse = async (until = "<END>", currentReader) => {
+                const targetReader = currentReader || reader;
+                if (!targetReader) {
+                    addLog("No active reader. Cannot read response.", "error");
+                    throw new Error("No active reader. Not connected to Pico.");
+                }
                 let out = "";
+                const END_MARKER = encoder.encode(until);
+                let accumulatedBytes = new Uint8Array();
+
                 while (true) {
-                    const { value, done } = await reader.read(); // Destructure done as well
-                    if (done || !value) break; // Check for done
-                    const text = decoder.decode(value);
-                    out += text;
-                    if (out.includes(until)) break;
+                    const { value, done } = await targetReader.read();
+                    if (done || !value) {
+                         addLog(`Reader stream closed unexpectedly while waiting for '${until}'.`, "warn");
+                         break;
+                    }
+                    
+                    const newAccumulatedBytes = new Uint8Array(accumulatedBytes.length + value.length);
+                    newAccumulatedBytes.set(accumulatedBytes);
+                    newAccumulatedBytes.set(value, accumulatedBytes.length);
+                    accumulatedBytes = newAccumulatedBytes;
+
+                    // Check for END_MARKER in the accumulated bytes
+                    let endMarkerIndex = -1;
+                    for (let i = 0; i <= accumulatedBytes.length - END_MARKER.length; i++) {
+                        if (accumulatedBytes.slice(i, i + END_MARKER.length).every((byte, idx) => byte === END_MARKER[idx])) {
+                            endMarkerIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (endMarkerIndex !== -1) {
+                        out = decoder.decode(accumulatedBytes.slice(0, endMarkerIndex));
+                        break;
+                    }
                 }
                 addLog(`Received response (until '${until}'):\n${out}`, "info");
                 return out;
             };
 
-            // Upload a file to Pico
-            const putFile = async (file) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot upload file.", "error");
-                    throw new Error("Not connected to Pico.");
+            // Upload a file to Pico - now accepts specific writer
+            const putFile = async (file, currentWriter) => {
+                const targetWriter = currentWriter || writer;
+                if (!targetWriter) {
+                    addLog("No active writer. Cannot upload file.", "error");
+                    throw new Error("No active writer. Not connected to Pico.");
                 }
                 addLog(`Initiating upload for ${file.name}...`, "info");
-                await sendCommand("PUT " + file.name);
+                await sendCommand("PUT " + file.name, targetWriter); // Pass targetWriter
                 await new Promise(r => setTimeout(r, 100)); // Small delay for Pico to process command
 
                 const buf = new Uint8Array(await file.arrayBuffer());
                 const chunkSize = 256;
                 for (let i = 0; i < buf.length; i += chunkSize) {
-                    await writer.write(buf.slice(i, i + chunkSize));
+                    await targetWriter.write(buf.slice(i, i + chunkSize));
                     await new Promise(r => setTimeout(r, 1)); // Small delay between chunks
                 }
-                await writer.write(encoder.encode("<EOF>"));
+                await targetWriter.write(encoder.encode("<EOF>"));
                 addLog(`Uploaded ${file.name} chunks. Waiting for Pico confirmation.`, "info");
                 // Read the confirmation from Pico
-                const response = await readResponse("<END>"); // Expect <END> from Pico after successful PUT
+                const response = await readResponse("<END>", reader); // Use state reader for response
                 addLog(`Pico PUT response: ${response}`, "info");
             };
 
-            // Download file from Pico (modified to not trigger download, just return content)
-            const getFile = async (filename) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot get file.", "error");
-                    throw new Error("Not connected to Pico.");
+            // Download file from Pico - now accepts specific reader/writer
+            const getFile = async (filename, currentReader, currentWriter) => {
+                const targetReader = currentReader || reader;
+                const targetWriter = currentWriter || writer;
+                if (!targetReader || !targetWriter) {
+                    addLog("No active reader or writer. Cannot get file.", "error");
+                    throw new Error("No active reader/writer. Not connected to Pico.");
                 }
                 addLog(`Initiating request for ${filename}...`, "info");
-                await sendCommand("GET " + filename);
-                
-                // Pico sends <START><size><content><EOF>
-                let header = "";
-                let contentBytes = new Uint8Array();
-                let startedReceiving = false;
+                await sendCommand("GET " + filename, targetWriter);
+                await new Promise(r => setTimeout(r, 50)); // Small delay after sending command
+
+                let accumulatedBytes = new Uint8Array();
+                let headerParsed = false;
                 let expectedSize = -1;
-                const buffer = []; // Use an array for chunks
-
+                const START_MARKER = encoder.encode("<START>");
+                const EOF_MARKER = encoder.encode("<EOF>");
+                
                 while (true) {
-                    const { value, done } = await reader.read();
-                    if (done || !value) break;
+                    const { value, done } = await targetReader.read();
+                    if (done || !value) {
+                        addLog("Reader stream closed prematurely or no value.", "warn");
+                        break;
+                    }
 
-                    buffer.push(value); // Store Uint8Array chunks
+                    // Append new value to accumulated bytes
+                    const newAccumulatedBytes = new Uint8Array(accumulatedBytes.length + value.length);
+                    newAccumulatedBytes.set(accumulatedBytes);
+                    newAccumulatedBytes.set(value, accumulatedBytes.length);
+                    accumulatedBytes = newAccumulatedBytes;
 
-                    // Try to decode and find start marker and size
-                    if (!startedReceiving) {
-                        const currentText = decoder.decode(new Uint8Array(buffer.flat())); // Decode accumulated parts
-                        const startIndex = currentText.indexOf("<START>");
-                        if (startIndex !== -1) {
-                            const sizeEndIndex = currentText.indexOf(">", startIndex + "<START>".length);
-                            if (sizeEndIndex !== -1) {
-                                header = currentText.substring(startIndex + "<START>".length, sizeEndIndex);
-                                expectedSize = parseInt(header, 10);
+                    // Try to parse header if not already done
+                    if (!headerParsed) {
+                        // Check for <START>
+                        let startMarkerIndex = -1;
+                        for (let i = 0; i <= accumulatedBytes.length - START_MARKER.length; i++) {
+                            if (accumulatedBytes.slice(i, i + START_MARKER.length).every((byte, idx) => byte === START_MARKER[idx])) {
+                                startMarkerIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (startMarkerIndex !== -1) {
+                            // Try to find '>' after <START> to get size
+                            const textAfterStart = decoder.decode(accumulatedBytes.slice(startMarkerIndex + START_MARKER.length));
+                            const sizeEndCharIndex = textAfterStart.indexOf(">");
+                            
+                            if (sizeEndCharIndex !== -1) {
+                                const headerString = textAfterStart.substring(0, sizeEndCharIndex);
+                                expectedSize = parseInt(headerString, 10);
                                 if (!isNaN(expectedSize)) {
-                                    startedReceiving = true;
-                                    addLog(`GET response header: ${header}, expected size: ${expectedSize} bytes.`, "info");
-                                    // Remove the header part from the buffer for pure content
-                                    const headerLength = sizeEndIndex + 1; // Include the '>'
-                                    let bytesReadForHeader = 0;
-                                    for(let i = 0; i < buffer.length; i++) {
-                                        if (bytesReadForHeader + buffer[i].length >= headerLength) {
-                                            const remaining = headerLength - bytesReadForHeader;
-                                            buffer[i] = buffer[i].slice(remaining);
-                                            break;
-                                        }
-                                        bytesReadForHeader += buffer[i].length;
-                                        buffer[i] = new Uint8Array(); // Clear fully consumed chunks
-                                    }
-                                    buffer = buffer.filter(chunk => chunk.length > 0); // Remove empty chunks
+                                    headerParsed = true;
+                                    // Calculate the byte offset to the start of the content
+                                    // This is the length of <START> + headerString + '>'
+                                    const headerByteLength = START_MARKER.length + encoder.encode(headerString).length + 1;
+                                    
+                                    // Remove the header from accumulatedBytes, leaving only content
+                                    accumulatedBytes = accumulatedBytes.slice(startMarkerIndex + headerByteLength);
+                                    
+                                    addLog(`GET response header: ${headerString}, expected size: ${expectedSize} bytes.`, "info");
+                                } else {
+                                    throw new Error("Invalid file size in GET response header.");
                                 }
                             }
                         }
                     }
 
-                    if (startedReceiving) {
-                        // Check for <EOF> at the end of the content
-                        const combinedBuffer = new Uint8Array(buffer.flat());
-                        const eofIndex = decoder.decode(combinedBuffer).indexOf("<EOF>");
-                        if (eofIndex !== -1) {
-                            contentBytes = combinedBuffer.slice(0, eofIndex);
+                    // Once header is parsed, look for EOF and accumulate content
+                    if (headerParsed) {
+                        // Check for EOF_MARKER in the *current* accumulatedBytes (which now only contains potential content)
+                        let eofMarkerIndex = -1;
+                        for (let i = 0; i <= accumulatedBytes.length - EOF_MARKER.length; i++) {
+                            if (accumulatedBytes.slice(i, i + EOF_MARKER.length).every((byte, idx) => byte === EOF_MARKER[idx])) {
+                                eofMarkerIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (eofMarkerIndex !== -1) {
+                            const contentBytes = accumulatedBytes.slice(0, eofMarkerIndex);
+                            if (contentBytes.length !== expectedSize) {
+                                addLog(`Received size mismatch! Expected ${expectedSize} bytes, got ${contentBytes.length} bytes for ${filename}.`, "error");
+                                throw new Error(`File transfer error: Size mismatch for ${filename}.`);
+                            }
                             addLog(`Received <EOF>. Total content bytes: ${contentBytes.length}.`, "info");
-                            break;
+                            return new Blob([contentBytes]);
                         }
                     }
                 }
                 
-                if (expectedSize !== -1 && contentBytes.length !== expectedSize) {
-                    addLog(`Received size mismatch! Expected ${expectedSize} bytes, got ${contentBytes.length} bytes for ${filename}.`, "error");
-                    throw new Error(`File transfer error: Size mismatch for ${filename}.`);
-                }
-
-                const blob = new Blob([contentBytes]);
-                addLog(`Received content for ${filename}.`, "success");
-                return blob; // Return blob to allow further processing (e.g., loading into textarea)
+                // If loop finishes without returning (e.g., stream closed before EOF)
+                addLog(`File transfer for ${filename} did not complete. Stream closed before EOF or expected size reached.`, "error");
+                throw new Error(`File transfer for ${filename} incomplete.`);
             };
 
-            // Delete a file
-            const deleteFile = async (fname) => {
-                if (!writer) {
-                    addLog("Not connected to Pico. Cannot delete file.", "error");
-                    throw new Error("Not connected to Pico.");
+            // Delete a file - now accepts specific writer
+            const deleteFile = async (fname, currentWriter) => {
+                const targetWriter = currentWriter || writer;
+                if (!targetWriter) {
+                    addLog("No active writer. Cannot delete file.", "error");
+                    throw new Error("No active writer. Not connected to Pico.");
                 }
                 addLog(`Attempting to delete ${fname}...`, "info");
-                await sendCommand("DEL " + fname);
-                const response = await readResponse("<END>"); // Pico should send <END>
+                await sendCommand("DEL " + fname, targetWriter); // Pass targetWriter
+                const response = await readResponse("<END>", reader); // Use state reader for response
                 addLog(`Delete response for ${fname}: ${response}`, "info");
             };
 
@@ -1440,6 +1611,11 @@
             // New state for Web Serial API support
             const [webSerialSupported, setWebSerialSupported] = useState(false);
 
+            // New state for LayerAssignmentModal
+            const [showLayerAssignmentModal, setShowLayerAssignmentModal] = useState(false);
+            const [layerAssignmentModalData, setLayerAssignmentModalData] = useState({ type: '', targetCell: null });
+
+
             const [macros, setMacros] = useState([
                 { id: 1, name: "Macro 1", sequence: "Hello World!" }, // Renamed for consistency with Pico parsing
                 { id: 2, name: "Macro 2", sequence: "control+alt+t" }, // Example macro
@@ -1454,8 +1630,40 @@
                 setWebSerialSupported('serial' in navigator);
             }, []);
 
+            // Function to assign a layer shortcut from the modal
+            const assignLayerShortcut = (type, layerNum) => {
+                const { index, layer } = layerAssignmentModalData.targetCell;
+
+                const newKeymap = JSON.parse(JSON.stringify(keymap));
+
+                const newCombo = `${type}(${layerNum})`;
+                let newDescription = "";
+                switch (type) {
+                    case "TO": newDescription = `Permanent to Layer ${layerNum}`; break;
+                    case "MO": newDescription = `Momentary to Layer ${layerNum}`; break;
+                    case "TT": newDescription = `Toggle Layer ${layerNum}`; break;
+                    case "DF": newDescription = `Set Default Layer ${layerNum}`; break;
+                }
+
+                if (index < newKeymap[layer].keys.length) { // Ensure index is valid
+                    newKeymap[layer].keys[index] = newCombo;
+                    newKeymap[layer].labels[index] = newDescription;
+                    setKeymap(newKeymap);
+                    addLog(`Assigned ${newCombo} to Layer ${layer}, Index ${index}.`, "info");
+                } else {
+                    addLog(`Attempted to assign layer shortcut to out-of-bounds index ${index} on Layer ${layer}.`, "error");
+                    setModalContent({
+                        title: "Assignment Error",
+                        message: `The selected key position (index ${index}) is outside the current keymap grid. This might indicate an issue with your physical layout.`
+                    });
+                    setShowModal(true);
+                }
+                setShowLayerAssignmentModal(false); // Close the layer assignment modal
+                setSelectedKeymapCell(null); // Clear selection after assignment
+            };
+
             // Handlers for drag and drop
-            const handleDrop = (e, flatIndex) => { // Now takes flatIndex directly
+            const handleDrop = async (e, flatIndex) => { // Now takes flatIndex directly
                 e.preventDefault();
                 const data = e.dataTransfer.getData("text/plain");
                 let droppedItem;
@@ -1469,11 +1677,12 @@
                     return;
                 }
 
-                const newKeymap = JSON.parse(JSON.stringify(keymap));
+                const specialLayerKeycodeTypes = ["TO", "MO", "TT", "DF"];
 
                 if (droppedItem.isKeymapCell) {
                     const sourceFlatIndex = droppedItem.sourceFlatIndex;
                     const sourceLayer = droppedItem.sourceLayer;
+                    const newKeymap = JSON.parse(JSON.stringify(keymap));
 
                     if (sourceLayer === currentLayer) {
                         // Swap logic for same layer
@@ -1490,16 +1699,25 @@
                         newKeymap[currentLayer].keys[flatIndex] = droppedItem.combo;
                         newKeymap[currentLayer].labels[flatIndex] = droppedItem.description;
                     }
+                    setKeymap(newKeymap);
+                    addLog(`Key assigned to Layer ${currentLayer}, Index ${flatIndex}.`, "info");
+
+                } else if (specialLayerKeycodeTypes.includes(droppedItem.combo)) {
+                    // Open layer assignment modal
+                    setLayerAssignmentModalData({ type: droppedItem.combo, targetCell: { index: flatIndex, layer: currentLayer } });
+                    setShowLayerAssignmentModal(true);
+                    addLog(`Opened layer assignment modal for ${droppedItem.combo} at Layer ${currentLayer}, Index ${flatIndex}.`, "info");
                 } else {
-                    // Assign new shortcut
+                    // Assign regular shortcut
+                    const newKeymap = JSON.parse(JSON.stringify(keymap));
                     newKeymap[currentLayer].keys[flatIndex] = droppedItem.combo;
                     newKeymap[currentLayer].labels[flatIndex] = droppedItem.description;
+                    setKeymap(newKeymap);
+                    addLog(`Key assigned to Layer ${currentLayer}, Index ${flatIndex}.`, "info");
                 }
 
-                setKeymap(newKeymap);
                 setDraggedShortcut(null);
                 setSelectedKeymapCell(null); // Clear any active cell selection after drag-drop
-                addLog(`Key assigned to Layer ${currentLayer}, Index ${flatIndex}.`, "info");
             };
 
 
@@ -1553,25 +1771,34 @@
             };
 
             // New handler for clicking a shortcut in the pool
-            const handleShortcutClick = (shortcut) => {
+            const handleShortcutClick = async (shortcut) => { // Made async to await prompt
                 if (selectedKeymapCell) {
-                    const { index, layer } = selectedKeymapCell; // Get index
-                    const newKeymap = JSON.parse(JSON.stringify(keymap));
-                    if (index < newKeymap[layer].keys.length) { // Ensure index is valid
-                        newKeymap[layer].keys[index] = shortcut.combo;
-                        newKeymap[layer].labels[index] = shortcut.description; // Store description as label
+                    const specialLayerKeycodeTypes = ["TO", "MO", "TT", "DF"];
+                    if (specialLayerKeycodeTypes.includes(shortcut.combo)) {
+                        // Open layer assignment modal
+                        setLayerAssignmentModalData({ type: shortcut.combo, targetCell: selectedKeymapCell });
+                        setShowLayerAssignmentModal(true);
+                        addLog(`Opened layer assignment modal for ${shortcut.combo} at selected cell.`, "info");
                     } else {
-                        addLog(`Attempted to assign shortcut to out-of-bounds index ${index} on Layer ${layer}.`, "error");
-                        setModalContent({
-                            title: "Assignment Error",
-                            message: `The selected key position (index ${index}) is outside the current keymap grid. This might indicate an issue with your physical layout.`
-                        });
-                        setShowModal(true);
-                        return;
+                        const { index, layer } = selectedKeymapCell; // Get index
+                        const newKeymap = JSON.parse(JSON.stringify(keymap));
+                        if (index < newKeymap[layer].keys.length) { // Ensure index is valid
+                            newKeymap[layer].keys[index] = shortcut.combo;
+                            newKeymap[layer].labels[index] = shortcut.description; // Store description as label
+                        } else {
+                            addLog(`Attempted to assign shortcut to out-of-bounds index ${index} on Layer ${layer}.`, "error");
+                            setModalContent({
+                                title: "Assignment Error",
+                                message: `The selected key position (index ${index}) is outside the current keymap grid. This might indicate an issue with your physical layout.`
+                            });
+                            setShowModal(true);
+                            setSelectedKeymapCell(null); // Clear selection on error
+                            return;
+                        }
+                        setKeymap(newKeymap);
+                        setSelectedKeymapCell(null); // Clear selection after assignment
+                        addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Index ${index}.`, "info");
                     }
-                    setKeymap(newKeymap);
-                    setSelectedKeymapCell(null); // Clear selection after assignment
-                    addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Index ${index}.`, "info");
                 } else {
                     // Optionally, you could show a modal or message if no cell is selected
                     setModalContent({
@@ -1631,67 +1858,8 @@
                 const saved = localStorage.getItem("trkey_profile");
                 if (saved) {
                     const profileData = JSON.parse(saved);
-                    
-                    const loadedGridSize = profileData.grid_size || DEFAULT_GRID_SIZE;
-                    const clampedGridSize = Math.max(MIN_GRID_SIZE, Math.min(MAX_GRID_SIZE, loadedGridSize));
-                    setGridSize(clampedGridSize); // Set the grid size
-
-                    const loadedNumLayers = profileData.numLayers || DEFAULT_LAYERS;
-                    const clampedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedNumLayers));
-                    setNumLayers(clampedNumLayers);
-
-                    const numKeysInLoadedGrid = clampedGridSize * clampedGridSize;
-
-                    // Load physical layout first, or default if not found/invalid
-                    let loadedPhysicalLayout;
-                    if (profileData.physicalLayout && Array.isArray(profileData.physicalLayout)) {
-                        loadedPhysicalLayout = profileData.physicalLayout.filter(item => item && typeof item.index === 'number' && item.row < clampedGridSize && item.col < clampedGridSize); // Filter out invalid entries
-                        loadedPhysicalLayout.sort((a,b) => a.index - b.index); // Ensure it's sorted
-                    } else {
-                        loadedPhysicalLayout = createDefaultPhysicalLayout(clampedGridSize);
-                    }
-                    setPhysicalLayout(loadedPhysicalLayout);
-
-                    // Re-initialize keymap based on loadedNumLayers (or clamped) and clampedGridSize
-                    const newKeymap = Array(clampedNumLayers).fill().map((_, i) => {
-                        if (profileData.keymap && profileData.keymap[i]) {
-                            // Deep copy and ensure keys/labels are correct size and only for active physical keys
-                            const currentKeys = profileData.keymap[i].keys || [];
-                            const currentLabels = profileData.keymap[i].labels || [];
-
-                            const keys = Array(numKeysInLoadedGrid).fill(null);
-                            const labels = Array(numKeysInLoadedGrid).fill('');
-
-                            loadedPhysicalLayout.forEach(layoutItem => {
-                                if (layoutItem && layoutItem.index !== null && layoutItem.index < currentKeys.length) {
-                                    keys[layoutItem.index] = currentKeys[layoutItem.index];
-                                    labels[layoutItem.index] = currentLabels[layoutItem.index];
-                                }
-                            });
-
-                            return { ...profileData.keymap[i], 
-                                keys: keys, 
-                                labels: labels 
-                            };
-                        } else {
-                            // Create new empty layer respecting the new grid size and physical layout
-                            const newEmptyLayerKeys = Array(numKeysInLoadedGrid).fill(null);
-                            const newEmptyLayerLabels = Array(numKeysInLoadedGrid).fill('');
-                            return { ...createEmptyLayer(i, clampedGridSize), keys: newEmptyLayerKeys, labels: newEmptyLayerLabels };
-                        }
-                    });
-                    setKeymap(newKeymap);
-
-                    setMacros(profileData.macros || []);
-
-                    // Adjust currentLayer if it's out of bounds after loading
-                    setCurrentLayer(prevCurrentLayer => {
-                        if (prevCurrentLayer >= clampedNumLayers) {
-                            return clampedNumLayers > 0 ? clampedNumLayers - 1 : 0;
-                        }
-                        return prevCurrentLayer;
-                    });
-
+                    // Call the unified load function
+                    loadConfigFromJson(JSON.stringify(profileData), "fromBrowser");
                     setModalContent({
                         title: "Profile Loaded",
                         message: "Profile loaded successfully."
@@ -1702,10 +1870,12 @@
                         title: "No Profile Found",
                         message: "No saved profile found. Initializing with default layers and layout."
                     });
+                    // Explicitly set default config if no profile found
                     setGridSize(DEFAULT_GRID_SIZE);
-                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE)));
                     setNumLayers(DEFAULT_LAYERS);
-                    setPhysicalLayout(createDefaultPhysicalLayout(DEFAULT_GRID_SIZE)); // Also set default physical layout
+                    setPhysicalLayout(createDefaultPhysicalLayout(DEFAULT_GRID_SIZE));
+                    setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE)));
+                    setMacros([]); // Clear macros if no profile
                     addLog("No saved profile found in browser storage. Initialized with default layers and layout.", "info");
                 }
                 setShowModal(true);
@@ -1837,7 +2007,7 @@
                     setShowModal(true);
                     addLog("Starting layers.json upload to Pico...", "info");
 
-                    await putFile(fileToUpload); // Pass the File object
+                    await putFile(fileToUpload, writer); // Pass the state writer explicitly
                     
                     setModalContent({
                         title: "Upload Successful",
@@ -1870,7 +2040,7 @@
                     setModalContent({ title: "Checking...", message: `Checking ${filename} on Pico. Please wait.` });
                     setShowModal(true);
                     addLog(`Starting check of ${filename} on Pico...`, "info");
-                    const blob = await getFile(filename); // getFile now just returns blob
+                    const blob = await getFile(filename, reader, writer); // Pass state reader/writer
                     const text = await blob.text();
                     
                     // Attempt to pretty-print if it's JSON
@@ -1908,7 +2078,7 @@
                             setModalContent({ title: "Deleting...", message: `Deleting ${filename} from Pico. Please wait.` });
                             setShowModal(true);
                             addLog(`Confirming deletion of ${filename}...`, "info");
-                            await deleteFile(filename); // deleteFile now handles its own response logging
+                            await deleteFile(filename, writer); // Pass state writer
                             setModalContent({ title: "Delete Successful", message: `${filename} deleted.` });
                             addLog(`${filename} deleted successfully.`, "success");
                             setShowModal(true);
@@ -1935,29 +2105,45 @@
 
                     // Expecting a root object with 'physical_layout' and 'layers' keys
                     if (typeof parsedJson === 'object' && parsedJson !== null && Array.isArray(parsedJson.layers)) {
-                        // Load grid size first
+                        // 1. Load grid size first
                         const loadedGridSize = parsedJson.grid_size || DEFAULT_GRID_SIZE;
                         const clampedGridSize = Math.max(MIN_GRID_SIZE, Math.min(MAX_GRID_SIZE, loadedGridSize));
                         setGridSize(clampedGridSize);
                         const numKeysInLoadedGrid = clampedGridSize * clampedGridSize;
 
-                        // Load layers
+                        // 2. Load physical_layout
+                        let loadedPhysicalLayout;
+                        if (Array.isArray(parsedJson.physical_layout)) {
+                            const validatedLayout = parsedJson.physical_layout.map(item => {
+                                if (item === null || (typeof item === 'object' && item !== null && 'index' in item && 'row' in item && 'col' in item)) {
+                                    return item;
+                                }
+                                return null;
+                            }).filter(item => item !== null && item.row < clampedGridSize && item.col < clampedGridSize);
+                            validatedLayout.sort((a,b) => a.index - b.index);
+                            loadedPhysicalLayout = validatedLayout;
+                            addLog(`Physical layout loaded from JSON. Detected ${loadedPhysicalLayout.length} active key positions.`, "info");
+                        } else {
+                            loadedPhysicalLayout = createDefaultPhysicalLayout(clampedGridSize); // Fallback to default
+                            addLog("No valid 'physical_layout' found in JSON, defaulting to new grid size layout.", "warn");
+                        }
+                        setPhysicalLayout(loadedPhysicalLayout); // Set physical layout state
+
+                        // 3. Load layers (now that gridSize and physicalLayout are stable)
                         const loadedLayers = parsedJson.layers;
                         const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedLayers.length));
                         setNumLayers(loadedNumLayers); // Update the numLayers state
 
                         const newKeymap = Array(loadedNumLayers).fill().map((_, layerIdx) => {
                             if (loadedLayers[layerIdx]) {
-                                // Ensure keys/labels are correct size and only for active physical keys
                                 const layerKeys = Array.isArray(loadedLayers[layerIdx].keys) ? loadedLayers[layerIdx].keys : [];
                                 const layerLabels = Array.isArray(loadedLayers[layerIdx].labels) ? loadedLayers[layerIdx].labels : [];
 
                                 const keys = Array(numKeysInLoadedGrid).fill(null);
                                 const labels = Array(numKeysInLoadedGrid).fill('');
 
-                                // Iterate through the loaded physical layout to fill the keymap
-                                const currentPhysicalLayout = Array.isArray(parsedJson.physical_layout) ? parsedJson.physical_layout : [];
-                                currentPhysicalLayout.forEach(layoutItem => {
+                                // Iterate through the *loaded* physical layout to fill the keymap
+                                loadedPhysicalLayout.forEach(layoutItem => {
                                     if (layoutItem && typeof layoutItem.index === 'number' && layoutItem.index < numKeysInLoadedGrid) {
                                         keys[layoutItem.index] = layerKeys[layoutItem.index] || null;
                                         labels[layoutItem.index] = layerLabels[layoutItem.index] || '';
@@ -1976,43 +2162,23 @@
                         });
                         setKeymap(newKeymap);
 
-                        // Load physical_layout
-                        if (Array.isArray(parsedJson.physical_layout)) {
-                            // Validate physical_layout: ensure it contains objects with index, row, col, or null
-                            const validatedPhysicalLayout = parsedJson.physical_layout.map(item => {
-                                if (item === null || (typeof item === 'object' && item !== null && 'index' in item && 'row' in item && 'col' in item)) {
-                                    return item;
-                                }
-                                return null; // Invalid items become null
-                            }).filter(item => item !== null && item.row < clampedGridSize && item.col < clampedGridSize); // Filter out items outside new grid bounds
-                            validatedPhysicalLayout.sort((a,b) => a.index - b.index); // Sort by index
-                            setPhysicalLayout(validatedPhysicalLayout);
-                            addLog(`Physical layout loaded from JSON. Detected ${validatedPhysicalLayout.length} active key positions.`, "info");
-                        } else {
-                            const defaultLayout = createDefaultPhysicalLayout(clampedGridSize);
-                            setPhysicalLayout(defaultLayout); // Reset to default if not found or invalid
-                            addLog("No valid 'physical_layout' found in JSON, defaulting to new grid size layout.", "warn");
-                        }
-
+                        // 4. Load macros
                         let loadedMacros = [];
                         let maxMacroId = 0;
-
-                        // Consolidate macros from all loaded layers (though Pico expects them on layer 0)
-                        parsedJson.layers.forEach(layerData => { // Iterate through parsedJson.layers
+                        parsedJson.layers.forEach(layerData => {
                             if (layerData.macros && Array.isArray(layerData.macros)) {
                                 const newMacrosForLayer = layerData.macros.map((m) => {
-                                    // Assign a new, unique ID for internal React state if needed, but keep original if existing
-                                    const id = m.id || nextMacroId + loadedMacros.length;
+                                    const id = m.id || nextMacroId + loadedMacros.length; // Assign temp ID if not present
                                     maxMacroId = Math.max(maxMacroId, id);
                                     return { id: id, name: m.name, sequence: m.sequence };
                                 });
                                 loadedMacros = [...loadedMacros, ...newMacrosForLayer];
                             }
                         });
-                        
                         setMacros(loadedMacros);
-                        setNextMacroId(maxMacroId + 1); // Update nextMacroId based on loaded macros
+                        setNextMacroId(maxMacroId + 1);
 
+                        // Adjust currentLayer if it's out of bounds after loading
                         setCurrentLayer(prevCurrentLayer => {
                             if (prevCurrentLayer >= loadedNumLayers) {
                                 return loadedNumLayers > 0 ? loadedNumLayers - 1 : 0;
@@ -2035,7 +2201,7 @@
                         });
                         setShowModal(true);
                     }
-                    // For auto-load, we already set a modal message in connectPico
+                    // For auto-load, a message is handled in connectPico and default config is applied there.
                 }
             };
 
@@ -2182,9 +2348,9 @@
                             </div>
                         )}
 
-                        {activeTab === 'save-load' && (
-                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for save-load tab content */}
-                                <SaveLoad
+                        {activeTab === 'connect-load' && (
+                            <div className="p-4 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700"> {/* Added container for connect-load tab content */}
+                                <ConnectLoad /* Renamed component */
                                     saveProfile={saveProfile}
                                     loadProfile={loadProfile}
                                     exportKeymap={exportKeymap}
@@ -2233,6 +2399,18 @@
                         message={modalContent.message}
                         onConfirm={modalContent.onConfirm}
                         onCancel={modalContent.onCancel}
+                    />
+                    {/* NEW: Layer Assignment Modal */}
+                    <LayerAssignmentModal
+                        show={showLayerAssignmentModal}
+                        type={layerAssignmentModalData.type}
+                        maxLayer={numLayers - 1} // Max layer index is numLayers - 1
+                        onAssign={assignLayerShortcut}
+                        onCancel={() => {
+                            setShowLayerAssignmentModal(false);
+                            setSelectedKeymapCell(null); // Clear selection if user cancels
+                            addLog("Layer assignment cancelled.", "info");
+                        }}
                     />
                 </div>
             );
