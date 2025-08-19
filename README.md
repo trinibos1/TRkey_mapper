@@ -149,7 +149,12 @@ MIT License – free to use, modify, and distribute.
 * Email: **[Trinibos1@proton.me](mailto:Trinibos1@proton.me)**
 
 ---
+## 🙌 Thanks
 
+Huge thanks to **[Adafruit](https://www.adafruit.com/)** for their lib.  
+Without their work, projects like macropad wouldn’t be possible. 💜
+
+---
 ## ⌨️ Coming Soon
 
 **Trkey Keyboard** 🚀
