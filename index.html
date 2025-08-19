@@ -269,16 +269,6 @@
                 { combo: "SLEEP", description: "Sleep" },
                 { combo: "WAKE", description: "Wake" },
             ],
-            "RGB_LIGHTING_CONTROLS": [
-                { combo: "RGB_TOG", description: "RGB Tog" },
-                { combo: "RGB_MOD", description: "RGB Mode" },
-                { combo: "RGB_HUI", description: "RGB Hue+" },
-                { combo: "RGB_HUD", description: "RGB Hue-" },
-                { combo: "RGB_SAI", description: "RGB Sat+" },
-                { combo: "RGB_SAD", description: "RGB Sat-" },
-                { combo: "RGB_VAI", description: "RGB Val+" },
-                { combo: "RGB_VAD", description: "RGB Val-" },
-            ],
             "MINECRAFT_SPECIFIC": [
                 { combo: "W_KEY", description: "Fwd" },
                 { combo: "A_KEY", description: "Left" },
@@ -290,55 +280,6 @@
                 { combo: "F3_N", description: "GM Swch" },
                 { combo: "F3_C", description: "Crash" },
                 { combo: "F3_A", description: "Reload" },
-            ],
-            "WAR_THUNDER_SPECIFIC": [
-                { combo: "W_S_THROTTLE", description: "Throttle" },
-                { combo: "A_D_RUDDER", description: "Rudder" },
-                { combo: "Q_E_ROLL", description: "Roll" },
-                { combo: "HOLD_T", description: "Mark" },
-                { combo: "HOLD_SHIFT", description: "Sprint" },
-                { combo: "HOLD_F", description: "Plant" },
-                { combo: "CONTROL_NUMBER", description: "Squad" },
-                { combo: "SHIFT_ONE", description: "Fm 1" },
-                { combo: "SHIFT_TWO", description: "Fm 2" },
-                { combo: "SHIFT_THREE", description: "Fm 3" },
-                { combo: "SHIFT_FOUR", description: "Fm 4" },
-            ],
-            "ROBLOX_STUDIO_SPECIFIC": [
-                { combo: "ARROW_KEYS_NUDGE", description: "Nudge" },
-            ],
-            "LINUX_COMMANDS": [
-                { combo: "MACRO_LS", description: "ls" },
-                { combo: "MACRO_CD", description: "cd" },
-                { combo: "MACRO_PWD", description: "pwd" },
-                { combo: "MACRO_MKDIR", description: "mkdir" },
-                { combo: "MACRO_RM", description: "rm" },
-                { combo: "MACRO_CP", description: "cp" },
-                { combo: "MACRO_MV", description: "mv" },
-                { combo: "MACRO_SUDO", description: "sudo" },
-                { combo: "MACRO_MAN", description: "man" },
-                { combo: "MACRO_TOP", description: "top" },
-                { combo: "MACRO_PS", description: "ps" },
-                { combo: "MACRO_KILL", description: "kill" },
-                { combo: "MACRO_GREP", description: "grep" },
-                { combo: "MACRO_CHMOD", description: "chmod" },
-                { combo: "MACRO_CHOWN", description: "chown" },
-                { combo: "MACRO_NANO", description: "nano" },
-                { combo: "MACRO_VIM", description: "vim" },
-                { combo: "MACRO_DF", description: "df" },
-                { combo: "MACRO_DU", description: "du" },
-                { combo: "MACRO_TAR", description: "tar" },
-                { combo: "MACRO_ZIP_UNZIP", description: "zip/unzip" },
-                { combo: "MACRO_SSH", description: "ssh" },
-                { combo: "MACRO_SCP", description: "scp" },
-                { combo: "MACRO_WGET", description: "wget" },
-                { combo: "MACRO_CURL", description: "curl" },
-                { combo: "MACRO_ALIAS", description: "alias" },
-                { combo: "MACRO_HISTORY", description: "history" },
-                { combo: "MACRO_CLEAR", description: "clear" },
-                { combo: "MACRO_REBOOT", description: "reboot" },
-                { combo: "MACRO_SHUTDOWN", description: "shutdown" },
-                { combo: "MACRO_UPTIME", description: "uptime" },
             ],
             "KICAD_SPECIFIC": [
                 { combo: "CONTROL_SCROLL", description: "Zoom" },
@@ -360,10 +301,19 @@
         // Helper function to create an empty layer object
         const createEmptyLayer = (index) => ({
             name: `Layer ${index}`,
-            labels: Array(9).fill(''),
-            keys: Array(9).fill(null),
+            labels: Array(9).fill(''), // Always 9 elements for the 3x3 grid internally
+            keys: Array(9).fill(null), // Always 9 elements for the 3x3 grid internally
             macros: [] // Macros are technically global to the app but stored on Layer 0 in JSON
         });
+
+        // Helper function to create a default 3x3 physical layout
+        const createDefaultPhysicalLayout = () => {
+            const layout = [];
+            for (let i = 0; i < 9; i++) {
+                layout.push({ index: i, row: Math.floor(i / 3), col: i % 3 });
+            }
+            return layout;
+        };
 
 
         // Modal component (formerly from src/components/Modal.js)
@@ -465,15 +415,18 @@
         };
 
         // KeymapGrid component (formerly from src/components/KeymapGrid.js)
-        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers }) => {
+        const KeymapGrid = ({ keymap, handleDrop, handleKeymapDragStart, handleDragEnd, clearKeymapCell, currentLayer, setCurrentLayer, selectedKeymapCell, handleKeymapCellClick, clearCurrentLayer, numLayers, physicalLayout }) => {
             const { useState, useEffect } = React;
             // The keymap prop is now an array of layer objects, each with 'keys' and 'labels'
-            // We need to transform the 1D 'keys' and 'labels' arrays into a 3x3 grid for display
             const currentLayerData = keymap[currentLayer] || { keys: Array(9).fill(null), labels: Array(9).fill('') };
 
-            // Helper to get the key/label for a specific grid cell
-            const getCellContent = (rIdx, cIdx) => {
-                const flatIndex = rIdx * 3 + cIdx;
+            // Helper to get the key/label for a specific flat index
+            const getCellContent = (flatIndex) => {
+                // Ensure flatIndex is within bounds for keymap data
+                if (flatIndex < 0 || flatIndex >= currentLayerData.keys.length) {
+                    return null;
+                }
+
                 const keyCombo = currentLayerData.keys[flatIndex];
                 const keyLabel = currentLayerData.labels[flatIndex];
                 
@@ -492,6 +445,14 @@
                         const macroNum = keyCombo.split('_')[1];
                         // If you want to show the actual macro name, you'd need to pass the macros array here
                         description = `Macro ${macroNum}`;
+                    }
+                    // Special handling for layer functions
+                    if (keyCombo.startsWith("TO(") || keyCombo.startsWith("MO(") || keyCombo.startsWith("TG(")) {
+                        description = keyCombo; // Show the function directly
+                    }
+                    // Special handling for NO_OP
+                    if (keyCombo === "NO_OP") {
+                        description = "No Operation";
                     }
 
                     return { combo: keyCombo, description: description };
@@ -520,47 +481,59 @@
                             Clear Current Layer
                         </button>
                     </div>
+                    {/* Render keys based on physicalLayout */}
                     <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
-                        {Array(3).fill().map((_, rIdx) => ( // Iterate for 3 rows
-                            Array(3).fill().map((_, cIdx) => { // Iterate for 3 columns
-                                const cellContent = getCellContent(rIdx, cIdx);
-                                const flatIndex = rIdx * 3 + cIdx;
+                        {physicalLayout.map((layoutItem, gridIndex) => {
+                            if (layoutItem === null || typeof layoutItem.index === 'undefined' || layoutItem.index === null) {
                                 return (
                                     <div
-                                        key={`${rIdx}-${cIdx}`}
-                                        className={`relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
-                                                    hover:border-red-500 transition-all duration-200 cursor-pointer
-                                                    ${selectedKeymapCell && selectedKeymapCell.row === rIdx && selectedKeymapCell.col === cIdx && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-900 bg-opacity-30' : ''}`}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => handleDrop(e, rIdx, cIdx)}
-                                        draggable
-                                        onDragStart={(e) => handleKeymapDragStart(e, cellContent, rIdx, cIdx)}
-                                        onDragEnd={handleDragEnd}
-                                        onClick={() => handleKeymapCellClick(rIdx, cIdx, currentLayer)}
+                                        key={`empty-${gridIndex}`}
+                                        className="relative bg-zinc-900 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-800 shadow-inner text-zinc-600 italic"
                                     >
-                                        {cellContent ? (
-                                            <>
-                                                <span className="text-2xl font-bold text-red-300">{cellContent.combo}</span>
-                                                <span className="text-sm text-zinc-400 text-center mt-1">{cellContent.description}</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-zinc-500">Drag & Drop Here</span>
-                                        )}
-                                        {cellContent && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); clearKeymapCell(rIdx, cIdx); }}
-                                                className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
-                                                title="Clear cell"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        )}
+                                        Empty Slot
                                     </div>
                                 );
-                            })
-                        ))}
+                            }
+
+                            // Use the 'index' from physical_layout as the flat index for keymap data
+                            const flatIndex = layoutItem.index; 
+                            const cellContent = getCellContent(flatIndex);
+
+                            return (
+                                <div
+                                    key={`cell-${flatIndex}`} /* Use flatIndex for key as it's the unique identifier for logical position */
+                                    className={`relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
+                                                hover:border-red-500 transition-all duration-200 cursor-pointer
+                                                ${selectedKeymapCell && selectedKeymapCell.index === flatIndex && selectedKeymapCell.layer === currentLayer ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-900 bg-opacity-30' : ''}`}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => handleDrop(e, flatIndex)}
+                                    draggable
+                                    onDragStart={(e) => handleKeymapDragStart(e, cellContent, flatIndex)}
+                                    onDragEnd={handleDragEnd}
+                                    onClick={() => handleKeymapCellClick(flatIndex, currentLayer)}
+                                >
+                                    {cellContent ? (
+                                        <>
+                                            <span className="text-2xl font-bold text-red-300">{cellContent.combo}</span>
+                                            <span className="text-sm text-zinc-400 text-center mt-1">{cellContent.description}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-zinc-500">Drag & Drop Here</span>
+                                    )}
+                                    {cellContent && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); clearKeymapCell(flatIndex); }}
+                                            className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
+                                            title="Clear cell"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -867,8 +840,34 @@
             );
         };
 
+        // New component to display the physical layout JSON
+        const PhysicalLayoutViewer = ({ physicalLayout }) => {
+            const { useState, useEffect } = React;
+            const [layoutJson, setLayoutJson] = useState('');
+
+            useEffect(() => {
+                try {
+                    setLayoutJson(JSON.stringify(physicalLayout, null, 2));
+                } catch (e) {
+                    setLayoutJson("Error displaying layout JSON.");
+                }
+            }, [physicalLayout]);
+
+            return (
+                <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 mt-8">
+                    <h2 className="text-2xl font-bold text-red-300 mb-4">Current Physical Layout</h2>
+                    <p className="text-zinc-400 mb-2 text-sm">This shows the layout currently applied to the UI. To change it, paste a new configuration above that includes a "physical_layout" array.</p>
+                    <textarea
+                        readOnly
+                        className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y custom-scrollbar"
+                        value={layoutJson}
+                    ></textarea>
+                </div>
+            );
+        };
+
         // Settings component (formerly from src/components/Settings.js)
-        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea, numLayers, setNumLayers }) => {
+        const Settings = ({ jsonInput, setJsonInput, loadJsonFromTextArea, numLayers, setNumLayers, physicalLayout }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full p-8"> {/* Added padding here */}
@@ -896,7 +895,7 @@
                         <h2 className="text-2xl font-bold text-red-300 mb-4">Import JSON Configuration</h2>
                         <textarea
                             className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y"
-                            placeholder="Paste your layers.json configuration here..."
+                            placeholder="Paste your full Trkey configuration JSON here, including 'physical_layout' and 'layers'..."
                             value={jsonInput}
                             onChange={(e) => setJsonInput(e.target.value)}
                         ></textarea>
@@ -907,6 +906,8 @@
                             Load JSON
                         </button>
                     </div>
+                    {/* Add the PhysicalLayoutViewer component here */}
+                    <PhysicalLayoutViewer physicalLayout={physicalLayout} />
                 </div>
             );
         };
@@ -1176,6 +1177,9 @@
                 addLog(`Delete response for ${fname}: ${response}`, "info");
             };
 
+            // State for the physical layout of the keys (e.g., 3x3 grid, or custom layout with nulls)
+            const [physicalLayout, setPhysicalLayout] = useState(() => createDefaultPhysicalLayout());
+
             // New state for number of layers
             const [numLayers, setNumLayers] = useState(DEFAULT_LAYERS);
 
@@ -1214,7 +1218,7 @@
             const [jsonInput, setJsonInput] = useState('');
             const [currentLayer, setCurrentLayer] = useState(0); // New state for active layer in UI
             // New state for click-to-assign functionality
-            const [selectedKeymapCell, setSelectedKeymapCell] = useState(null); // {row, col, layer} or null
+            const [selectedKeymapCell, setSelectedKeymapCell] = useState(null); // {index, layer} or null (index is the flat index)
             // New state for Web Serial API support
             const [webSerialSupported, setWebSerialSupported] = useState(false);
 
@@ -1238,7 +1242,7 @@
             }, []);
 
             // Handlers for drag and drop
-            const handleDrop = (e, row, col) => {
+            const handleDrop = (e, flatIndex) => { // Now takes flatIndex directly
                 e.preventDefault();
                 const data = e.dataTransfer.getData("text/plain");
                 let droppedItem;
@@ -1253,13 +1257,10 @@
                 }
 
                 const newKeymap = JSON.parse(JSON.stringify(keymap));
-                const flatIndex = row * 3 + col;
 
                 if (droppedItem.isKeymapCell) {
-                    const sourceRow = droppedItem.sourceRow;
-                    const sourceCol = droppedItem.sourceCol;
+                    const sourceFlatIndex = droppedItem.sourceFlatIndex;
                     const sourceLayer = droppedItem.sourceLayer;
-                    const sourceFlatIndex = sourceRow * 3 + sourceCol;
 
                     if (sourceLayer === currentLayer) {
                         // Swap logic for same layer
@@ -1285,13 +1286,13 @@
                 setKeymap(newKeymap);
                 setDraggedShortcut(null);
                 setSelectedKeymapCell(null); // Clear any active cell selection after drag-drop
-                addLog(`Key assigned to Layer ${currentLayer}, Row ${row}, Col ${col}.`, "info");
+                addLog(`Key assigned to Layer ${currentLayer}, Index ${flatIndex}.`, "info");
             };
 
 
-            const handleKeymapDragStart = (e, cellContent, row, col) => {
+            const handleKeymapDragStart = (e, cellContent, flatIndex) => { // Now takes flatIndex directly
                 // Pass the combo and description for dragging
-                const dragData = JSON.stringify({ isKeymapCell: true, cell: cellContent, sourceRow: row, sourceCol: col, sourceLayer: currentLayer });
+                const dragData = JSON.stringify({ isKeymapCell: true, cell: cellContent, sourceFlatIndex: flatIndex, sourceLayer: currentLayer });
                 e.dataTransfer.setData("text/plain", dragData);
                 setSelectedKeymapCell(null); // Clear any active cell selection on drag start
             };
@@ -1306,8 +1307,7 @@
                 setDraggedShortcut(null);
             };
 
-            const clearKeymapCell = (rIdx, cIdx) => {
-                const flatIndex = rIdx * 3 + cIdx;
+            const clearKeymapCell = (flatIndex) => { // Now takes flatIndex directly
                 const updatedKeymap = keymap.map((layer, lIdx) => {
                     if (lIdx === currentLayer) {
                         const newKeys = [...layer.keys];
@@ -1320,33 +1320,32 @@
                 });
                 setKeymap(updatedKeymap);
                 setSelectedKeymapCell(null); // Clear selection if the cleared cell was selected
-                addLog(`Keymap cell Layer ${currentLayer}, Row ${rIdx}, Col ${cIdx} cleared.`, "info");
+                addLog(`Keymap cell Layer ${currentLayer}, Index ${flatIndex} cleared.`, "info");
             };
 
             // New handler for clicking a keymap cell
-            const handleKeymapCellClick = (row, col, layer) => {
+            const handleKeymapCellClick = (flatIndex, layer) => { // Now takes flatIndex directly
                 // If the clicked cell is already selected, deselect it
-                if (selectedKeymapCell && selectedKeymapCell.row === row && selectedKeymapCell.col === col && selectedKeymapCell.layer === layer) {
+                if (selectedKeymapCell && selectedKeymapCell.index === flatIndex && selectedKeymapCell.layer === layer) {
                     setSelectedKeymapCell(null);
-                    addLog(`Deselected keymap cell Layer ${layer}, Row ${row}, Col ${col}.`, "info");
+                    addLog(`Deselected keymap cell Layer ${layer}, Index ${flatIndex}.`, "info");
                 } else {
                     // Otherwise, select this cell
-                    setSelectedKeymapCell({ row, col, layer });
-                    addLog(`Selected keymap cell Layer ${layer}, Row ${row}, Col ${col}.`, "info");
+                    setSelectedKeymapCell({ index: flatIndex, layer }); // Store index
+                    addLog(`Selected keymap cell Layer ${layer}, Index ${flatIndex}.`, "info");
                 }
             };
 
             // New handler for clicking a shortcut in the pool
             const handleShortcutClick = (shortcut) => {
                 if (selectedKeymapCell) {
-                    const { row, col, layer } = selectedKeymapCell;
-                    const flatIndex = row * 3 + col;
+                    const { index, layer } = selectedKeymapCell; // Get index
                     const newKeymap = JSON.parse(JSON.stringify(keymap));
-                    newKeymap[layer].keys[flatIndex] = shortcut.combo;
-                    newKeymap[layer].labels[flatIndex] = shortcut.description; // Store description as label
+                    newKeymap[layer].keys[index] = shortcut.combo;
+                    newKeymap[layer].labels[index] = shortcut.description; // Store description as label
                     setKeymap(newKeymap);
                     setSelectedKeymapCell(null); // Clear selection after assignment
-                    addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Row ${row}, Col ${col}.`, "info");
+                    addLog(`Assigned "${shortcut.combo}" to Layer ${layer}, Index ${index}.`, "info");
                 } else {
                     // Optionally, you could show a modal or message if no cell is selected
                     setModalContent({
@@ -1387,6 +1386,7 @@
             const saveProfile = () => {
                 const profileData = {
                     keymap: keymap, // Save the multi-layer keymap
+                    physicalLayout: physicalLayout, // Save the current physical layout
                     potentiometerConfig: potentiometerConfig,
                     macros: macros,
                     numLayers: numLayers // Save the number of layers
@@ -1423,6 +1423,13 @@
                     });
                     setKeymap(newKeymap);
 
+                    // Load physical layout, or default if not found/invalid
+                    if (profileData.physicalLayout && Array.isArray(profileData.physicalLayout)) {
+                        setPhysicalLayout(profileData.physicalLayout);
+                    } else {
+                        setPhysicalLayout(createDefaultPhysicalLayout());
+                    }
+
                     setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 34, function: 'volume', customAction: '' });
                     setMacros(profileData.macros || []);
 
@@ -1442,11 +1449,12 @@
                 } else {
                     setModalContent({
                         title: "No Profile Found",
-                        message: "No saved profile found. Initializing with default layers."
+                        message: "No saved profile found. Initializing with default layers and layout."
                     });
                     setKeymap(Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i)));
                     setNumLayers(DEFAULT_LAYERS);
-                    addLog("No saved profile found in browser storage. Initialized with default layers.", "info");
+                    setPhysicalLayout(createDefaultPhysicalLayout()); // Also set default physical layout
+                    addLog("No saved profile found in browser storage. Initialized with default layers and layout.", "info");
                 }
                 setShowModal(true);
             };
@@ -1470,13 +1478,16 @@
                     });
                 });
 
-                const fullExportData = layersForExport; // The root is now the array of layers
+                const fullExportData = {
+                    physical_layout: physicalLayout, // Include the physical layout
+                    layers: layersForExport // Include the layers array
+                };
 
                 // Macros are typically added to the first layer in Pico's layers.json
                 if (macros.length > 0) {
-                    if (fullExportData.length > 0) {
+                    if (fullExportData.layers.length > 0) {
                          // Ensure macros are stored as {name: "Macro X", sequence: "..."}
-                         fullExportData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
+                         fullExportData.layers[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
                     }
                 }
 
@@ -1531,11 +1542,14 @@
                         });
                     });
 
-                    const fullUploadData = layersForUpload;
+                    const fullUploadData = {
+                        physical_layout: physicalLayout, // Include the physical layout
+                        layers: layersForUpload, // Include the layers array
+                    };
 
                     // Add macros to the first layer for upload
-                    if (macros.length > 0 && fullUploadData.length > 0) {
-                        fullUploadData[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
+                    if (macros.length > 0 && fullUploadData.layers.length > 0) {
+                        fullUploadData.layers[0].macros = macros.map(m => ({ name: m.name, sequence: m.sequence }));
                     }
 
                     const json = JSON.stringify(fullUploadData);
@@ -1586,7 +1600,15 @@
                     addLog(`Starting check of ${filename} on Pico...`, "info");
                     const blob = await getFile(filename); // getFile now just returns blob
                     const text = await blob.text();
-                    setJsonInput(text); // Populate the settings textarea with the retrieved content
+                    
+                    // Attempt to pretty-print if it's JSON
+                    try {
+                        const parsed = JSON.parse(text);
+                        setJsonInput(JSON.stringify(parsed, null, 2));
+                    } catch (parseError) {
+                        setJsonInput(text); // If not JSON, just set the raw text
+                    }
+                    
                     setActiveTab('settings'); // Switch to settings tab to show the content
                     setModalContent({ title: "Check Successful", message: `${filename} content loaded into settings tab.` });
                     addLog(`${filename} content loaded into settings tab.`, "success");
@@ -1638,36 +1660,56 @@
                 try {
                     const parsedJson = JSON.parse(jsonInput);
 
-                    // Expecting an array of layer objects for layers.json
-                    if (Array.isArray(parsedJson)) {
-                        const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, parsedJson.length));
+                    // Expecting a root object with 'physical_layout' and 'layers' keys
+                    if (typeof parsedJson === 'object' && parsedJson !== null && Array.isArray(parsedJson.layers)) {
+                        // Load layers
+                        const loadedLayers = parsedJson.layers;
+                        const loadedNumLayers = Math.max(MIN_LAYERS, Math.min(MAX_LAYERS, loadedLayers.length));
                         setNumLayers(loadedNumLayers); // Update the numLayers state
 
                         const newKeymap = Array(loadedNumLayers).fill().map((_, layerIdx) => {
-                            if (parsedJson[layerIdx]) {
+                            if (loadedLayers[layerIdx]) {
                                 return {
-                                    name: parsedJson[layerIdx].name || `Layer ${layerIdx}`,
-                                    labels: Array.isArray(parsedJson[layerIdx].labels) && parsedJson[layerIdx].labels.length === 9
-                                        ? [...parsedJson[layerIdx].labels]
-                                        : Array(9).fill(''),
-                                    keys: Array.isArray(parsedJson[layerIdx].keys) && parsedJson[layerIdx].keys.length === 9
-                                        ? [...parsedJson[layerIdx].keys]
-                                        : Array(9).fill(null),
-                                    macros: parsedJson[layerIdx].macros || []
+                                    name: loadedLayers[layerIdx].name || `Layer ${layerIdx}`,
+                                    labels: Array.isArray(loadedLayers[layerIdx].labels) && loadedLayers[layerIdx].labels.length === 9
+                                        ? [...loadedLayers[layerIdx].labels]
+                                        : Array(9).fill(''), // Ensure 9 elements
+                                    keys: Array.isArray(loadedLayers[layerIdx].keys) && loadedLayers[layerIdx].keys.length === 9
+                                        ? [...loadedLayers[layerIdx].keys]
+                                        : Array(9).fill(null), // Ensure 9 elements
+                                    macros: loadedLayers[layerIdx].macros || []
                                 };
                             } else {
                                 return createEmptyLayer(layerIdx);
                             }
                         });
+                        setKeymap(newKeymap);
+
+                        // Load physical_layout
+                        if (Array.isArray(parsedJson.physical_layout)) {
+                            // Validate physical_layout: ensure it contains objects with index, row, col, or null
+                            const validatedPhysicalLayout = parsedJson.physical_layout.map(item => {
+                                if (item === null || (typeof item === 'object' && item !== null && 'index' in item && 'row' in item && 'col' in item)) {
+                                    return item;
+                                }
+                                return null; // Invalid items become null
+                            });
+                            setPhysicalLayout(validatedPhysicalLayout);
+                            addLog(`Physical layout loaded from JSON. Detected ${validatedPhysicalLayout.filter(i => i !== null).length} active key positions.`, "info");
+                        } else {
+                            setPhysicalLayout(createDefaultPhysicalLayout()); // Reset to default if not found or invalid
+                            addLog("No valid 'physical_layout' found in JSON, defaulting to 3x3 layout.", "warn");
+                        }
 
                         let loadedMacros = [];
                         let maxMacroId = 0;
 
                         // Consolidate macros from all loaded layers (though Pico expects them on layer 0)
-                        parsedJson.forEach(layerData => {
+                        parsedJson.layers.forEach(layerData => { // Iterate through parsedJson.layers
                             if (layerData.macros && Array.isArray(layerData.macros)) {
                                 const newMacrosForLayer = layerData.macros.map((m) => {
-                                    const id = nextMacroId + loadedMacros.length; // Assign a temporary ID
+                                    // Assign a new, unique ID for internal React state if needed, but keep original if existing
+                                    const id = m.id || nextMacroId + loadedMacros.length;
                                     maxMacroId = Math.max(maxMacroId, id);
                                     return { id: id, name: m.name, sequence: m.sequence };
                                 });
@@ -1675,7 +1717,6 @@
                             }
                         });
                         
-                        setKeymap(newKeymap);
                         setMacros(loadedMacros);
                         setNextMacroId(maxMacroId + 1); // Update nextMacroId based on loaded macros
 
@@ -1698,7 +1739,7 @@
                     } else {
                         setModalContent({
                             title: "Invalid JSON",
-                            message: "The pasted JSON does not contain a valid layers.json array structure."
+                            message: "The pasted JSON does not contain a valid configuration. Expected a root object with 'physical_layout' (optional) and a 'layers' array."
                         });
                         addLog("Invalid JSON structure for layers.json.", "error");
                     }
@@ -1803,6 +1844,7 @@
                                     handleKeymapCellClick={handleKeymapCellClick} /* New prop */
                                     clearCurrentLayer={clearCurrentLayer} /* New prop */
                                     numLayers={numLayers} /* Pass numLayers to KeymapGrid */
+                                    physicalLayout={physicalLayout} /* Pass physicalLayout to KeymapGrid */
                                 />
                                 <h2 className="text-3xl font-bold text-red-400 mb-6">SHORTCUTS</h2>
                                 <ShortcutPool
@@ -1863,6 +1905,7 @@
                                     loadJsonFromTextArea={loadJsonFromTextArea}
                                     numLayers={numLayers} /* Pass numLayers */
                                     setNumLayers={setNumLayers} /* Pass setNumLayers */
+                                    physicalLayout={physicalLayout} /* Pass physicalLayout to Settings */
                                 />
                             </div>
                         )}
@@ -1897,4 +1940,3 @@
     </script>
 </body>
 </html>
-s
