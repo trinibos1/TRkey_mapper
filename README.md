@@ -26,16 +26,6 @@ Customize key bindings, layers, macros, and peripherals with an intuitive interf
 - **[Trkey Macropad](https://github.com/trinibos1/Trkey_macro)** – Official Pico-powered macropad hardware + firmware, fully compatible with the Trkey Configurator.
 
 ---
-
-## 🚀 How to Use
-
-1. Open **`index.html`** in Chrome or Edge (Web Serial API must be enabled).  
-2. Use the sidebar to navigate: **KEYMAP, MACROS, CONTROLS, SAVE+LOAD, TERMINAL, SETTINGS, KEY TESTER**.  
-3. Configure and export your setup to `layers.json`.  
-4. Drag-and-drop `layers.json` onto the **CIRCUITPY** drive (manual upload required).  
-
----
-
 ## 📁 File Structure
 
 - **Single-page app** (`index.html`)  
