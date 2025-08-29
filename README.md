@@ -3,7 +3,6 @@
 
 A modern **web-based tool** to configure your **micropad** — and soon, full keyboards.  
 Customize key bindings, layers, macros, and peripherals with an intuitive interface, and communicate directly with your device via the **Web Serial API**.
-please note that there is a big update that changes the Json formate and connections coming soon 
 ---
 
 ## ✨ Features
