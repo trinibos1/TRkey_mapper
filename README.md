@@ -1,5 +1,7 @@
 
-# ⚙️ Trkey
+# ⚙️ TRKey
+
+![TRKey Logo](./assets/trkey-logo.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
@@ -17,7 +19,7 @@ Customize key bindings, layers, macros, and physical layouts with an intuitive i
 - **Full Key Remapping** – Assign single keys or complex shortcuts to any key. Drag-and-drop or click-to-assign.  
 - **Configurable Physical Layout** – Visually define your macropad's physical button arrangement (e.g., 2x2, 3x3, etc.) and active key positions directly in the UI.  
 - **Multi-Layer Support** – Configure up to 10 layers for dynamic switching between keysets.  
-- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with Trkey Macropad.  
+- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with TRKey Macropad.  
 - **Peripheral Controls** – Control volume, scrolling, or custom QMK keycodes via potentiometers or peripherals.  
 - **Persistent Profiles** – Save and load configurations in browser local storage.  
 - **Configuration Export** – Export `layers.json` for Pico firmware.  
@@ -30,7 +32,7 @@ Customize key bindings, layers, macros, and physical layouts with an intuitive i
 
 ## 🔗 Related Projects
 
-- **Trkey Macropad** – Official Pico-powered macropad hardware + firmware, fully compatible with the Trkey Configurator.  
+- **TRKey Macropad** – Official Pico-powered macropad hardware + firmware, fully compatible with the TRKey Configurator.  
 
 Want your device added? Contact me!
 
@@ -48,7 +50,7 @@ Want your device added? Contact me!
 
 - Chromium browser (Chrome, Edge) with Web Serial API enabled  
 - Raspberry Pi Pico with compatible CircuitPython firmware  
-- Pico running the **Trkey serial handler `code.py` script** for device communication (`PUT`/`GET`/`DEL`/`LIST` commands)  
+- Pico running the **TRKey serial handler `code.py` script** for device communication (`PUT`/`GET`/`DEL`/`LIST` commands)  
 - `layers.json` config file for keymap, macros, and peripherals  
 
 ---
@@ -101,7 +103,7 @@ Pico sends a list of files, each on a new line, until `<END>\n`.
 
 ## ⌨️ Supported Shortcuts
 
-The Trkey Configurator leverages string representations that map directly to **Adafruit HID library codes** on your CircuitPython device.  
+The TRKey Configurator leverages string representations that map directly to **Adafruit HID library codes** on your CircuitPython device.  
 
 Supports hundreds of keycodes & combos, including:
 
@@ -148,23 +150,23 @@ Supports hundreds of keycodes & combos, including:
 ## 🗺️ Roadmap 🚀
 
 ### Phase 1: Current & Upcoming Enhancements
-- [x] Full Key Remapping  
-- [x] Configurable Physical Layout  
-- [x] Multi-Layer Support  
-- [x] Macro Management  
-- [x] Basic Peripheral Controls (media keys, scrolling)  
-- [x] Persistent Profiles  
-- [x] Configuration Export  
-- [x] Web Serial API Integration  
-- [x] Live Key Tester  
-- [x] Responsive UI  
-- [x] Interactive Terminal & Logging  
+- ✅ Full Key Remapping  
+- ✅ Configurable Physical Layout  
+- ✅ Multi-Layer Support  
+- ✅ Macro Management  
+- ✅ Basic Peripheral Controls (media keys, scrolling)  
+- ✅ Persistent Profiles  
+- ✅ Configuration Export  
+- ✅ Web Serial API Integration  
+- ✅ Live Key Tester  
+- ✅ Responsive UI  
+- ✅ Interactive Terminal & Logging  
 - [ ] Advanced Layout Editor  
 - [ ] Improved Macro Editor (timing, conditionals, visual builder)  
 - [ ] Theming Options  
 
 ### Phase 2: Expanded Hardware Support & Connectivity
-- [ ] Trkey Keyboard Support (full-sized keyboards)  
+- [ ] TRKey Keyboard Support (full-sized keyboards)  
 - [ ] Hall Effect Switches Integration  
 - [ ] QMK/KMK Firmware Compatibility  
 - [ ] Wireless Connectivity (Bluetooth/BLE)  
@@ -210,4 +212,3 @@ MIT License – free to use, modify, and distribute.
 
 Huge thanks to **Adafruit** for their libraries. Without their work, projects like macropads wouldn’t be possible 💜
 
-```
