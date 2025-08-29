@@ -1,138 +1,195 @@
 
 # ⚙️ Trkey
 
-A modern **web-based tool** to configure your **micropad** — and soon, full keyboards.  
-Customize key bindings, layers, macros, and peripherals with an intuitive interface, and communicate directly with your device via the **Web Serial API**.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/status-active-success.svg)](#)
+[![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg?logo=react&logoColor=white)](#)
+[![Web Serial](https://img.shields.io/badge/API-Web%20Serial-blue.svg)](#)
+[![CircuitPython](https://img.shields.io/badge/CircuitPython-compatible-purple.svg)](https://circuitpython.org/)
+
+A modern web-based tool to configure your macropad — and soon, full keyboards.  
+Customize key bindings, layers, macros, and physical layouts with an intuitive interface, and communicate directly with your device via the Web Serial API.
+
 ---
 
 ## ✨ Features
 
-- **Full Key Remapping** – Assign single keys or complex shortcuts to any of the 9 keys. Drag-and-drop or click-to-assign.  
+- **Full Key Remapping** – Assign single keys or complex shortcuts to any key. Drag-and-drop or click-to-assign.  
+- **Configurable Physical Layout** – Visually define your macropad's physical button arrangement (e.g., 2x2, 3x3, etc.) and active key positions directly in the UI.  
 - **Multi-Layer Support** – Configure up to 10 layers for dynamic switching between keysets.  
-- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with [Trkey Macro](https://github.com/trinibos1/Trkey_macro).  
+- **Macro Management** – Create, edit, and assign custom macros to any key. Works seamlessly with Trkey Macropad.  
 - **Peripheral Controls** – Control volume, scrolling, or custom QMK keycodes via potentiometers or peripherals.  
 - **Persistent Profiles** – Save and load configurations in browser local storage.  
 - **Configuration Export** – Export `layers.json` for Pico firmware.  
-- **Web Serial API** – Connect to your device in real-time for logging & commands.  
-- **Live Key Tester** – Debug keypresses and modifiers.  
-- **Responsive UI** – Built with **React + Tailwind CSS**.  
-- **Interactive Terminal & Logging** – Monitor device logs and send commands directly.  
+- **Web Serial API Integration** – Connect to your device in real-time for logging, commands, and direct file transfer.  
+- **Live Key Tester** – Debug keypresses and modifiers directly in the browser.  
+- **Responsive UI** – Built with React + Tailwind CSS for a smooth experience on any device.  
+- **Interactive Terminal & Logging** – Monitor device serial logs and send commands directly to your Pico.  
 
 ---
 
 ## 🔗 Related Projects
 
-- **[Trkey Macropad](https://github.com/trinibos1/Trkey_macro)** – Official Pico-powered macropad hardware + firmware, fully compatible with the Trkey Configurator.
-- want your device add, contact me. 
+- **Trkey Macropad** – Official Pico-powered macropad hardware + firmware, fully compatible with the Trkey Configurator.  
+
+Want your device added? Contact me!
+
 ---
+
 ## 📁 File Structure
 
-- **Single-page app** (`index.html`)  
-- Includes **React + Tailwind CSS** inline (no server required)  
-- Fully **client-side**  
+- Single-page app (`index.html`)  
+- Includes React + Tailwind CSS inline (no server required)  
+- Fully client-side  
 
 ---
 
 ## 📋 Requirements
 
-- Chromium browser (**Chrome, Edge**) with Web Serial API enabled  
-- Raspberry Pi Pico with compatible **CircuitPython firmware**  
-- `layers.json` config file for keymap, macros, peripherals  
+- Chromium browser (Chrome, Edge) with Web Serial API enabled  
+- Raspberry Pi Pico with compatible CircuitPython firmware  
+- Pico running the **Trkey serial handler `code.py` script** for device communication (`PUT`/`GET`/`DEL`/`LIST` commands)  
+- `layers.json` config file for keymap, macros, and peripherals  
 
 ---
 
 ## 📡 Web Serial Protocol
 
+The configurator communicates with the Pico using a custom serial protocol, implemented in your Pico's `code.py` (or `main.py`) script.
+
 - **Baud Rate:** `115200`  
 - **Line Endings:** `\n`  
-- **Response Markers:** `<EOF>` (file data), `<END>` (text response)  
+- **Response Markers:**  
+  - `<EOF>` – end of file data  
+  - `<END>` – end of multi-line text response  
 
-### File Ops:
-- **GET:** `GET layers.json\n` → Receive until `<EOF>`  
-- **DEL:** `DEL layers.json\n` → Deletes file  
-- **PUT:** (Manual drag required due to CircuitPython MSC mode)  
+**File Operations:**
+
+- **GET**  
+```
+
+GET <filename>\n
+
+```
+Pico sends file content until `<EOF>\n`.
+
+- **PUT**  
+```
+
+PUT <filename>\n <file content> <EOF>\n
+
+```
+Pico confirms with `FILE RECEIVED\n`.
+
+- **DEL**  
+```
+
+DEL <filename>\n
+
+```
+Pico confirms with `DELETED\n`.
+
+- **LIST**  
+```
+
+LIST\n
+
+````
+Pico sends a list of files, each on a new line, until `<END>\n`.
 
 ---
 
 ## ⌨️ Supported Shortcuts
 
-Supports **hundreds of keycodes & combos**, including:  
+The Trkey Configurator leverages string representations that map directly to **Adafruit HID library codes** on your CircuitPython device.  
 
-- **Alphanumeric** (A–Z, 0–9)  
-- **Function Keys** (F1–F24)  
-- **Navigation** (Arrows, Home, End, PgUp, PgDn)  
-- **Modifiers** (Ctrl, Shift, Alt, GUI/Command)  
-- **System** (Sleep, Power, Wake)  
-- **Media Controls** (Play, Pause, Volume, Track Skip)  
-- **Mouse Actions** (Clicks, Scrolls, Drag shortcuts)  
-- **Common Shortcuts** (Ctrl+C, Ctrl+V, Alt+Tab, etc.)  
-- **App-Specific**:  
-  - Minecraft  
-  - KiCad  
-  - Fusion360  
-  - Browsers  
-  - Audio/Video editors  
-  - Design software  
+Supports hundreds of keycodes & combos, including:
 
-*(See full key list in `constants.js`.)*
+- **Alphanumeric:** A–Z, 0–9  
+- **Function Keys:** F1–F24  
+- **Navigation:** Arrows, Home, End, PgUp, PgDn  
+- **Modifiers:** Ctrl, Shift, Alt, GUI/Command  
+- **System:** Power, Sleep, Wake  
+- **Media Controls:** Play/Pause, Volume Up/Down, Mute, Track Skip  
+- **Mouse Actions:** LEFT_BUTTON, RIGHT_BUTTON, MIDDLE_BUTTON, Scrolls, Drag shortcuts  
+- **Common Shortcuts:** Ctrl+C, Ctrl+V, Alt+Tab, etc.  
+- **Layer Switching:** TO(x), MO(x), TT(x), DF(x)  
+
+**App-Specific Presets:**  
+- Minecraft  
+- KiCad  
+- Fusion360  
+- Browsers, audio/video editors, design software  
 
 ---
 
 ## 🛠️ Architecture & Data Flow
 
-- **Frontend (React/Tailwind)** → User edits keymap/macros  
-- **State Management (React)** → Config state stored in browser  
-- **Persistence** → Saved in `localStorage`  
-- **Export** → Generates `layers.json`  
-- **Transfer** → Manual drag to Pico CIRCUITPY  
-- **Firmware (code.py)** → Reads `layers.json`, loads mappings/macros  
+1. **Frontend (React/Tailwind):** User configures keymaps/macros in the browser UI  
+2. **State Management (React):** Config state managed client-side  
+3. **Persistence:** Profiles saved/loaded from `localStorage`  
+4. **Export:** Generates `layers.json`  
+5. **Transfer (Web Serial):** Sends `layers.json` to Pico (`PUT`)  
+6. **Firmware (code.py):** Reads uploaded `layers.json` and dynamically loads mappings/macros  
 
 ---
 
 ## 🖥️ Interface Breakdown
 
-- **KEYMAP** – Map keys, assign tap/hold, manage layers  
-- **MACROS** – Create and assign text/sequence macros  
-- **CONTROLS** – Configure peripherals (potentiometers, scroll, volume)  
-- **SAVE + LOAD** – Save profiles in browser, export `layers.json`  
-- **TERMINAL** – View Pico logs, send commands via Web Serial  
-- **SETTINGS** – Import raw JSON configs  
-- **KEY TESTER** – Debug HID events in-browser  
+- **KEYMAP** – Assign keys, drag-and-drop, manage layers  
+- **LAYOUT** – Configure grid size, toggle active keys  
+- **MACROS** – Create/edit/assign text or key sequence macros  
+- **CONNECT + LOAD** – Save/load profiles, export `layers.json`, Web Serial ops (connect, upload, download, delete, list)  
+- **SETTINGS** – Import raw JSON configs, set total number of active layers  
+- **KEY TESTER** – Debug live keypresses/modifiers in-browser  
 
 ---
 
-## 📡 `layers.json` Example
+## 🗺️ Roadmap 🚀
 
-```json
-[
-  {
-    "name": "Layer 0",
-    "labels": ["A", "B", "C", "", "", "", "", "", ""],
-    "keys": ["CONTROL_C", "CONTROL_V", "CONTROL_X", "A", "B", "C", "F1", "F2", "F3"],
-    "macros": [
-      { "name": "Hello", "sequence": "Hello, World!\n" }
-    ]
-  }
-]
-````
+### Phase 1: Current & Upcoming Enhancements
+- [x] Full Key Remapping  
+- [x] Configurable Physical Layout  
+- [x] Multi-Layer Support  
+- [x] Macro Management  
+- [x] Basic Peripheral Controls (media keys, scrolling)  
+- [x] Persistent Profiles  
+- [x] Configuration Export  
+- [x] Web Serial API Integration  
+- [x] Live Key Tester  
+- [x] Responsive UI  
+- [x] Interactive Terminal & Logging  
+- [ ] Advanced Layout Editor  
+- [ ] Improved Macro Editor (timing, conditionals, visual builder)  
+- [ ] Theming Options  
 
----
+### Phase 2: Expanded Hardware Support & Connectivity
+- [ ] Trkey Keyboard Support (full-sized keyboards)  
+- [ ] Hall Effect Switches Integration  
+- [ ] QMK/KMK Firmware Compatibility  
+- [ ] Wireless Connectivity (Bluetooth/BLE)  
 
-## 🤖 Firmware Role (CircuitPython `code.py`)
-
-* Reads and parses **`layers.json`**
-* Handles **3×3 key scanning + debouncing**
-* Sends **USB HID reports** (keyboard + media controls)
-* Runs macros, shortcuts, and layer switching
-* Updates OLED with active layer and key labels
+### Phase 3: Community & Extended Ecosystem
+- [ ] Community Preset Sharing  
+- [ ] Documentation & Tutorials  
+- [ ] Custom Firmware Generation  
 
 ---
 
 ## 🐛 Troubleshooting
 
-* **Serial Issues** – Check Chromium permissions, USB cable, baud `115200`
-* **UI Bugs** – Refresh page
-* **JSON Errors** – Ensure strict format (array of layer objects, each with `keys`, `labels`, optional `macros`)
+- **Serial Issues** – Use Chromium-based browser, check Web Serial permissions, verify USB cable, baud rate = 115200  
+- **Pico Not Responding / `UNKNOWN COMMAND`** – Ensure correct `code.py` uploaded & running on CIRCUITPY  
+- **Read-only Filesystem Error** – Ensure Pico’s filesystem is writable  
+- **UI Bugs** – Refresh page  
+- **JSON Errors** – Imported JSON must follow strict format:  
+```json
+{
+  "layers": [...],
+  "physical_layout": [...],
+  "grid_size": 3
+}
+````
 
 ---
 
@@ -148,15 +205,9 @@ MIT License – free to use, modify, and distribute.
 * Email: **[Trinibos1@proton.me](mailto:Trinibos1@proton.me)**
 
 ---
+
 ## 🙌 Thanks
 
-Huge thanks to **[Adafruit](https://www.adafruit.com/)** for their lib.  
-Without their work, projects like macropad wouldn’t be possible. 💜
+Huge thanks to **Adafruit** for their libraries. Without their work, projects like macropads wouldn’t be possible 💜
 
----
-## ⌨️ Coming Soon
-
-**Trkey Keyboard** 🚀
-
-**Hall affect switches**🥳
-
+```
