@@ -440,22 +440,23 @@
                 case "TO":
                     titleText = "Assign Permanent Layer Switch (TO)";
                     descriptionText = "Enter the layer number to switch to permanently.";
-                    break;
+                    break; // Added break
                 case "MO":
                     titleText = "Assign Momentary Layer Switch (MO)";
                     descriptionText = "Enter the layer number to switch to while held.";
-                    break;
+                    break; // Added break
                 case "TT":
                     titleText = "Assign Toggle Layer (TT)";
                     descriptionText = "Enter the layer number to toggle on/off.";
-                    break;
+                    break; // Added break
                 case "DF":
                     titleText = "Assign Set Default Layer (DF)";
                     descriptionText = "Enter the layer number to set as the new default.";
-                    break;
+                    break; // Added break
                 default:
                     titleText = "Assign Layer Function";
                     descriptionText = "Enter the target layer number.";
+                    break; // Added break for consistency
             }
 
             return (
@@ -838,7 +839,7 @@
         };
 
         // ConnectLoad component (formerly SaveLoad)
-        const ConnectLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown, webSerialSupported, isLoadingDeviceConfig, isHandshakeComplete, handleListFiles, handleDownloadLastGet, lastDownloadedFileContent }) => {
+        const ConnectLoad = ({ saveProfile, loadProfile, exportKeymap, uploadToDevice, isConnected, handleConnectPico, handleGetFile, handleDeleteFile, logs, clearLogs, showLogDropdown, toggleLogDropdown, webSerialSupported, isLoadingDeviceConfig, handleListFiles, handleDownloadLastGet, lastDownloadedFileContent }) => {
             const { useState, useEffect } = React;
             return (
                 <div className="flex flex-col items-center w-full p-8">
@@ -883,41 +884,33 @@
                         ) : (
                             <>
                                 <p className="text-green-400 text-center text-lg font-semibold">Connected to Pico!</p>
-                                {!isHandshakeComplete ? (
-                                    <p className="text-yellow-400 text-center text-sm">Waiting for device handshake to complete...</p>
-                                ) : (
-                                    <p className="text-green-400 text-center text-sm">Device handshake complete.</p>
-                                )}
+                                {/* Removed the "Device handshake complete." message */}
                                 <button
                                     onClick={uploadToDevice}
-                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold
-                                                ${isHandshakeComplete ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-500 cursor-not-allowed'}`}
-                                    disabled={!isHandshakeComplete}
+                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold bg-purple-600 hover:bg-purple-700`}
+                                    disabled={!isConnected}
                                 >
                                     Upload layers.json to Device
                                 </button>
                                 <button
                                     onClick={() => handleGetFile("layers.json")}
-                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold
-                                                ${isHandshakeComplete ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-500 cursor-not-allowed'}`}
-                                    disabled={!isHandshakeComplete}
+                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold bg-purple-600 hover:bg-purple-700`}
+                                    disabled={!isConnected}
                                 >
                                     Check layers.json on Device
                                 </button>
                                 <button
                                     onClick={() => handleDeleteFile("layers.json")}
-                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold
-                                                ${isHandshakeComplete ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-500 cursor-not-allowed'}`}
-                                    disabled={!isHandshakeComplete}
+                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold bg-purple-600 hover:bg-purple-700`}
+                                    disabled={!isConnected}
                                 >
                                     Delete layers.json on Device
                                 </button>
                                 <hr className="border-zinc-600 my-4" /> {/* Separator */}
                                 <button
                                     onClick={handleListFiles}
-                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold
-                                                ${isHandshakeComplete ? 'bg-teal-600 hover:bg-teal-700' : 'bg-gray-500 cursor-not-allowed'}`}
-                                    disabled={!isHandshakeComplete}
+                                    className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold bg-teal-600 hover:bg-teal-700`}
+                                    disabled={!isConnected}
                                 >
                                     List Files on Device
                                 </button>
@@ -1311,9 +1304,8 @@
                         ) : (
                             <button
                                 onClick={uploadToDevice}
-                                className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full sm:w-1/2
-                                            ${isHandshakeComplete ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-500 cursor-not-allowed'}`}
-                                disabled={!isHandshakeComplete}
+                                className={`px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold bg-red-600 hover:bg-red-700`}
+                                disabled={!isConnected}
                             >
                                 Upload Layout to Macropad
                             </button>
@@ -1321,7 +1313,7 @@
                     </div>
                      {!webSerialSupported && (
                         <p className="text-red-300 text-sm mt-4 text-center">
-                            *Web Serial API is required for direct device interaction and is best supported in Chromium-based browsers (e.g., Chrome, Edge).
+                            *Web Serial API is required for direct device interaction and is best supported in Chromium-based browsers (e.g., Chrome, Chrome Beta, Edge).
                         </p>
                     )}
 
@@ -1341,7 +1333,6 @@
             const readerRef = useRef(null); // Changed to useRef
             const writerRef = useRef(null); // Changed to useRef
             const [isConnected, setIsConnected] = useState(false);
-            const [isHandshakeComplete, setIsHandshakeComplete] = useState(false); // NEW: Handshake state
             const encoder = new TextEncoder();
             const decoder = new TextDecoder(); 
             const incomingAppReadBuffer = useRef(''); 
@@ -1368,8 +1359,36 @@
             const toggleLogDropdown = () => {
                 setShowLogDropdown(prev => !prev);
             };
+
+            // Define a comprehensive function to clean a line of terminal junk
+            const cleanReceivedLine = (line) => {
+                let cleaned = line;
+
+                // 1. Remove OSC (Operating System Command) sequences (e.g., window title)
+                // These start with ESC ] and typically end with BEL (\x07) or ST (ESC \).
+                // This regex attempts to match ESC ] followed by any character (non-greedy)
+                // until it finds a BEL, ST, or another ESC character (which might indicate a malformed sequence end)
+                // or the end of the line.
+                cleaned = cleaned.replace(/\x1B\](?:.*?)(?:\x07|\x1B\\|\x1B|$)/g, '');
+
+                // 2. Remove CSI (Control Sequence Introducer) sequences (e.g., color codes)
+                // These start with ESC [ and end with a letter.
+                cleaned = cleaned.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+                
+                // 3. Remove any remaining bare ESC characters.
+                // This catches any ESCs that might have been part of an unrecognised or malformed sequence
+                // after the previous replacements.
+                cleaned = cleaned.replace(/\x1B/g, '');
+
+                // 4. Remove miscellaneous non-printable ASCII control characters (C0 control codes)
+                //    excluding newline (\n) and carriage return (\r) which are fundamental for line handling.
+                cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''); 
+
+                // Finally, trim leading/trailing whitespace characters
+                return cleaned.trim();
+            };
             
-            // Helper for APP component to send JSON commands
+            // Helper for APP component to send JSON commands (for future use, if device implements JSON API)
             const appSendJsonCommand = useCallback(async (commandObj) => { 
                 const activeWriter = writerRef.current; 
 
@@ -1406,65 +1425,71 @@
                 }
             }, []);
 
-            // Helper for APP component to read raw lines from serial, stripping known prefixes and skipping echoes
-            const appReadLine = useCallback(async (timeoutMs = 15000) => { 
-                const activeReader = readerRef.current; 
-
-                if (!activeReader) { 
+            // New: Function to read a single line acknowledgement
+            const appReadAcknowledgement = useCallback(async (expectedResponse = null, timeoutMs = 15000) => {
+                const activeReader = readerRef.current;
+                if (!activeReader) {
                     addLog(`App: Operation aborted. Reason: Reader unavailable.`, 'error');
                     throw new Error(`Reader not available.`);
                 }
 
-                let buffer = incomingAppReadBuffer.current; 
-                incomingAppReadBuffer.current = ''; 
+                let buffer = incomingAppReadBuffer.current;
+                incomingAppReadBuffer.current = ''; // Clear buffer at the start of a new read
 
                 const timeoutPromise = new Promise((_, reject) => {
                     timeoutIdRef.current = setTimeout(() => {
-                        // Ensure reader is available before cancelling
                         if (activeReader && activeReader.locked) {
-                            activeReader.cancel(); 
+                            activeReader.cancel();
                         }
-                        reject(new Error(`Read operation timed out after ${timeoutMs}ms.`)); 
+                        reject(new Error(`Acknowledgement read timed out after ${timeoutMs}ms. Expected: "${expectedResponse || 'any non-empty line'}"`));
                     }, timeoutMs);
                 });
 
                 const readPromise = new Promise(async (resolve, reject) => {
                     try {
                         while (true) {
-                            const { value, done } = await activeReader.read(); 
+                            const { value, done } = await activeReader.read();
                             if (done) {
-                                addLog("App: Reader stream closed.", "info");
+                                addLog("App: Reader stream closed during acknowledgement read.", "info");
                                 reject(new Error("Reader stream closed prematurely."));
                                 break;
                             }
                             if (value) {
                                 buffer += decoder.decode(value, { stream: true });
-                                
+
                                 let newlineIndex;
                                 while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-                                    let line = buffer.substring(0, newlineIndex).trim();
-                                    buffer = buffer.substring(newlineIndex + 1); 
+                                    let line = buffer.substring(0, newlineIndex);
+                                    buffer = buffer.substring(newlineIndex + 1);
 
-                                    // CircuitPython's REPL often prefixes lines with ' ]0;🐍code.py | 9.2.8 \'
-                                    // This removes that prefix for cleaner log output and parsing.
-                                    while (line.startsWith(' ]0;🐍code.py | 9.2.8 \\')) {
-                                        line = line.substring(' ]0;🐍code.py | 9.2.8 \\'.length);
+                                    const originalLineBeforeCleaning = line;
+                                    line = cleanReceivedLine(line);
+
+                                    addLog(`DEBUG (Ack): Raw line: "${originalLineBeforeCleaning.replace(/\x1B/g, '\\x1B')}" -> Cleaned: "${line}"`, 'debug');
+
+                                    if (line === "iles:") { // CircuitPython LIST quirk
+                                        addLog(`App: Correcting "iles:" to "Files:" (CircuitPython LIST quirk).`, 'debug');
+                                        line = "Files:";
                                     }
-                                    
+
                                     // Skip echoing of sent commands
                                     if (lastSentCommandForEchoCheck.current && line === lastSentCommandForEchoCheck.current) {
                                         addLog(`App: Skipping echoed command: "${line}"`, 'debug');
-                                        lastSentCommandForEchoCheck.current = null; 
-                                        continue; 
+                                        lastSentCommandForEchoCheck.current = null;
+                                        continue;
                                     }
 
-                                    // If a non-empty, non-echoed line is received, resolve the promise.
-                                    if (line.length > 0) { 
-                                        addLog(`App: Received line: "${line}"`, 'response');
-                                        clearTimeout(timeoutIdRef.current); 
+                                    // If we are looking for a specific response and found it, or if any non-empty line is valid.
+                                    if (line.length > 0 && (expectedResponse === null || line === expectedResponse)) {
+                                        clearTimeout(timeoutIdRef.current);
                                         incomingAppReadBuffer.current = buffer; // Store remaining buffer
-                                        resolve(line); 
-                                        return; 
+                                        addLog(`App: Received expected acknowledgement: "${line}"`, 'response');
+                                        resolve(line);
+                                        return;
+                                    }
+                                    // If we received an unexpected line, log it but keep looking unless timeout
+                                    if (line.length > 0 && expectedResponse !== null && line !== expectedResponse) {
+                                        addLog(`App: Received unexpected line during acknowledgement wait: "${line}" (still looking for "${expectedResponse}")`, 'warn');
                                     }
                                 }
                                 incomingAppReadBuffer.current = buffer; // Store current buffer if no newline found
@@ -1472,12 +1497,74 @@
                         }
                     } catch (error) {
                         clearTimeout(timeoutIdRef.current);
-                        addLog(`App: Error during read operation: ${error.message}`, "error");
-                        reject(error); 
+                        addLog(`App: Error during acknowledgement read: ${error.message}`, "error");
+                        reject(error);
                     }
                 });
 
-                return Promise.race([readPromise, timeoutPromise]); 
+                return Promise.race([readPromise, timeoutPromise]);
+            }, []);
+
+            // New: Function to read multi-line file content until <EOF>
+            const appReadFileContent = useCallback(async (timeoutMs = 60000) => {
+                const activeReader = readerRef.current;
+                if (!activeReader) {
+                    addLog(`App: Operation aborted. Reason: Reader unavailable.`, 'error');
+                    throw new Error(`Reader not available.`);
+                }
+
+                let buffer = incomingAppReadBuffer.current;
+                incomingAppReadBuffer.current = ''; // Clear buffer at the start of a new read
+                let fileContentBuffer = '';
+
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutIdRef.current = setTimeout(() => {
+                        if (activeReader && activeReader.locked) {
+                            activeReader.cancel();
+                        }
+                        reject(new Error(`File content read timed out after ${timeoutMs}ms. (Missing <EOF>)`));
+                    }, timeoutMs);
+                });
+
+                const readPromise = new Promise(async (resolve, reject) => {
+                    try {
+                        while (true) {
+                            const { value, done } = await activeReader.read();
+                            if (done) {
+                                addLog("App: Reader stream closed during file content read.", "info");
+                                reject(new Error("Reader stream closed prematurely."));
+                                break;
+                            }
+                            if (value) {
+                                buffer += decoder.decode(value, { stream: true });
+
+                                const eofIndex = buffer.indexOf("<EOF>\n");
+                                if (eofIndex !== -1) {
+                                    fileContentBuffer += buffer.substring(0, eofIndex);
+                                    const remainingBuffer = buffer.substring(eofIndex + "<EOF>\n".length);
+                                    
+                                    clearTimeout(timeoutIdRef.current);
+                                    incomingAppReadBuffer.current = remainingBuffer; // Store buffer after EOF
+                                    
+                                    const cleanedContent = cleanReceivedLine(fileContentBuffer); // Clean the whole file content
+                                    addLog(`App: Received full file content (up to <EOF>), length: ${cleanedContent.length}.`, 'response');
+                                    resolve(cleanedContent);
+                                    return;
+                                }
+
+                                // If <EOF> not yet found, append whole buffer to fileContentBuffer
+                                fileContentBuffer += buffer;
+                                buffer = ''; // Clear buffer as content moved to fileContentBuffer
+                            }
+                        }
+                    } catch (error) {
+                        clearTimeout(timeoutIdRef.current);
+                        addLog(`App: Error during file content read: ${error.message}`, "error");
+                        reject(error);
+                    }
+                });
+
+                return Promise.race([readPromise, timeoutPromise]);
             }, []);
 
 
@@ -1492,7 +1579,7 @@
                     setIsLoadingDeviceConfig(true); 
                     setModalContent({
                         title: "Connecting...",
-                        message: "Opening port and initiating handshake...", 
+                        message: "Opening port and initiating communication...", 
                         onConfirm: undefined,
                         onCancel: undefined,
                         autoClose: false 
@@ -1500,85 +1587,57 @@
                     setShowModal(true); 
 
                     // Open the serial port.
+                    // Changed baudRate to 115200 for better compatibility
                     await selectedPort.open({ baudRate: 115200 });
 
                     // Get a writable stream and a readable stream from the port.
-                    // These are used for sending and receiving data.
                     writerRef.current = selectedPort.writable.getWriter();
                     readerRef.current = selectedPort.readable.getReader();
                     setPort(selectedPort);
 
                     // Update connection state for UI.
                     setIsConnected(true); 
-                    setIsHandshakeComplete(false); // Reset handshake status on new connection attempt
                     
-                    addLog("Successfully connected to Pico! Waiting for device bootup...", "success");
+                    addLog("Successfully connected to Pico! Proceeding to load configuration...", "success");
 
                     // Small delay to give Pico firmware time to boot and UART to settle.
-                    await new Promise(r => setTimeout(r, 200)); 
+                    await new Promise(r => setTimeout(r, 1000)); 
 
-                    addLog("Initiating handshake by sending 'hello'...", "info");
-                    // Send a "hello" command to the Pico to initiate handshake.
-                    await appSendJsonCommand({ cmd: "hello" }); 
-                    
-                    // Handshake with Pico
+                    // --- SIMPLIFIED CONNECTION LOGIC (NO EXPLICIT HANDSHAKE) ---
+                    // Directly proceed with requesting layers.json after a brief delay
                     try {
-                        // Wait for "hello_ack" confirmation from Pico
-                        addLog("Waiting for Pico's 'hello_ack' confirmation...", "info");
-                        const helloAckLine = await appReadLine(); 
-                        let helloAckResponse;
-                        try {
-                            helloAckResponse = JSON.parse(helloAckLine);
-                        } catch (e) {
-                            throw new Error(`Failed to parse hello_ack confirmation as JSON: "${helloAckLine}". Error: ${e.message}`);
-                        }
-                        if (helloAckResponse.status === "hello_ack") {
-                            addLog("Pico acknowledged 'hello'. Device unlocked for file transfers.", "success");
-                            setIsHandshakeComplete(true); // Handshake complete!
-                        } else {
-                            throw new Error(`Pico returned unexpected status for 'hello_ack': "${helloAckLine}"`);
-                        }
-
-                        // Now proceed with requesting layers.json if handshake was successful
-                        addLog("Handshake successful. Requesting layers.json from Pico...", "info");
-                        await appSendRawCommand("GET layers.json"); // Use raw command for GET
+                        addLog("Requesting layers.json from Pico...", "info");
+                        await appSendRawCommand("GET layers.json"); 
                         
-                        let fileContentBuffer = '';
-                        let line;
-                        // Read lines until <EOF>
-                        while ((line = await appReadLine()) !== "<EOF>") {
-                            fileContentBuffer += line; // Accumulate content
-                        }
-                        setLastDownloadedFileContent(fileContentBuffer); // Store for potential download
+                        // Use appReadFileContent to get the full file content
+                        const fileContent = await appReadFileContent(60000); // 60-second timeout for the file content
+                        
+                        setLastDownloadedFileContent(fileContent); // Store for potential download
 
-                        // Try to parse the collected content as JSON
-                        let fileResponse;
-                        try {
-                            fileResponse = JSON.parse(fileContentBuffer);
-                        } catch (e) {
-                            // If it's not valid JSON, it's an error for the configurator
-                            throw new Error(`Failed to parse layers.json content as JSON: "${fileContentBuffer}". Error: ${e.message}`);
-                        }
-
-                        // If content is received, load it into the configurator.
-                        if (fileResponse) { // No need to check for content !== undefined as JSON.parse already happened
-                            loadConfigFromJson(fileContentBuffer, "fromDevice"); // Pass original string for loadConfigFromJson
+                        if (fileContent.length > 0) { 
+                            loadConfigFromJson(fileContent, "fromDevice"); // Pass original string for loadConfigFromJson
                             setModalContent(prev => ({ ...prev, title: "Load Successful", message: "Connected and loaded configuration from device!", autoClose: true }));
                             addLog("Configuration loaded automatically from device.", "success");
                         } else {
-                            throw new Error("No content received for layers.json.");
+                            // If GET returned <EOF> immediately without content, assume file not found/empty
+                            addLog("layers.json not found or is empty on device. Starting with default configuration.", "warn");
+                            loadConfigFromJson(JSON.stringify({
+                                grid_size: DEFAULT_GRID_SIZE,
+                                physical_layout: createDefaultPhysicalLayout(DEFAULT_GRID_SIZE),
+                                layers: Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE))
+                            }), "default");
+                            setModalContent(prev => ({ ...prev, title: "No Device Config", message: "layers.json not found or empty on device. Starting with default configuration.", autoClose: false }));
                         }
-                    } catch (handshakeError) {
-                        setModalContent(prev => ({ ...prev, title: "Device Handshake Failed", message: `Failed to communicate with Pico during handshake: ${handshakeError.message}. Starting with default configuration.`, autoClose: false }));
-                        addLog(`Device handshake failed: ${handshakeError.message}.`, "error");
-                        setIsHandshakeComplete(false); // Ensure handshake is marked as failed
-                        // Load default configuration if handshake fails.
+                    } catch (commandError) {
+                        addLog(`Device communication failed during initial load: ${commandError.message}. Starting with default configuration.`, "error");
                         loadConfigFromJson(JSON.stringify({
                             grid_size: DEFAULT_GRID_SIZE,
                             physical_layout: createDefaultPhysicalLayout(DEFAULT_GRID_SIZE),
                             layers: Array(DEFAULT_LAYERS).fill().map((_, i) => createEmptyLayer(i, DEFAULT_GRID_SIZE))
                         }), "default");
+                        setModalContent(prev => ({ ...prev, title: "Device Communication Failed", message: `Failed to communicate with Pico: ${commandError.message}. Starting with default configuration.`, autoClose: false }));
                     }
+                    // --- END SIMPLIFIED CONNECTION LOGIC ---
 
                     // Add a disconnect event listener
                     selectedPort.addEventListener('disconnect', () => {
@@ -1586,7 +1645,6 @@
                         if (readerRef.current && readerRef.current.locked) readerRef.current.releaseLock(); 
                         if (writerRef.current && writerRef.current.locked) writerRef.current.releaseLock();
                         setIsConnected(false);
-                        setIsHandshakeComplete(false); 
                         setPort(null);
                         readerRef.current = null; 
                         writerRef.current = null; 
@@ -1603,7 +1661,6 @@
 
                 } catch (error) {
                     setIsConnected(false); 
-                    setIsHandshakeComplete(false); 
                     setModalContent({
                         title: "Connection Failed",
                         message: "Failed to connect to Pico: " + error.message,
@@ -1634,17 +1691,17 @@
                         return;
                     }
 
-                    // Ensure connection and handshake are complete before uploading.
-                    if (!isConnected || !isHandshakeComplete) { 
+                    // Ensure connection is complete before uploading.
+                    if (!isConnected) { 
                         setModalContent({
-                            title: "Not Ready",
-                            message: "Please connect to your Pico device and ensure handshake is complete before uploading.",
+                            title: "Not Connected",
+                            message: "Please connect to your Pico device before uploading.",
                             onConfirm: undefined,
                             onCancel: undefined,
                             autoClose: false
                         });
                         setShowModal(true);
-                        addLog("Not connected or handshake not complete for upload.", "warn");
+                        addLog("Not connected for upload.", "warn");
                         return;
                     }
 
@@ -1696,19 +1753,12 @@
 
                     // Send the "put" command.
                     await appSendRawCommand("PUT layers.json"); 
-                    // Wait for the "READY" response from the device.
-                    let responseLine = await appReadLine();
-                    if (responseLine !== "READY") {
-                        throw new Error(`Device did not respond with READY, got: "${responseLine}"`);
-                    }
-                    addLog("Device is READY for file content.", "info");
-
-                    // Send the raw JSON content followed by <EOF>
+                    // Directly send the raw JSON content followed by <EOF>
                     await writerRef.current.write(encoder.encode(jsonContent + "\n<EOF>\n"));
                     addLog("File content and <EOF> sent.", "info");
 
                     // Wait for "FILE RECEIVED" confirmation
-                    responseLine = await appReadLine();
+                    const responseLine = await appReadAcknowledgement("FILE RECEIVED"); // Expect specific acknowledgement
                     if (responseLine === "FILE RECEIVED") {
                          setModalContent({
                             title: "Upload Successful",
@@ -1737,11 +1787,11 @@
 
             const handleGetFile = async (filename) => {
                 try {
-                    // Ensure connection and handshake are complete before getting a file.
-                    if (!isConnected || !isHandshakeComplete) { 
-                        setModalContent({ title: "Not Ready", message: "Please connect to your Pico device and ensure handshake is complete before checking files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
+                    // Ensure connection is complete before getting a file.
+                    if (!isConnected) { 
+                        setModalContent({ title: "Not Connected", message: "Please connect to your Pico device before checking files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
                         setShowModal(true);
-                        addLog("Not connected or handshake not complete for file check.", "warn");
+                        addLog("Not connected for file check.", "warn");
                         return;
                     }
                     setModalContent({ title: "Checking...", message: `Checking ${filename} on Pico. Please wait.`, onConfirm: undefined, onCancel: undefined, autoClose: false });
@@ -1751,23 +1801,18 @@
                     // Send the "get" command for the specified file.
                     await appSendRawCommand(`GET ${filename}`); // Use raw command for GET
                     
-                    let fileContentBuffer = '';
-                    let line;
-                    // Read lines until <EOF>
-                    while ((line = await appReadLine()) !== "<EOF>") {
-                        fileContentBuffer += line + "\n"; // Accumulate content, re-add newline if it was stripped
-                    }
-                    fileContentBuffer = fileContentBuffer.trim(); // Trim last newline if any
+                    // Use appReadFileContent to get the full file content
+                    const fileContent = await appReadFileContent(); 
 
-                    setLastDownloadedFileContent(fileContentBuffer); // Store for potential download
+                    setLastDownloadedFileContent(fileContent); // Store for potential download
 
                     // If content is received, display it in the settings tab.
-                    if (fileContentBuffer.length > 0) { 
+                    if (fileContent.length > 0) { 
                         try {
-                            const parsed = JSON.parse(fileContentBuffer);
+                            const parsed = JSON.parse(fileContent);
                             setJsonInput(JSON.stringify(parsed, null, 2));
                         } catch (parseError) {
-                            setJsonInput(fileContentBuffer); // If not valid JSON, display as plain text
+                            setJsonInput(fileContent); // If not valid JSON, display as plain text
                             addLog(`Received file "${filename}" is not valid JSON. Displaying as plain text.`, "warn");
                         }
                         
@@ -1801,11 +1846,11 @@
 
             const handleDeleteFile = async (filename) => {
                 try {
-                    // Ensure connection and handshake are complete before deleting a file.
-                    if (!isConnected || !isHandshakeComplete) { 
-                        setModalContent({ title: "Not Ready", message: "Please connect to your Pico device and ensure handshake is complete before deleting files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
+                    // Ensure connection is complete before deleting a file.
+                    if (!isConnected) { 
+                        setModalContent({ title: "Not Connected", message: "Please connect to your Pico device before deleting files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
                         setShowModal(true);
-                        addLog("Not connected or handshake not complete for file deletion.", "warn");
+                        addLog("Not connected for file deletion.", "warn");
                         return;
                     }
                     setModalContent({
@@ -1819,7 +1864,7 @@
                             
                             // Send the "del" command for the specified file.
                             await appSendRawCommand(`DEL ${filename}`);
-                            const responseLine = await appReadLine();
+                            const responseLine = await appReadAcknowledgement("DELETED"); // Expect specific acknowledgement
                             
                             // Check the response status for success.
                             if (responseLine === "DELETED") {
@@ -1850,10 +1895,10 @@
 
             const handleListFiles = async () => {
                 try {
-                    if (!isConnected || !isHandshakeComplete) {
-                        setModalContent({ title: "Not Ready", message: "Please connect to your Pico device and ensure handshake is complete before listing files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
+                    if (!isConnected) {
+                        setModalContent({ title: "Not Connected", message: "Please connect to your Pico device before listing files.", onConfirm: undefined, onCancel: undefined, autoClose: false });
                         setShowModal(true);
-                        addLog("Not connected or handshake not complete for listing files.", "warn");
+                        addLog("Not connected for listing files.", "warn");
                         return;
                     }
                     setModalContent({ title: "Listing Files...", message: "Requesting file list from Pico. Please wait.", onConfirm: undefined, onCancel: undefined, autoClose: false });
@@ -1865,18 +1910,20 @@
                     let fileList = [];
                     let line;
                     // Read lines until <END>
-                    while ((line = await appReadLine()) !== "<END>") {
+                    // Use appReadAcknowledgement to get each line, but don't pass expectedResponse for the lines themselves
+                    while ((line = await appReadAcknowledgement(null, 3000)) !== "<END>") { // Reduced timeout for individual lines in a list
                         if (line.startsWith("Files:")) {
-                            // Skip the "Files:" header line
                             continue;
                         }
-                        fileList.push(line);
+                        if (!line.startsWith(".")) {
+                            fileList.push(line);
+                        }
                     }
                     
-                    setModalContent({ title: "Files Listed", message: `Found ${fileList.length} files on device. Details in log.`, onConfirm: undefined, onCancel: undefined, autoClose: true });
-                    addLog("--- Files on Device ---", "info");
+                    setModalContent({ title: "Files Listed", message: `Found ${fileList.length} user files on device. Details in log.`, onConfirm: undefined, onCancel: undefined, autoClose: true });
+                    addLog("--- User Files on Device ---", "info");
                     fileList.forEach(file => addLog(`- ${file}`, "filelist"));
-                    addLog("--- End of File List ---", "info");
+                    addLog("--- End of User File List ---", "info");
                 } catch (err) {
                     setModalContent({ title: "List Files Failed", message: `Failed to list files: ${err.message}`, onConfirm: undefined, onCancel: undefined, autoClose: false });
                     addLog(`List files failed: ${err.message}`, "error");
@@ -2291,7 +2338,20 @@
             // Refactored JSON Load function (from manual input or auto-load)
             const loadConfigFromJson = (jsonString, source = "manual") => {
                 try {
-                    const parsedJson = JSON.parse(jsonString);
+                    // Extract potential JSON object (starts with '{', ends with '}')
+                    const jsonStartIndex = jsonString.indexOf('{');
+                    const jsonEndIndex = jsonString.lastIndexOf('}');
+
+                    let cleanedJsonString = jsonString;
+
+                    if (jsonStartIndex !== -1 && jsonEndIndex !== -1 && jsonEndIndex > jsonStartIndex) {
+                        cleanedJsonString = jsonString.substring(jsonStartIndex, jsonEndIndex + 1);
+                        addLog(`Extracted potential JSON substring from received data (length: ${cleanedJsonString.length}).`, "debug");
+                    } else {
+                        addLog("Could not find a clear JSON object boundary ({}). Attempting to parse raw string.", "warn");
+                    }
+
+                    const parsedJson = JSON.parse(cleanedJsonString);
                     addLog(`Loading configuration from ${source} source.`, "info");
 
                     if (typeof parsedJson === 'object' && parsedJson !== null && Array.isArray(parsedJson.layers)) {
@@ -2335,7 +2395,8 @@
                                         keys[layoutItem.index] = layerKeys[layoutItem.index] || null;
                                         labels[layoutItem.index] = layerLabels[layoutItem.index] || '';
                                     }
-                                });
+                                }
+                                );
 
                                 return {
                                     name: loadedLayers[layerIdx].name || `Layer ${layerIdx}`,
@@ -2379,7 +2440,7 @@
                     }
                 } catch (error) {
                     addLog(`Failed to load configuration from ${source}: ${error.message}`, "error");
-                    if (source === "manual") { 
+                    if (source === "manual" || source === "fromDevice") { // Show modal for device load errors as well
                         setModalContent({
                             title: `Configuration Load Error (${source})`,
                             message: `Failed to load configuration: ${error.message}. Please check the JSON format.`,
@@ -2467,9 +2528,6 @@
                             <span className={`text-sm px-3 py-1 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600'} text-white`}>
                                 Connected: {isConnected ? 'Yes' : 'No'}
                             </span>
-                            <span className={`text-sm px-3 py-1 rounded-full ${isHandshakeComplete ? 'bg-green-600' : 'bg-red-600'} text-white`}>
-                                Handshake: {isHandshakeComplete ? 'Complete' : 'Pending'}
-                            </span>
                         </div>
                         {isLoadingDeviceConfig && (
                             <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -2534,7 +2592,6 @@
                                     isConnected={isConnected} 
                                     handleConnectPico={handleConnectPico} 
                                     webSerialSupported={webSerialSupported} 
-                                    isHandshakeComplete={isHandshakeComplete} 
                                 />
                             </div>
                         )}
@@ -2567,7 +2624,6 @@
                                     toggleLogDropdown={toggleLogDropdown} 
                                     webSerialSupported={webSerialSupported} 
                                     isLoadingDeviceConfig={isLoadingDeviceConfig} 
-                                    isHandshakeComplete={isHandshakeComplete} 
                                     handleListFiles={handleListFiles}
                                     handleDownloadLastGet={handleDownloadLastGet}
                                     lastDownloadedFileContent={lastDownloadedFileContent}
