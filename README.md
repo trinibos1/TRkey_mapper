@@ -1,7 +1,7 @@
 
 # ⚙️ TRKey
 
-![TRKey Logo](./assets/trkey-logo.png)
+
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
