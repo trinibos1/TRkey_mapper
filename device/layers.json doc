@@ -1,0 +1,113 @@
+Trkey layers.json Documentation 📄
+The layers.json file is the core configuration file for your Trkey macropad. It defines everything from the physical arrangement of your keys to the specific actions they perform across different layers, including custom macros.
+1. JSON Structure Overview 🏗️
+The layers.json file is a single JSON object with the following top-level properties:
+{
+  "grid_size": 3,
+  "physical_layout": [
+    { "index": 0, "row": 0, "col": 0 },
+    { "index": 1, "row": 0, "col": 1 },
+    // ... more key definitions
+  ],
+  "layers": [
+    {
+      "name": "Base Layer",
+      "labels": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
+      "keys": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
+      "macros": [
+        { "id": 1, "name": "Hello World!", "sequence": "Hello World!" }
+      ]
+    },
+    {
+      "name": "Function Layer",
+      "labels": ["F1", "F2", "Mute", "Vol Dn", "Vol Up", "", "", "", ""],
+      "keys": ["F1", "F2", "MUTE", "VOLUME_DECREMENT", "VOLUME_INCREMENT", "NO_OP", "NO_OP", "NO_OP", "NO_OP"]
+    }
+  ]
+}
+
+2. Property Details 📝
+Let's break down each property:
+grid_size (Number)
+•	Description: An integer representing the dimensions of your square macropad grid (e.g., 3 for a 3x3 grid, 4 for a 4x4 grid). The configurator supports 2x2 to 5x5 grids.
+•	Example: "grid_size": 3
+physical_layout (Array of Objects)
+•	Description: This array defines the active physical key positions on your macropad. Each object within the array represents one physical key. The length of this array determines the number of active keys.
+o	index (Number): The logical index of the key (0 to (grid_size * grid_size) - 1). This is crucial as it links to the keys and labels arrays within each layer.
+o	row (Number): The row of the key in the grid (0-indexed).
+o	col (Number): The column of the key in the grid (0-indexed).
+•	Important: Only keys defined in physical_layout will respond to input on your device. Any position not included here is considered an "empty slot" and will not trigger any action.
+•	Example:
+•	"physical_layout": [
+•	  { "index": 0, "row": 0, "col": 0 },
+•	  { "index": 1, "row": 0, "col": 1 },
+•	  { "index": 2, "row": 0, "col": 2 },
+•	  { "index": 3, "row": 1, "col": 0 }
+•	]
+
+layers (Array of Objects)
+•	Description: This is an array where each object represents a distinct keymap layer for your macropad. The order in this array determines the layer number (Layer 0, Layer 1, etc.).
+•	Each layer object has the following properties:
+name (String)
+o	Description: A human-readable name for the layer (e.g., "Base Layer", "Function Layer", "Gaming Layer").
+o	Example: "name": "Base Layer"
+labels (Array of Strings)
+o	Description: An array of strings representing the display labels for each key on this specific layer in the web configurator. Its length should be grid_size * grid_size. These are purely for visual representation in the UI.
+o	Example (for a 3x3 grid): "labels": ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+keys (Array of Strings)
+o	Description: The most critical part of a layer, this array defines the actual keycodes or functions assigned to each physical key for this layer. Its length should match grid_size * grid_size.
+o	Valid Values:
+	CircuitPython Keycodes: Common keyboard keycodes (e.g., "A", "ENTER", "F1", "LEFT_SHIFT"). These typically correspond to adafruit_hid.keycode.Key or adafruit_hid.consumer_control_code.ConsumerControlCode values.
+	Combination Shortcuts: Predefined shortcuts combining modifiers (e.g., "CONTROL_C", "ALT_TAB").
+	Media Controls: "VOLUME_INCREMENT", "MUTE", "PLAY_PAUSE", etc.
+	Mouse Actions: "MOUSE_BUTTON_1", "MOUSE_WHEEL_UP", etc.
+	Layer Switching: Special functions to switch between layers:
+	"TO(X)": Permanently switch to Layer X.
+	"MO(X)": Momentarily switch to Layer X while held.
+	"TT(X)": Toggle Layer X on/off.
+	"DF(X)": Set Layer X as the new default layer.
+	Macros: "MACRO_X" where X corresponds to the id of a macro defined in this layer's macros array.
+	"NO_OP": No operation. The key does nothing.
+	null or empty string "": Also treated as "no operation".
+o	Example (for a 3x3 grid):
+o	"keys": [
+o	  "A", "B", "C",
+o	  "MO(1)", "NO_OP", "DEL",
+o	  "MACRO_1", "VOLUME_DECREMENT", "VOLUME_INCREMENT"
+o	]
+
+macros (Array of Objects - Optional, usually in Layer 0)
+o	Description: An optional array that holds definitions for custom macros. While you can technically add this to any layer, the Trkey Configurator UI currently only manages and expects macros to be associated with Layer 0 for simplicity in the generated JSON.
+o	Each macro object has:
+	id (Number): A unique identifier for the macro. This ID is referenced by "MACRO_X" in the keys array.
+	name (String): A descriptive name for the macro (e.g., "Hello World!").
+	sequence (String): The actual string or key sequence that the macro will type/send. This can be plain text, or a string representation of key combinations (e.g., "control+alt+t"). The CircuitPython device will interpret this.
+•	Example:
+•	"macros": [
+•	  { "id": 1, "name": "Hello World!", "sequence": "Hello World!" },
+•	  { "id": 2, "name": "Open Terminal", "sequence": "control+alt+t" }
+•	]
+
+3. How to Use layers.json with the Trkey Configurator 🛠️
+A. Generating layers.json
+1.	Configure Your Layout & Keymap: Use the "KEYMAP" and "LAYOUT" tabs in the Trkey Configurator to set up your desired keys and layers.
+2.	Add Macros (if any): Use the "MACROS" tab to define any custom macros.
+3.	Export: Go to the "CONNECT + LOAD" tab and click the "Export Configuration as layers.json" button. This will download the layers.json file to your computer.
+B. Loading layers.json into the Configurator
+There are two main ways to load a layers.json file:
+1.	From a Saved File:
+o	Go to the "SETTINGS" tab.
+o	Paste the content of your layers.json file into the "Import JSON Configuration" textarea.
+o	Click "Load JSON". The configurator will update its UI to reflect the loaded configuration.
+2.	From Your Pico Device (Automatic on Connect):
+o	Go to the "CONNECT + LOAD" tab.
+o	Click "Connect to Device".
+o	If your Pico has a layers.json file and is running the appropriate serial handler code.py script (which I provided earlier), the configurator will automatically attempt to fetch and load the layers.json content from the device.
+C. Uploading layers.json to Your Pico Device
+1.	Connect to Device: In the "CONNECT + LOAD" tab, ensure you are successfully connected to your Pico device.
+2.	Upload: Click the "Upload layers.json to Device" button.
+o	This will take the current configuration displayed in the web application and send it to your Pico, overwriting any existing layers.json file on the device.
+o	Important: Your Pico must be running the serial handler code.py script for this upload to succeed.
+Conclusion
+The layers.json file provides a flexible and comprehensive way to define and manage your Trkey macropad's functionality. By understanding its structure, you can precisely control your device's behavior, create custom layouts, and integrate complex macros.
+
