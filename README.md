@@ -32,8 +32,8 @@ Customize key bindings, layers, macros, and physical layouts with an intuitive i
 
 ## 🔗 Related Projects
 
-- **TRKey Macropad** – Official Pico-powered macropad hardware + firmware, fully compatible with the TRKey Configurator.  
-
+**TRKey Macropad** – Official Pico-powered macropad hardware + firmware, fully compatible with the TRKey Configurator. 🔗 [Macropad](https://github.com/trinibos1/Trkey_macro) 
+---
 Want your device added? Contact me!
 
 ---
