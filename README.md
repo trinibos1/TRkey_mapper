@@ -206,7 +206,7 @@ MIT License – free to use, modify, and distribute.
 
 * Open issues on GitHub
 * Email: **[Trinibos1@proton.me](mailto:Trinibos1@proton.me)**
-*Discord **[TrKey discord server}(https://discord.gg/q5tpeJtQFv)**
+*Discord: **[TrKey discord server}(https://discord.gg/q5tpeJtQFv)**
 ---
 
 ## 🙌 Thanks
