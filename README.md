@@ -11,8 +11,9 @@
 
 A modern web-based tool to configure your macropad — and soon, full keyboards.  
 Customize key bindings, layers, macros, and physical layouts with an intuitive interface, and communicate directly with your device via the Web Serial API.
-Please note that this a dev page and stable version is [trkey](https://trkey.pages.dev) https://trkey.pages.dev
-
+Please note that this a dev page and stable version is **[trkey](https://trkey.pages.dev)**
+---
+Discord server add, check out at **[Discord](https://discord.gg/q5tpeJtQFv)**
 ---
 
 ## ✨ Features
@@ -206,7 +207,7 @@ MIT License – free to use, modify, and distribute.
 
 * Open issues on GitHub
 * Email: **[Trinibos1@proton.me](mailto:Trinibos1@proton.me)**
-*Discord: **[TrKey discord server}(https://discord.gg/q5tpeJtQFv)**
+* Discord: **[Discord](https://discord.gg/q5tpeJtQFv)**
 ---
 
 ## 🙌 Thanks
