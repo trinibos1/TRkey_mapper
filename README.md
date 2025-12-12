@@ -8,12 +8,10 @@
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg?logo=react&logoColor=white)](#)
 [![Web Serial](https://img.shields.io/badge/API-Web%20Serial-blue.svg)](#)
 [![CircuitPython](https://img.shields.io/badge/CircuitPython-compatible-purple.svg)](https://circuitpython.org/)
-
+---
 A modern web-based tool to configure your macropad — and soon, full keyboards.  
 Customize key bindings, layers, macros, and physical layouts with an intuitive interface, and communicate directly with your device via the Web Serial API.
 Please note that this a dev page and stable version is **[trkey](https://trkey.pages.dev)**
----
-Discord server add, check out at **[Discord](https://discord.gg/q5tpeJtQFv)**
 ---
 
 ## ✨ Features
