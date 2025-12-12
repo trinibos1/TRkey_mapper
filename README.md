@@ -11,7 +11,8 @@
 ---
 A modern web-based tool to configure your macropad — and soon, full keyboards.  
 Customize key bindings, layers, macros, and physical layouts with an intuitive interface, and communicate directly with your device via the Web Serial API.
-Please note that this a dev page and stable version is **[trkey](https://trkey.pages.dev)**
+Please note that this a dev page and stable version is: https://trkey.pages.dev
+
 ---
 
 ## ✨ Features
